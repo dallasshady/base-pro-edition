@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{1011fedc-248f-4530-8561-f4170868452c}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="Interface">
+      <UniqueIdentifier>{63adf2f2-0296-483f-8229-1433778616f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Implementation">
+      <UniqueIdentifier>{67dcd13c-9845-4b3e-804b-9c4596a4e664}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\shared\language.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="headers.h">
+      <Filter>Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Includes\TinyXML\include\tinystr.h" />
+    <ClInclude Include="..\Includes\TinyXML\include\tinyxml.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="language.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Includes\TinyXML\include\tinystr.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxml.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxmlerror.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxmlparser.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="language.rc" />
+  </ItemGroup>
+</Project>

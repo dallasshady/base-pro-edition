@@ -1,0 +1,66 @@
+﻿Build started 5/23/2011 12:07:23 PM.
+     1>Project "H:\Games\BASEsrc\gameplay\gameplay.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Touching ".\Debug\gameplay.unsuccessfulbuild".
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\Includes\Novodex\Cooking\include /I..\Includes\Novodex\Physics\include /I..\Includes\Novodex\Foundation\include /I..\Includes\DirectX\Include /I..\Includes\TinyXML\include /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _WINDLL /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /GR /Fo".\Debug/" /Fd".\Debug/vc100.pdb" /FR".\Debug\\" /Gd /TP /analyze- /errorReport:prompt ..\Includes\TinyXML\include\tinystr.cpp ..\Includes\TinyXML\include\tinyxml.cpp ..\Includes\TinyXML\include\tinyxmlerror.cpp ..\Includes\TinyXML\include\tinyxmlparser.cpp ..\Includes\TinyXML\include\xmltest.cpp acroinstructor.cpp actionmap.cpp activity.cpp actor.cpp affinstructor.cpp airplane.cpp ambientsound.cpp angelfalls.cpp animobject.cpp arbitrary.cpp baseinstructor.cpp bitfield.cpp boogie.cpp buttonchannel.cpp callback.cpp canopy.cpp canopy_render.cpp career.cpp careercourse.cpp casting.cpp cattoy.cpp cave.cpp character.cpp character_idle.cpp climbing.cpp collapse.cpp community.cpp communitymission.cpp cord.cpp createcareer.cpp credits.cpp crowd.cpp crypt.cpp crysound.cpp currenttime.cpp cutscene.cpp db_canopy.cpp db_event.cpp db_face.cpp db_helmet.cpp db_location.cpp db_mission.cpp db_npc.cpp db_rig.cpp db_suit.cpp db_textures.cpp deletecareer.cpp demo.cpp divine.cpp dropzone_basevff.cpp dropzone_cloudyrodeo.cpp dropzone_freejumps.cpp dropzone_skybase.cpp dropzone_vff.cpp elcapitan.cpp enclosure.cpp enterlocation.cpp equip.cpp equip_callback.cpp event.cpp fatalitylist.cpp festival.cpp flight.cpp flywaycamera.cpp footsteps.cpp forest.cpp freecamera.cpp freefall.cpp gameplay.cpp gear.cpp geoscape.cpp goal.cpp goal_bonus.cpp goal_delayaccuracy.cpp goal_dropzone.cpp goal_experience.cpp goal_flipcount.cpp goal_footage.cpp goal_gear.cpp goal_landing.cpp goal_proximity.cpp goal_reward.cpp goal_smokeball.cpp goal_spiral.cpp goal_stateofhealth.cpp goal_trackingperf.cpp hardlanding.cpp hookknife.cpp hud.cpp hud_altimeter.cpp hud_health.cpp hud_timer.cpp hud_variometer.cpp incident.cpp instructor.cpp interrupt.cpp jumper.cpp jumper_airplaneidle.cpp jumper_airplanejump.cpp jumper_badlanding.cpp jumper_copening.cpp jumper_flight.cpp jumper_flip.cpp jumper_flipjump.cpp jumper_landing.cpp jumper_linetwists.cpp jumper_modelman.cpp jumper_outofcontrol.cpp jumper_pull.cpp jumper_rendercb.cpp jumper_runningjump.cpp jumper_sitflying.cpp jumper_standingjump.cpp jumper_tracking.cpp jumper_turn.cpp jumper_walkbackward.cpp jumper_walkforward.cpp kjerag.cpp kvly.cpp landingaccuracy.cpp location.cpp memstream.cpp messagebox.cpp messagedialog.cpp mission.cpp missionbrowser.cpp missionsource.cpp mode.cpp mousechannel.cpp night.cpp npc.cpp npcassist.cpp npccameraman.cpp npcflight.cpp npcfollow.cpp npcfreefall.cpp npcmove.cpp npcprogram.cpp ostankino_attic.cpp ostankino_openair.cpp pab.cpp pilotchute.cpp preloaded.cpp render.cpp rope.cpp royalgorge.cpp royalgorge_field.cpp royalgorge_smokeball.cpp salary.cpp scene.cpp script.cpp selectcareer.cpp selecthome.cpp sensor.cpp smokeball.cpp smokeevent.cpp smokejet.cpp spectator.cpp spectator_move.cpp spectator_turn.cpp spinalcord.cpp tournamentsource.cpp traffic.cpp travel.cpp traveldialog.cpp trollveggen.cpp trollveggen_climbing.cpp trollveggen_field.cpp trollveggen_freejumping.cpp trollveggen_smokeball.cpp usercommunity.cpp virtues.cpp weatherforecast.cpp windpointer.cpp wlo.cpp xpp.cpp xpp_airplane.cpp xpp_basejumper01.cpp xpp_bush.cpp xpp_canopy02.cpp xpp_crowdmale01.cpp xpp_helicopter.cpp xpp_ostankinocuts.cpp xpp_pilotchute.cpp xpp_slider.cpp xpp_traffic.cpp xpp_tree.cpp
+         tinystr.cpp
+         tinyxml.cpp
+         tinyxmlerror.cpp
+         tinyxmlparser.cpp
+         xmltest.cpp
+     1>h:\games\basesrc\includes\tinyxml\include\xmltest.cpp(559): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\stdio.h(234) : see declaration of 'fopen'
+     1>h:\games\basesrc\includes\tinyxml\include\xmltest.cpp(560): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\stdio.h(234) : see declaration of 'fopen'
+     1>h:\games\basesrc\includes\tinyxml\include\xmltest.cpp(826): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\string.h(105) : see declaration of 'strcpy'
+     1>h:\games\basesrc\includes\tinyxml\include\xmltest.cpp(919): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\stdio.h(234) : see declaration of 'fopen'
+     1>h:\games\basesrc\includes\tinyxml\include\xmltest.cpp(925): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\stdio.h(234) : see declaration of 'fopen'
+     1>h:\games\basesrc\includes\tinyxml\include\xmltest.cpp(941): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\stdio.h(234) : see declaration of 'fopen'
+     1>h:\games\basesrc\includes\tinyxml\include\xmltest.cpp(954): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\stdio.h(234) : see declaration of 'fopen'
+         acroinstructor.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         actionmap.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         activity.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         actor.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         affinstructor.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         airplane.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         ambientsound.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         angelfalls.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         animobject.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         arbitrary.cpp
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11280): error C2061: syntax error : identifier '__RPC__out_xcount_part'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): error C2059: syntax error : ')'
+     1>c:\program files (x86)\microsoft sdks\windows\v7.0a\include\objidl.h(11281): fatal error C1903: unable to recover from previous error(s); stopping compilation
+         baseinstructor.cpp

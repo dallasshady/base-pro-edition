@@ -1,0 +1,317 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="component">
+      <UniqueIdentifier>{50d8a07d-f02f-4cdd-aae3-eecada56cafd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{fcf4ccc9-ca1f-4773-b82a-af6c281b8945}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="alphasort.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="animation.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="asset.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="atomic.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="batch.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="bsp.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="camera.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="clump.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="collision.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="effect.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="engine.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="errorreport.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="fastquat.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="frame.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="fundamentals.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="glow.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="grass.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="gui.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="hash.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="headers.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="hlsl.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="imem.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="intersection.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="istring.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="ixml.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="light.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="lightmap.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="loader.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="psys.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="rain.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="rendering.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="shader.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="shadows.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="smoketrail.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="sprite.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="vertexdeclaration.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="wire.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\engine.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\gui.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="..\Includes\TinyXML\include\tinystr.h" />
+    <ClInclude Include="..\Includes\TinyXML\include\tinyxml.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="animation.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="atomic.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="batch.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="batch_sector.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="binaryasset.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="boxintersection.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="bsp.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="camera.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="clump.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="collision.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="component.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="depthmap.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="effect.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="engine.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="environment.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="frame.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="fxblender.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="fxcamera.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="fxgrass.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="fxhlsl.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="fxwater.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="fxwaterfall.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="glow.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="grass.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="gui.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="guibutton.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="guiedit.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="guipanel.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="guislider.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="guistatictext.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="guiwindow.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="guixml.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="hlsl.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="imem.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="importasset.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="lensflare.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="light.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="lightmap.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="loader.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="lostable.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="octree.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="psys.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="rain.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="rayintersection.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="shader.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="shadows.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="smoketrail.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="sphereintersection.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="sprite.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="wire.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="xasset.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Includes\TinyXML\include\tinystr.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxml.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxmlerror.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxmlparser.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\xmltest.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="engine.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="gui.xml" />
+  </ItemGroup>
+</Project>

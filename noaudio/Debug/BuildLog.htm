@@ -1,0 +1,33 @@
+<html>
+<head>
+<META HTTP-EQUIV="Content-Type" content="text/html; charset=windows-1251">
+</head>
+<body>
+<pre>
+<table width=100% bgcolor=#CFCFE5><tr> <td> <font face=arial size=+3>
+Build Log
+</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>
+<h3>------- Build started: Project: noaudio, Configuration: Debug|Win32 -------
+</h3>
+</pre></table><table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>
+Command Lines
+</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>Creating temporary file "d:\bad3p\base\gamesrc\noaudio\Debug\RSP000011.rsp" with contents
+[
+/Od /G5 /I "D:\bad3p\base\libs\OpenAL\include" /I "D:\bad3p\base\libs\OggVorbis\libogg\\include" /I "D:\bad3p\base\libs\OggVorbis\libvorbis\\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /EHsc /RTC1 /MDd /GR /YX"stdafx.h" /Fp".\Debug/noaudio.pch" /Fo".\Debug/" /Fd".\Debug/" /FR".\Debug/" /W3 /c /ZI /TP
+.\component.cpp
+]
+Creating command line "cl.exe @d:\bad3p\base\gamesrc\noaudio\Debug\RSP000011.rsp /nologo"
+</pre></table><table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>
+Output Window
+</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>Compiling...
+component.cpp
+d:\bad3p\base\gamesrc\noaudio\component.cpp(100) : error C2259: 'Audio' : cannot instantiate abstract class
+        due to following members:
+        'void audio::IAudio::updateStreamSounds(void)' : pure virtual function was not defined
+        d:\bad3p\base\gamesrc\shared\audio.h(95) : see declaration of 'audio::IAudio::updateStreamSounds'
+</pre></table><table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>
+Results
+</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>
+Build log was saved at "file://d:\bad3p\base\gamesrc\noaudio\Debug\BuildLog.htm"
+noaudio - 1 error(s), 0 warning(s)</pre></table><table   width=100% height=20 bgcolor=#CFCFE5><tr><td><font face=arial size=+2>
+</font></table></body></html>

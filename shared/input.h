@@ -128,7 +128,12 @@ struct MouseState
     int           dX, dY, dZ;
     unsigned char buttonState[8];
 };
-
+struct JoyState
+{
+    bool buttonState[32];
+	float axis[6];
+	bool usable;
+};
 /**
  * input device
  */
@@ -148,6 +153,7 @@ public:
      * @return false if device is unacquired and cannot be re-acquire this time
      */
     virtual bool __stdcall getMouseState(MouseState* state) = 0;
+    virtual bool __stdcall getJoystickState(JoyState* state) = 0;
     /**
      * method releases the input device
      */

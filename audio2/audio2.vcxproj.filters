@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="component">
+      <UniqueIdentifier>{ce0395c4-125f-4ff2-813d-4a1d9dfd747b}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{1d1489e0-2beb-423a-921b-fa13ce02569b}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{075f7c9b-7dbd-4c67-8833-bd40771d8fcf}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="compability.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="errorreport.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="headers.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="ogg.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="silence.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="spatial.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="static.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="stream.h">
+      <Filter>component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\audio.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="component.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="ogg.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="spatial.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="static.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+    <ClCompile Include="stream.cpp">
+      <Filter>component</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

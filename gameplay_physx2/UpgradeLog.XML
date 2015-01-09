@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="gameplay">
+</Property><Property Name="Solution File" Value="D:\Games\BASEsrc\gameplay\gameplay.sln">
+</Property><Property Name="User Options File" Value="D:\Games\BASEsrc\gameplay\gameplay.suo">
+</Property><Property Name="Date" Value="Friday, July 13, 2012">
+</Property><Property Name="Time" Value="23:18 PM">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="gameplay.sln" Description="File successfully backed up as D:\Games\BASEsrc\gameplay\gameplay.sln.old">
+</Event><Event ErrorLevel="0" Project="" Source="gameplay.suo" Description="File successfully backed up as D:\Games\BASEsrc\gameplay\gameplay.suo.old">
+</Event><Event ErrorLevel="3" Project="gameplay" Source="gameplay.vcproj" Description="No Conversion Required">
+</Event><Event ErrorLevel="0" Project="" Source="gameplay.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="gameplay.sln" Description="Converted">
+</Event></UpgradeLog>

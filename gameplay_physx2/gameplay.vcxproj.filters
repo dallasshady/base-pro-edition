@@ -1,0 +1,949 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Component">
+      <UniqueIdentifier>{70f10b17-deb6-4bb0-b153-5b2db8d54395}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{d9934046-b19a-4c5d-b401-6568d5d17914}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="acroinstructor.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="actionmap.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="activity.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="actor.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="affinstructor.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="airfoil.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="airplane.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ambientsound.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="angelfalls.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="animobject.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="arbitrary.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="baseinstructor.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="bitfield.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="boogie.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="buttonchannel.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="callback.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="canopy.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="canopy_render.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="career.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="careercourse.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="casting.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="cattoy.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="cave.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="character.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="character_idle.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="climbing.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="collapse.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="community.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="communitymission.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="component.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="cord.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="createcareer.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="credits.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="crowd.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="crypt.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="crysound.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="currenttime.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="cutscene.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_canopy.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_event.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_face.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_helmet.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_location.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_mission.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_npc.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_reserve.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_rig.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_suit.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_textures.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="deletecareer.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="demo.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="divine.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="dropzone_basevff.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="dropzone_cloudyrodeo.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="dropzone_freejumps.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="dropzone_skybase.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="dropzone_vff.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="EasyBMP.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="elcapitan.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="enclosure.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="enterlocation.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="equip.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="equip_callback.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="event.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="fatalitylist.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="festival.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="flight.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="flywaycamera.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="footsteps.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="forest.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="freecamera.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="freefall.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="gameplay.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="gear.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="geoscape.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_bonus.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_canopytime.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_delayaccuracy.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_dropzone.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_experience.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_flipcount.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_footage.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_freefalltime.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_gear.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_jumps.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_landing.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_opening.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_proximity.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_reward.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_smokeball.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_spiral.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_stateofhealth.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_trackingperf.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_wingsuittime.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="hardlanding.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="hookknife.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="hud.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="hud_altimeter.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="hud_health.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="hud_timer.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="hud_variometer.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="incident.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="instructor.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="interrupt.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="joystickchannel.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_airplaneidle.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_airplanejump.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_badlanding.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_copening.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_flight.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_flip.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_flipjump.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_landing.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_linetwists.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_modelman.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_outofcontrol.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_pull.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_pull_reserve.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_rendercb.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_runningjump.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_sidestepjump.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_standingjump.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_tracking.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_turn.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_walkbackward.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="jumper_walkforward.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="kjerag.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="kvly.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="landingaccuracy.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="location.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="memstream.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="messagebox.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="messagedialog.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="mission.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="missionbrowser.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="missionsource.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="mode.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="mousechannel.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="night.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npc.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcassist.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npccameraman.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npccameraman_dz.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcflight.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcflight_dz.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcfollow.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcfreefall.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcfreefall_dz.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcmove.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcprogram.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ostankino_attic.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ostankino_openair.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="pab.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="pilotchute.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="pose.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="preloaded.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="rds.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="render.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="rope.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="royalgorge.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="royalgorge_field.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="royalgorge_smokeball.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="salary.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="scene.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="script.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="selectcareer.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="selecthome.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="sensor.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="smokeball.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="smokeevent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="smokejet.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="spectator.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="spectator_move.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="spectator_turn.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="spinalcord.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Includes\TinyXML\include\tinystr.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxml.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxmlerror.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxmlparser.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="tournamentsource.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="traffic.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="travel.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="traveldialog.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="trollveggen.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="trollveggen_climbing.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="trollveggen_field.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="trollveggen_freejumping.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="trollveggen_smokeball.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="usercommunity.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="virtues.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="weatherforecast.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="windpointer.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="wlo.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Includes\TinyXML\include\xmltest.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_airplane.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_basejumper01.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_bush.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_canopy02.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_crowdmale01.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_helicopter.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_ostankinocuts.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_pilotchute.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_slider.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_traffic.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="xpp_tree.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="network.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="acroinstructor.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="actionmap.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="activity.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="affinstructor.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="airfoil.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="airplane.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="angelfalls.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="animobject.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="arbitrary.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="baseinstructor.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="bitfield.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="boogie.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="callback.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="canopy.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="career.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="careercourse.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="casting.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="cave.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="character.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="climbing.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="community.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="communitymission.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="createcareer.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="credits.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="crowd.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="crypt.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="currenttime.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="cutscene.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="database.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="deletecareer.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="demo.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="divine.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="dropzone.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="EasyBMP.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="EasyBMP_BMP.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="EasyBMP_DataStructures.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="EasyBMP_VariousBMPutilities.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="elcapitan.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="equip.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="fatalitylist.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="festival.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="forest.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="gameplay.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="gear.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="geoscape.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="goal.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="headers.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="hud.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="imath.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="instructor.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="interrupt.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="jumper.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="jumper_machine.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="jumper_poses_init.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="jumper_poses_init_wings.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="kjerag.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="kvly.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="landingaccuracy.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="memstream.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="messagebox.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="mission.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="missionbrowser.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="night.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npc.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npcassist.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npccameraman.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npccameraman_dz.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npcflight.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npcflight_dz.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npcfollow.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npcfreefall.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npcfreefall_dz.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npcmove.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="ostankino.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="pilotchute.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="pose.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="preloaded.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="render.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="royalgorge.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="salary.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="script.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="selectcareer.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="selecthome.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="sensor.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="smokeball.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="smokeevent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="smokejet.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="sound.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="traffic.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="travel.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="trollveggen.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="unicode.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="version.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="virtues.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="weatherforecast.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="windpointer.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="xpp.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Includes\TinyXML\include\tinystr.h" />
+    <ClInclude Include="..\Includes\TinyXML\include\tinyxml.h" />
+    <ClInclude Include="network.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TODO.txt">
+      <Filter>Component</Filter>
+    </None>
+    <None Include="english.txt" />
+  </ItemGroup>
+</Project>

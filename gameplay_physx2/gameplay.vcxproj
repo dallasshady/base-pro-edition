@@ -1,0 +1,538 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="FakeRelease|Win32">
+      <Configuration>FakeRelease</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4341B448-F769-4ECE-A934-9F27E8E6CFF3}</ProjectGuid>
+    <RootNamespace>gameplay</RootNamespace>
+    <SccProjectName />
+    <SccLocalPath />
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'">$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'">false</LinkIncremental>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>..\Includes\Novodex\Foundation\include;..\Includes\Novodex\Cooking\include;..\Includes\Novodex\Physics\include;..\Includes\DirectX\Include;..\Includes\TinyXML\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\Release/gameplay.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CallingConvention>FastCall</CallingConvention>
+      <ShowIncludes>false</ShowIncludes>
+    </ClCompile>
+    <Link>
+      <ShowProgress>NotSet</ShowProgress>
+      <OutputFile>../../B.A.S.E. Game/sys/gameplay-d.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>..\Libraries;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>.\Release/gameplay.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>.\Release/gameplay.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Release/gameplay.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0419</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>D:\Games\BASEsrc\input;..\Includes\Novodex\Cooking\include;..\Includes\Novodex\Physics\include;..\Includes\Novodex\Foundation\include;..\Includes\DirectX\Include;..\Includes\TinyXML\include;..\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\Debug/gameplay.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Iphlpapi.lib;tinyxml.lib;NxPhysics.lib;NxCooking.lib;winmm.lib;sfml-system-s-d.lib;sfml-network-s-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../../B.A.S.E. Game/sys/gameplay-d.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>..\Libraries;D:\Games\BASEsrc2013_06_04\Libraries\SFML;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AssemblyDebug>
+      </AssemblyDebug>
+      <ProgramDatabaseFile>.\Debug/gameplay-d.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>.\Debug/gameplay-d.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Debug/gameplay.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0419</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(NXSDK)\Cooking\include\;$(NXSDK)\Physics\include\;$(NXSDK)\Foundation\include\;$(DX9SDK)\Include;$(TinyXML)\;$(OpenAL)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\Debug/gameplay.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Iphlpapi.lib;diskid.lib;tinyxml.lib;NxPhysics.lib;NxCooking.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../../game/sys/gameplay-d.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>D:\bad3p\base\gamesrc\diskid\Release;$(NXSDK)\Cooking\lib\win32\Release\;$(NXSDK)\Physics\lib\win32\Release\;$(TinyXML)\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/gameplay-d.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>.\Debug/gameplay-d.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Debug/gameplay.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0419</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="acroinstructor.cpp" />
+    <ClCompile Include="actionmap.cpp" />
+    <ClCompile Include="activity.cpp" />
+    <ClCompile Include="actor.cpp" />
+    <ClCompile Include="affinstructor.cpp" />
+    <ClCompile Include="airfoil.cpp" />
+    <ClCompile Include="airplane.cpp" />
+    <ClCompile Include="ambientsound.cpp" />
+    <ClCompile Include="angelfalls.cpp" />
+    <ClCompile Include="animobject.cpp" />
+    <ClCompile Include="arbitrary.cpp" />
+    <ClCompile Include="baseinstructor.cpp" />
+    <ClCompile Include="bitfield.cpp" />
+    <ClCompile Include="boogie.cpp" />
+    <ClCompile Include="buttonchannel.cpp" />
+    <ClCompile Include="callback.cpp" />
+    <ClCompile Include="canopy.cpp" />
+    <ClCompile Include="canopy_render.cpp" />
+    <ClCompile Include="career.cpp" />
+    <ClCompile Include="careercourse.cpp" />
+    <ClCompile Include="casting.cpp" />
+    <ClCompile Include="cattoy.cpp" />
+    <ClCompile Include="cave.cpp" />
+    <ClCompile Include="character.cpp" />
+    <ClCompile Include="character_idle.cpp" />
+    <ClCompile Include="climbing.cpp" />
+    <ClCompile Include="collapse.cpp" />
+    <ClCompile Include="community.cpp" />
+    <ClCompile Include="communitymission.cpp" />
+    <ClCompile Include="component.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS</PreprocessorDefinitions>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
+      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</BrowseInformation>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'">Disabled</Optimization>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'">WIN32;_DEBUG;_WINDOWS</PreprocessorDefinitions>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'">EnableFastChecks</BasicRuntimeChecks>
+      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='FakeRelease|Win32'">true</BrowseInformation>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS</PreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="cord.cpp" />
+    <ClCompile Include="createcareer.cpp" />
+    <ClCompile Include="credits.cpp" />
+    <ClCompile Include="crowd.cpp" />
+    <ClCompile Include="crypt.cpp" />
+    <ClCompile Include="crysound.cpp" />
+    <ClCompile Include="currenttime.cpp" />
+    <ClCompile Include="cutscene.cpp" />
+    <ClCompile Include="db_canopy.cpp" />
+    <ClCompile Include="db_event.cpp" />
+    <ClCompile Include="db_face.cpp" />
+    <ClCompile Include="db_helmet.cpp" />
+    <ClCompile Include="db_location.cpp" />
+    <ClCompile Include="db_mission.cpp" />
+    <ClCompile Include="db_npc.cpp" />
+    <ClCompile Include="db_reserve.cpp" />
+    <ClCompile Include="db_rig.cpp" />
+    <ClCompile Include="db_suit.cpp" />
+    <ClCompile Include="db_textures.cpp" />
+    <ClCompile Include="deletecareer.cpp" />
+    <ClCompile Include="demo.cpp" />
+    <ClCompile Include="divine.cpp" />
+    <ClCompile Include="dropzone_basevff.cpp" />
+    <ClCompile Include="dropzone_cloudyrodeo.cpp" />
+    <ClCompile Include="dropzone_freejumps.cpp" />
+    <ClCompile Include="dropzone_skybase.cpp" />
+    <ClCompile Include="dropzone_vff.cpp" />
+    <ClCompile Include="EasyBMP.cpp" />
+    <ClCompile Include="elcapitan.cpp" />
+    <ClCompile Include="enclosure.cpp" />
+    <ClCompile Include="enterlocation.cpp" />
+    <ClCompile Include="equip.cpp" />
+    <ClCompile Include="equip_callback.cpp" />
+    <ClCompile Include="event.cpp" />
+    <ClCompile Include="fatalitylist.cpp" />
+    <ClCompile Include="festival.cpp" />
+    <ClCompile Include="flight.cpp" />
+    <ClCompile Include="flywaycamera.cpp" />
+    <ClCompile Include="footsteps.cpp" />
+    <ClCompile Include="forest.cpp" />
+    <ClCompile Include="freecamera.cpp" />
+    <ClCompile Include="freefall.cpp" />
+    <ClCompile Include="gameplay.cpp" />
+    <ClCompile Include="gear.cpp" />
+    <ClCompile Include="geoscape.cpp" />
+    <ClCompile Include="goal.cpp" />
+    <ClCompile Include="goal_bonus.cpp" />
+    <ClCompile Include="goal_canopytime.cpp" />
+    <ClCompile Include="goal_delayaccuracy.cpp" />
+    <ClCompile Include="goal_dropzone.cpp" />
+    <ClCompile Include="goal_experience.cpp" />
+    <ClCompile Include="goal_flipcount.cpp" />
+    <ClCompile Include="goal_footage.cpp" />
+    <ClCompile Include="goal_freefalltime.cpp" />
+    <ClCompile Include="goal_gear.cpp" />
+    <ClCompile Include="goal_jumps.cpp" />
+    <ClCompile Include="goal_landing.cpp" />
+    <ClCompile Include="goal_opening.cpp" />
+    <ClCompile Include="goal_proximity.cpp" />
+    <ClCompile Include="goal_reward.cpp" />
+    <ClCompile Include="goal_smokeball.cpp" />
+    <ClCompile Include="goal_spiral.cpp" />
+    <ClCompile Include="goal_stateofhealth.cpp" />
+    <ClCompile Include="goal_trackingperf.cpp" />
+    <ClCompile Include="goal_wingsuittime.cpp" />
+    <ClCompile Include="hardlanding.cpp" />
+    <ClCompile Include="hookknife.cpp" />
+    <ClCompile Include="hud.cpp" />
+    <ClCompile Include="hud_altimeter.cpp" />
+    <ClCompile Include="hud_health.cpp" />
+    <ClCompile Include="hud_timer.cpp" />
+    <ClCompile Include="hud_variometer.cpp" />
+    <ClCompile Include="incident.cpp" />
+    <ClCompile Include="instructor.cpp" />
+    <ClCompile Include="interrupt.cpp" />
+    <ClCompile Include="joystickchannel.cpp" />
+    <ClCompile Include="jumper.cpp" />
+    <ClCompile Include="jumper_airplaneidle.cpp" />
+    <ClCompile Include="jumper_airplanejump.cpp" />
+    <ClCompile Include="jumper_badlanding.cpp" />
+    <ClCompile Include="jumper_copening.cpp" />
+    <ClCompile Include="jumper_flight.cpp" />
+    <ClCompile Include="jumper_flip.cpp" />
+    <ClCompile Include="jumper_flipjump.cpp" />
+    <ClCompile Include="jumper_landing.cpp" />
+    <ClCompile Include="jumper_linetwists.cpp" />
+    <ClCompile Include="jumper_modelman.cpp" />
+    <ClCompile Include="jumper_outofcontrol.cpp" />
+    <ClCompile Include="jumper_pull.cpp" />
+    <ClCompile Include="jumper_pull_reserve.cpp" />
+    <ClCompile Include="jumper_rendercb.cpp" />
+    <ClCompile Include="jumper_runningjump.cpp" />
+    <ClCompile Include="jumper_sidestepjump.cpp" />
+    <ClCompile Include="jumper_standingjump.cpp" />
+    <ClCompile Include="jumper_tracking.cpp" />
+    <ClCompile Include="jumper_turn.cpp" />
+    <ClCompile Include="jumper_walkbackward.cpp" />
+    <ClCompile Include="jumper_walkforward.cpp" />
+    <ClCompile Include="kjerag.cpp" />
+    <ClCompile Include="kvly.cpp" />
+    <ClCompile Include="landingaccuracy.cpp" />
+    <ClCompile Include="location.cpp" />
+    <ClCompile Include="memstream.cpp" />
+    <ClCompile Include="messagebox.cpp" />
+    <ClCompile Include="messagedialog.cpp" />
+    <ClCompile Include="mission.cpp" />
+    <ClCompile Include="missionbrowser.cpp" />
+    <ClCompile Include="missionsource.cpp" />
+    <ClCompile Include="mode.cpp" />
+    <ClCompile Include="mousechannel.cpp" />
+    <ClCompile Include="network.cpp" />
+    <ClCompile Include="night.cpp" />
+    <ClCompile Include="npc.cpp" />
+    <ClCompile Include="npcassist.cpp" />
+    <ClCompile Include="npccameraman.cpp" />
+    <ClCompile Include="npccameraman_dz.cpp" />
+    <ClCompile Include="npcflight.cpp" />
+    <ClCompile Include="npcflight_dz.cpp" />
+    <ClCompile Include="npcfollow.cpp" />
+    <ClCompile Include="npcfreefall.cpp" />
+    <ClCompile Include="npcfreefall_dz.cpp" />
+    <ClCompile Include="npcmove.cpp" />
+    <ClCompile Include="npcprogram.cpp" />
+    <ClCompile Include="ostankino_attic.cpp" />
+    <ClCompile Include="ostankino_openair.cpp" />
+    <ClCompile Include="pab.cpp" />
+    <ClCompile Include="pilotchute.cpp" />
+    <ClCompile Include="pose.cpp" />
+    <ClCompile Include="preloaded.cpp" />
+    <ClCompile Include="rds.cpp" />
+    <ClCompile Include="render.cpp" />
+    <ClCompile Include="rope.cpp" />
+    <ClCompile Include="royalgorge.cpp" />
+    <ClCompile Include="royalgorge_field.cpp" />
+    <ClCompile Include="royalgorge_smokeball.cpp" />
+    <ClCompile Include="salary.cpp" />
+    <ClCompile Include="scene.cpp" />
+    <ClCompile Include="script.cpp" />
+    <ClCompile Include="selectcareer.cpp" />
+    <ClCompile Include="selecthome.cpp" />
+    <ClCompile Include="sensor.cpp" />
+    <ClCompile Include="smokeball.cpp" />
+    <ClCompile Include="smokeevent.cpp" />
+    <ClCompile Include="smokejet.cpp" />
+    <ClCompile Include="spectator.cpp" />
+    <ClCompile Include="spectator_move.cpp" />
+    <ClCompile Include="spectator_turn.cpp" />
+    <ClCompile Include="spinalcord.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinystr.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxml.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxmlerror.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\tinyxmlparser.cpp" />
+    <ClCompile Include="tournamentsource.cpp" />
+    <ClCompile Include="traffic.cpp" />
+    <ClCompile Include="travel.cpp" />
+    <ClCompile Include="traveldialog.cpp" />
+    <ClCompile Include="trollveggen.cpp" />
+    <ClCompile Include="trollveggen_climbing.cpp" />
+    <ClCompile Include="trollveggen_field.cpp" />
+    <ClCompile Include="trollveggen_freejumping.cpp" />
+    <ClCompile Include="trollveggen_smokeball.cpp" />
+    <ClCompile Include="usercommunity.cpp" />
+    <ClCompile Include="virtues.cpp" />
+    <ClCompile Include="weatherforecast.cpp" />
+    <ClCompile Include="windpointer.cpp" />
+    <ClCompile Include="wlo.cpp" />
+    <ClCompile Include="..\Includes\TinyXML\include\xmltest.cpp" />
+    <ClCompile Include="xpp.cpp" />
+    <ClCompile Include="xpp_airplane.cpp" />
+    <ClCompile Include="xpp_basejumper01.cpp" />
+    <ClCompile Include="xpp_bush.cpp" />
+    <ClCompile Include="xpp_canopy02.cpp" />
+    <ClCompile Include="xpp_crowdmale01.cpp" />
+    <ClCompile Include="xpp_helicopter.cpp" />
+    <ClCompile Include="xpp_ostankinocuts.cpp" />
+    <ClCompile Include="xpp_pilotchute.cpp" />
+    <ClCompile Include="xpp_slider.cpp" />
+    <ClCompile Include="xpp_traffic.cpp" />
+    <ClCompile Include="xpp_tree.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="acroinstructor.h" />
+    <ClInclude Include="actionmap.h" />
+    <ClInclude Include="activity.h" />
+    <ClInclude Include="affinstructor.h" />
+    <ClInclude Include="airfoil.h" />
+    <ClInclude Include="airplane.h" />
+    <ClInclude Include="angelfalls.h" />
+    <ClInclude Include="animobject.h" />
+    <ClInclude Include="arbitrary.h" />
+    <ClInclude Include="baseinstructor.h" />
+    <ClInclude Include="bitfield.h" />
+    <ClInclude Include="boogie.h" />
+    <ClInclude Include="callback.h" />
+    <ClInclude Include="canopy.h" />
+    <ClInclude Include="career.h" />
+    <ClInclude Include="careercourse.h" />
+    <ClInclude Include="casting.h" />
+    <ClInclude Include="cave.h" />
+    <ClInclude Include="character.h" />
+    <ClInclude Include="climbing.h" />
+    <ClInclude Include="community.h" />
+    <ClInclude Include="communitymission.h" />
+    <ClInclude Include="createcareer.h" />
+    <ClInclude Include="credits.h" />
+    <ClInclude Include="crowd.h" />
+    <ClInclude Include="crypt.h" />
+    <ClInclude Include="currenttime.h" />
+    <ClInclude Include="cutscene.h" />
+    <ClInclude Include="database.h" />
+    <ClInclude Include="deletecareer.h" />
+    <ClInclude Include="demo.h" />
+    <ClInclude Include="divine.h" />
+    <ClInclude Include="dropzone.h" />
+    <ClInclude Include="EasyBMP.h" />
+    <ClInclude Include="EasyBMP_BMP.h" />
+    <ClInclude Include="EasyBMP_DataStructures.h" />
+    <ClInclude Include="EasyBMP_VariousBMPutilities.h" />
+    <ClInclude Include="elcapitan.h" />
+    <ClInclude Include="equip.h" />
+    <ClInclude Include="fatalitylist.h" />
+    <ClInclude Include="festival.h" />
+    <ClInclude Include="forest.h" />
+    <ClInclude Include="gameplay.h" />
+    <ClInclude Include="gear.h" />
+    <ClInclude Include="geoscape.h" />
+    <ClInclude Include="goal.h" />
+    <ClInclude Include="headers.h" />
+    <ClInclude Include="hud.h" />
+    <ClInclude Include="imath.h" />
+    <ClInclude Include="instructor.h" />
+    <ClInclude Include="interrupt.h" />
+    <ClInclude Include="jumper.h" />
+    <ClInclude Include="jumper_machine.h" />
+    <ClInclude Include="jumper_poses_init.h" />
+    <ClInclude Include="jumper_poses_init_wings.h" />
+    <ClInclude Include="kjerag.h" />
+    <ClInclude Include="kvly.h" />
+    <ClInclude Include="landingaccuracy.h" />
+    <ClInclude Include="memstream.h" />
+    <ClInclude Include="messagebox.h" />
+    <ClInclude Include="mission.h" />
+    <ClInclude Include="missionbrowser.h" />
+    <ClInclude Include="network.h" />
+    <ClInclude Include="night.h" />
+    <ClInclude Include="npc.h" />
+    <ClInclude Include="npcassist.h" />
+    <ClInclude Include="npccameraman.h" />
+    <ClInclude Include="npccameraman_dz.h" />
+    <ClInclude Include="npcflight.h" />
+    <ClInclude Include="npcflight_dz.h" />
+    <ClInclude Include="npcfollow.h" />
+    <ClInclude Include="npcfreefall.h" />
+    <ClInclude Include="npcfreefall_dz.h" />
+    <ClInclude Include="npcmove.h" />
+    <ClInclude Include="ostankino.h" />
+    <ClInclude Include="pilotchute.h" />
+    <ClInclude Include="pose.h" />
+    <ClInclude Include="preloaded.h" />
+    <ClInclude Include="render.h" />
+    <ClInclude Include="royalgorge.h" />
+    <ClInclude Include="salary.h" />
+    <ClInclude Include="scene.h" />
+    <ClInclude Include="script.h" />
+    <ClInclude Include="selectcareer.h" />
+    <ClInclude Include="selecthome.h" />
+    <ClInclude Include="sensor.h" />
+    <ClInclude Include="smokeball.h" />
+    <ClInclude Include="smokeevent.h" />
+    <ClInclude Include="smokejet.h" />
+    <ClInclude Include="sound.h" />
+    <ClInclude Include="traffic.h" />
+    <ClInclude Include="travel.h" />
+    <ClInclude Include="trollveggen.h" />
+    <ClInclude Include="unicode.h" />
+    <ClInclude Include="version.h" />
+    <ClInclude Include="virtues.h" />
+    <ClInclude Include="weatherforecast.h" />
+    <ClInclude Include="windpointer.h" />
+    <ClInclude Include="xpp.h" />
+    <ClInclude Include="..\Includes\TinyXML\include\tinystr.h" />
+    <ClInclude Include="..\Includes\TinyXML\include\tinyxml.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TODO.txt" />
+    <None Include="english.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,27 @@
+DONE
+2 Brake lines removed after using WLO to clear the lineover
+- Brake stowing
+2 More info after jump: depl. altitude, freefall time, canopy time, jump number.
+2 Better first person view
+
+EASY
+3 MrGparpinelli's camera angles
+
+NORMAL
+- RSL choice (none, standard, skyhook) (automatic reserve deployment on main cutaway)
+2 Freefly carving
+- Fully functional wingsuit physics
+
+HARD
+- Different aerodynamic characteristic suits (loose, tight, thermal, freefly, etc)
+- Swoop meter
+- More malfunctions: Pilot chute hesitation, horseshoe, baglock, lineover, toggle failure (due to age of eq).
+- PLF landing
+- More realistic deployment sequence
+- Custom mission creator
+- Acrobatic airplane exits.
+- All acrobatic jumps that have animations
+- Completely rewritten freefall (including wingsuit) physics engine v.2.0
+
+BRING IT ON
+- Location creation/import (maybe just the Dam level or Ramosch for now)

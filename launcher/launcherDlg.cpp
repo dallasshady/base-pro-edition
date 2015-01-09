@@ -111,7 +111,8 @@ CComboBox* ClauncherDlg::SetupMappingControl(CComboBox* comboBox, TiXmlElement* 
 
     // fill combo box with mapping variants
     int stringId;
-    for( int i=0; i<int(::getNumCodes()); i++ )
+	int i;
+    for( i=0; i<int(::getNumCodes()); i++ )
     {
         stringId = comboBox->AddString( ::getCodeHint( i ) );
         comboBox->SetItemData( stringId, ::getCode( i ) );
@@ -181,7 +182,8 @@ BOOL ClauncherDlg::OnInitDialog()
 
     // enumerate adapters
     m_numAdapters = m_iDirect3D9->GetAdapterCount();
-    for( int i=0; i<m_numAdapters; i++ )
+	int i;
+    for( i=0; i<m_numAdapters; i++ )
     {
         // retrieve adapter ID
         D3DADAPTER_IDENTIFIER9 adapterIdentifier;
@@ -469,7 +471,8 @@ void ClauncherDlg::OnCbnSelchangeAdapter()
     char str[512];
     D3DDISPLAYMODE displayMode;
     int numModes = m_iDirect3D9->GetAdapterModeCount( adapterId, D3DFMT_X8R8G8B8 );
-    for( int i=0; i<numModes; i++ )
+	int i;
+    for( i=0; i<numModes; i++ )
     {
         m_iDirect3D9->EnumAdapterModes( adapterId, D3DFMT_X8R8G8B8, i, &displayMode );
         if( displayMode.Width >= 640 && displayMode.Height >= 480 )

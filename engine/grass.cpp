@@ -52,7 +52,8 @@ void GrassCluster::updateBoundingSphere(void)
     // calculate bounding sphere center
     Vector pos;
     Vector temp;
-    for( unsigned int i=1; i<numParticles; i++ )
+	unsigned int i;
+    for( i=1; i<numParticles; i++ )
     {
         pos.x = particles[i].matrix._41,
         pos.y = particles[i].matrix._42,

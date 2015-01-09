@@ -409,7 +409,8 @@ void ShadowVolume::renderShadowVolume(Geometry* geometry, Matrix* ltm, float dep
 
     // now extrude and render the list of edges using
     // vertex shader
-    for( unsigned int i=0; i<numEdges; ++i )
+	unsigned int i;
+    for( i=0; i<numEdges; ++i )
     {
         fvId = numActiveEdges * 4;
         fiId = numActiveEdges * 6;

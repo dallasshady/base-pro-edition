@@ -26,6 +26,8 @@ public:
         paramid_t* params = new paramid_t[numParams];
         ppack->copyParamResult( params );
         if (numParams == 0) throw ccor::Exception("ccorlogic : No entities to load");
+
+		// ccor::getCore()->logMessage("%s %2.2f", ppack->gets(params[i]), getid());
         for (int i=0; i < numParams; ++i) 
         {
             icore->createEntity(ppack->gets(params[i]),getid(),NULL);

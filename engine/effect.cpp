@@ -107,7 +107,7 @@ AssetObjectT Effect::read(IResource* resource, AssetObjectM& assetObjects)
  * creation routine
  */
 
-const numEffectClasses = 4; // number of complicated effects
+const int numEffectClasses = 4; // number of complicated effects
 
 int Effect::getNumEffects(void)
 {

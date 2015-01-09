@@ -30,13 +30,21 @@
 #include <windowsx.h>
 #include <tchar.h>
 
-// directx includes
+// directx9 includes
 #include "d3d9.h"
 #include "d3d9types.h"
 #include "d3dx9effect.h"
 #include "d3dx9shader.h"
 #include "ddraw.h"
 #include "d3dx9math.h"
+
+// directx10 includes
+//#include "d3d10.h"
+//#include "d3d9types.h"
+//#include "d3d10effect.h"
+//#include "d3d10shader.h"
+//#include "ddraw.h"
+//#include "d3dx10math.h"
 
 // XML includes
 #include "tinyxml.h"

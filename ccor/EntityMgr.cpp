@@ -20,6 +20,7 @@ static const int ACTIVITY_MAX_DELAY_CLOCK   = 5 * CLOCKS_PER_SEC;
 
 
 entid_t EntityMgr::createEntity(const char * type, entid_t idParent, Object * param) {
+	ccor::getCore()->logMessage("%s %2.2f", type, idParent);
 
     if (NULL==type) throw Exception("core: Invalid entity type [NULL]");
     if (-1!=idParent) checkId(idParent);
@@ -213,8 +214,14 @@ int EntityMgr::findByType(const char * type) {
     MapTypeId::const_iterator it = mapTypeId.find(type);
     if (it==mapTypeId.end()) return 0;
     const EntityTypeChunk& tc=chunkType[it->second];
-    entityResult = tc.instances;
+
+	if (tc.instances.size() == 0) return 0;
+	entityResult = tc.instances;
     return entityResult.size();
+
+	// VC2010
+	//entityResult = tc.instances;
+    //return entityResult.size();
 }
 
 

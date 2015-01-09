@@ -985,7 +985,8 @@ void ConfigLayout::clear() {
 }
 
 int ParamPackFactory::getParamName(char * name, const char * src) {
-    for( int srcpos = 0, namepos = 0; src[srcpos] && src[srcpos] != '='; ++srcpos )
+	int srcpos = 0, namepos = 0;
+    for( srcpos = 0, namepos = 0; src[srcpos] && src[srcpos] != '='; ++srcpos )
         if(src[srcpos] != ' ')
             name[namepos++] = src[srcpos];
     name[namepos] = '\0';
@@ -1229,7 +1230,8 @@ void ParamPackFactory::backTranslateEscapeSequences(char * s) {
 }
 
 bool ParamPackFactory::isInt(const char * s) {
-    for(int pos = 0; s[pos]; ++pos )
+	int pos;
+    for(pos = 0; s[pos]; ++pos )
         if(s[pos] < '0' || s[pos] > '9' )
             return false;
 

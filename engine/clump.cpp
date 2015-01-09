@@ -287,7 +287,8 @@ void Clump::write(IResource* resource)
     // collect geometries
     std::list<Geometry*>           geometries;
     std::list<Geometry*>::iterator geometryI;
-    for( Clump::AtomicI atomicI = _atomics.begin();
+	Clump::AtomicI atomicI;
+    for( atomicI = _atomics.begin();
                         atomicI != _atomics.end();
                         atomicI++ )
     {
@@ -347,7 +348,8 @@ AssetObjectT Clump::read(IResource* resource, AssetObjectM& assetObjects)
     Clump* clump = new Clump( chunk.name );
 
     // read frames
-    for( int i=0; i<chunk.numFrames; i++ )
+	int i;
+    for( i=0; i<chunk.numFrames; i++ )
     {
         AssetObjectT assetObjectT = Frame::read( resource, assetObjects );
         if( i == 0 ) 

@@ -52,7 +52,8 @@ BinaryAsset::BinaryAsset(IResource* resource)
     fread( &chunk, sizeof(Chunk), 1, resource->getFile() );
 
     // read textures
-    for( int i=0; i<chunk.numTextures; i++ )
+	int i;
+    for( i=0; i<chunk.numTextures; i++ )
     {
         _assetObjects.insert( Texture::read( resource, _assetObjects ) );
         if( Engine::instance->progressCallback )
@@ -320,6 +321,9 @@ void BinaryAsset::release(void)
     delete this;
 }
 
+void BinaryAsset::setResourcePath(const char *path) {
+	this->_resourcePath = path;
+}
 void BinaryAsset::serialize(void)
 {
     IResource* resource = getCore()->getResource( _resourcePath.c_str(), "wb" );
@@ -353,13 +357,15 @@ void BinaryAsset::serialize(void)
     }
 
     // write bsps
-    for( BSPI bspI = _bsps.begin(); bspI != _bsps.end(); bspI++ )
+	BSPI bspI;
+    for( bspI = _bsps.begin(); bspI != _bsps.end(); bspI++ )
     {
         (*bspI)->write( resource );
     }              
 
     // write clumps
-    for( ClumpI clumpI = _clumps.begin(); clumpI != _clumps.end(); clumpI++ ) 
+	ClumpI clumpI;
+    for( clumpI = _clumps.begin(); clumpI != _clumps.end(); clumpI++ ) 
     {
         (*clumpI)->write( resource );
     }

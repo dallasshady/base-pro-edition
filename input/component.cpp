@@ -18,6 +18,8 @@ using namespace ccor;
  * DirectInput errors
  */
 
+
+
 static void diReportResult(const char* file, int line, HRESULT result)
 {
     const char* description = NULL;
@@ -51,6 +53,8 @@ static inline void diCheckResult(const char* file, int line, HRESULT result)
 {
     if( result != DI_OK ) diReportResult( file, line, result );
 }
+BOOL CALLBACK
+enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* context);
 
 #define _diCR(HRESULT) diCheckResult( __FILE__, __LINE__, HRESULT )
 
@@ -66,10 +70,30 @@ private:
     IDirectInput8*       _iDirectInput;
     IDirectInputDevice8* _iKeyboard;
     IDirectInputDevice8* _iMouse;
-	IDirectInputDevice8* _iJoystick;
 
-    DIMOUSESTATE2        _mouseState;   
+
+    DIMOUSESTATE2        _mouseState;  
+	DIJOYSTATE			 _joystickState;
 public:
+	IDirectInputDevice8* _iJoystick;
+	static BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE*     
+                                       pdidInstance, VOID* pContext)
+{
+    HRESULT hr;
+
+	// Get access to class variables
+	InputDevice* p_this = (InputDevice*) pContext;
+
+    // Obtain an interface to the enumerated joystick.
+    hr = p_this->_iDirectInput->CreateDevice(pdidInstance->guidInstance,  
+                                &p_this->_iJoystick, NULL);
+    if(FAILED(hr)) 
+        return DIENUM_CONTINUE;
+
+	getCore()->logMessage("Joystick found and created");
+    return DIENUM_STOP;
+}
+
     InputDevice()
     {
         IMainWnd( iMainWnd );
@@ -93,6 +117,21 @@ public:
         _diCR( _iMouse->SetDataFormat( &c_dfDIMouse2 ) );
         _diCR( _iMouse->SetCooperativeLevel( HWND( iMainWnd->getHandle() ), DISCL_BACKGROUND | DISCL_NONEXCLUSIVE ) );
         _diCR( _iMouse->Acquire() );
+
+        // create & setup joystick device
+		if (_iDirectInput->CreateDevice( GUID_Joystick, &_iJoystick, NULL ) == DI_OK) {
+			_iJoystick->SetDataFormat( &c_dfDIJoystick );
+			_iJoystick->SetCooperativeLevel( HWND( iMainWnd->getHandle() ), DISCL_EXCLUSIVE | DISCL_FOREGROUND );
+			if ( _iJoystick->Acquire() == DI_OK) {
+				getCore()->logMessage("Joystick acquired");
+			} else {
+				getCore()->logMessage("Failed to aquire joystick");
+			}
+		} else {
+			getCore()->logMessage("Joystick not found");
+			_iJoystick = NULL;
+		}
+
     } 
     virtual ~InputDevice() 
     {
@@ -103,6 +142,11 @@ public:
         _iKeyboard->Release();    
         _iMouse->Release();    
         _iDirectInput->Release();
+		
+		if (_iJoystick) {
+			_iJoystick->Unacquire();
+			_iJoystick->Release();
+		}
     }
 public:
     /**
@@ -162,11 +206,77 @@ public:
         memcpy( state->buttonState, _mouseState.rgbButtons, sizeof(unsigned char) * 8 );
         return true;
     }
+
+    virtual bool __stdcall getJoystickState(input::JoyState* state)
+    {
+		if (_iJoystick == NULL) {
+			state->usable = false;
+			return false;
+		}
+
+        ZeroMemory( &_joystickState, sizeof(_joystickState) );
+		HRESULT result = _iJoystick->Poll();
+
+		result = _iJoystick->GetDeviceState( 
+			sizeof(DIJOYSTATE), 
+            &_joystickState
+        );
+
+        // device is unacquired?
+        if( result < 0 )
+        {
+
+            // re-acquire mouse
+            result = _iJoystick->Acquire();
+            if( result != DI_OK ) return false;
+
+            // re-read kb state
+            _diCR( _iJoystick->GetDeviceState( 
+                sizeof(DIJOYSTATE), 
+                &_joystickState 
+            ) );
+        }
+
+		state->axis[0] = (float)_joystickState.lX / 32767.0f - 1.0f;
+		state->axis[1] = (float)_joystickState.lY / 32767.0f - 1.0f;
+		state->axis[2] = (float)_joystickState.lZ / 32767.0f - 1.0f;
+		state->axis[3] = (float)_joystickState.rglSlider[0] / 32767.0f - 1.0f;
+		state->axis[4] = (float)_joystickState.rglSlider[1] / 32767.0f - 1.0f;
+		for (int i = 0; i < 32; ++i) {
+			state->buttonState[i] = _joystickState.rgbButtons[i] != 0;
+		}
+		state->usable = true;
+		return true;
+	}
     virtual void __stdcall release(void)
     {
         delete this;
     }
 };
+BOOL CALLBACK
+enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* context)
+{
+    HWND hDlg = (HWND)context;
+
+    DIPROPRANGE propRange; 
+    propRange.diph.dwSize       = sizeof(DIPROPRANGE); 
+    propRange.diph.dwHeaderSize = sizeof(DIPROPHEADER); 
+    propRange.diph.dwHow        = DIPH_BYID; 
+    propRange.diph.dwObj        = instance->dwType;
+    propRange.lMin              = -1000; 
+    propRange.lMax              = +1000; 
+    
+    // Set the range for the axis
+	InputDevice *input = (InputDevice*)context;
+    if (FAILED(input->_iJoystick->SetProperty(DIPROP_RANGE, &propRange.diph))) {
+        return DIENUM_STOP;
+    }
+
+    return DIENUM_CONTINUE;
+}
+
+
+
 
 class Input : public EntityBase, 
               virtual public input::IInput 

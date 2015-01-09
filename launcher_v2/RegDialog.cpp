@@ -45,8 +45,8 @@ void CRegDialog::OnBnClickedOk()
     // check keycode was entered
     if( !keycode.size() )
     {
-        AfxMessageBox( "You must enter registration code!", IDOK, 0 );
-        return;
+       // AfxMessageBox( "You must enter registration code!", IDOK, 0 );
+       // return;
     }
 
     // save keycode

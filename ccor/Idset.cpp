@@ -70,7 +70,8 @@ bool Idset::load(const char * fname) {
                 nameInd.push_back(-1);
             }
             nameInd.back() = names.size();
-            names.insert(names.end(), a->second.begin(), a->second.begin()+a->second.size()+1);
+            // names.insert(names.end(), a->second.begin(), a->second.begin()+a->second.size()+1); VS2010
+			names.insert(names.end(), a->second.begin(), a->second.end());
         }
     }
 

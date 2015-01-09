@@ -43,11 +43,11 @@ void CRegDialog::OnBnClickedOk()
     std::string keycode = string;
 
     // check keycode was entered
-    if( !keycode.size() )
-    {
-        AfxMessageBox( "You must enter registration code!", IDOK, 0 );
-        return;
-    }
+    //if( !keycode.size() )
+   // {
+    //    AfxMessageBox( "You must enter registration code!", IDOK, 0 );
+    //    return;
+    //}
 
     // save keycode
     FILE* licFile = fopen( "./usr/licence.txt", "w" );

@@ -306,8 +306,8 @@ ImportAsset::ImportAsset(const char* resourcePath)
                 false,
                 importData->name
             );
-
-            for( int i=0; i<importData->numVertices; i++ )
+			int i;
+            for( i=0; i<importData->numVertices; i++ )
             {
                 geometry->getVertices()[i] = wrap( importData->vertices[i] );				
                 geometry->getNormals()[i] = wrap( importData->normals[i] );
@@ -381,7 +381,8 @@ ImportAsset::ImportAsset(const char* resourcePath)
             assert( frameI != _frames.end() );
             clump->setFrame( frameI->second );
             frameI->second->dirty();
-            for( int i=0; i<importData->numAtomics; i++ )
+			int i;
+            for( i=0; i<importData->numAtomics; i++ )
             {
                 AtomicI atomicI = _atomics.find( importData->atomics[i] );
                 assert( atomicI != _atomics.end() );
@@ -435,8 +436,8 @@ ImportAsset::ImportAsset(const char* resourcePath)
                 );
 
                 geometry->setShaders( bspI->second->getShaders() );
-
-                for( int i=0; i<importData->numVertices; i++ )
+				int i;
+                for( i=0; i<importData->numVertices; i++ )
                 {
                     geometry->getVertices()[i] = wrap( importData->vertices[i] );
                     geometry->getNormals()[i] = wrap( importData->normals[i] );

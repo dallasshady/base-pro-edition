@@ -39,11 +39,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib DxErr.lib dinput8.lib comctl32.lib dxguid.lib d3dxof.lib d3dx9dt.lib d3d9.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="dxguid.lib dxerr9.lib dinput8.lib comctl32.lib dxguid.lib d3dxof.lib d3dx9dt.lib d3d9.lib odbc32.lib odbccp32.lib"
 				OutputFile="../../game/sys/input.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="..\DirectX\lib"
+				AdditionalLibraryDirectories="$(DX9SDK)\lib"
 				ProgramDatabaseFile=".\Release/input.pdb"
 				SubSystem="2"
 				ImportLibrary=".\Release/input.lib"
@@ -105,11 +105,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib DxErr.lib dinput8.lib comctl32.lib dxguid.lib d3dxof.lib d3dx9dt.lib d3d9.lib odbc32.lib odbccp32.lib"
-				OutputFile="../../game/sys/input-d.dll"
+				AdditionalDependencies="dxguid.lib dxerr9.lib dinput8.lib comctl32.lib dxguid.lib d3dxof.lib d3dx9dt.lib d3d9.lib odbc32.lib odbccp32.lib"
+				OutputFile="../../B.A.S.E. Game/sys/input-d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="$(DX9SDK)\lib"
+				AdditionalLibraryDirectories="D:\Games\BASEsrc\Libraries"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/input-d.pdb"
 				SubSystem="2"
@@ -172,7 +172,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib DxErr.lib dinput8.lib comctl32.lib dxguid.lib d3dxof.lib d3dx9dt.lib d3d9.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="dxguid.lib dxerr9.lib dinput8.lib comctl32.lib dxguid.lib d3dxof.lib d3dx9dt.lib d3d9.lib odbc32.lib odbccp32.lib"
 				OutputFile="../../game/sys/input-d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"

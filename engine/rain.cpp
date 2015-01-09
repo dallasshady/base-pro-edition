@@ -347,7 +347,8 @@ void Rain::onUpdate(float dt)
     Matrix m;
     float space;
     RainParticle* particle;    
-    for( unsigned int i=0; i<_numParticles; i++ )
+	unsigned int i;
+    for( i=0; i<_numParticles; i++ )
     {
         // current particle
         particle = _particles + i;

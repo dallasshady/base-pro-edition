@@ -183,6 +183,7 @@ public:
     // IAsset
     virtual void __stdcall release(void);
     virtual void __stdcall serialize(void);
+	virtual void __stdcall setResourcePath(const char *path);
 };
 
 /**

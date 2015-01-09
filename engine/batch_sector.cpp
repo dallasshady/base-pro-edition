@@ -83,7 +83,8 @@ Batch::Sector::Sector(unsigned int leafSize, Geometry* geometryLod0, Matrix* ins
     // build list of indices inside AABB of this 
     unsigned int instanceId;
     AABB instanceAABB;
-    for( DynamicIndex index = parentIndices.begin(); 
+	DynamicIndex index;
+    for( index = parentIndices.begin(); 
                       index != parentIndices.end(); 
                       index++ )
     {

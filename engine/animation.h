@@ -139,6 +139,7 @@ private:
     std::vector<unsigned int> _activeTrack;    
     WeightSetMap              _weightSetMap;
     WeightSetI                _activeWeightSetI;
+	bool		              _activeWeightSetI_isNULL;		// update to msvc2010
     SRT                       _mixerSrc[engine::maxAnimationTracks];
     SRT                       _mixerDst;
     SRT*                      _blendSrc;

@@ -54,7 +54,7 @@ CoreImpl::CoreImpl() {
 
 
 void CoreImpl::init() {
-    coreParamPack = paramPackFactory->load("cfg/ccor.config");
+	coreParamPack = paramPackFactory->load("cfg/ccor.config");
     startLog();
     // loading ids database
     if (idset.load("sys/iddb.dat")) {

@@ -95,8 +95,12 @@ void GuiEdit::analyseString()
     );
 
     const int* length = ScriptString_pcOutChars( _strAnalysis );
-    assert( length );
-    _glyphWidths.resize( (size_t) *length );
+	//assert( length );
+	if (*length < 1) {
+		_glyphWidths.resize( 1 );
+	} else {
+		_glyphWidths.resize( (size_t) *length );
+	}
     ScriptStringGetLogicalWidths( _strAnalysis, &_glyphWidths[0] );
 }
 
@@ -114,7 +118,8 @@ void GuiEdit::onRender(void)
         // determine caret rectangle
         D3DXFONT_DESC fontDesc;
         font->GetDesc( &fontDesc );
-        for( int i=0; i<_caretPos; i++ ) screenRect.left += _glyphWidths[i];        
+		int i;
+        for( i=0; i<_caretPos; i++ ) screenRect.left += _glyphWidths[i];        
         screenRect.bottom = screenRect.top + fontDesc.Height;
         if( _caretPos < int( _text.size() ) ) screenRect.top = screenRect.bottom - 2;
         screenRect.right = screenRect.left;
@@ -159,7 +164,8 @@ void GuiEdit::onMessage(gui::Message* message)
             if( _caretPos > 0 )
             {
                 std::string temp;
-                for( int i=0; i<_caretPos-1; i++ ) temp += _text[i];
+				int i;
+                for( i=0; i<_caretPos-1; i++ ) temp += _text[i];
                 for( i=_caretPos; i<int(_text.size()); i++ ) temp += _text[i];
                 _caretPos--;
                 if( _caretPos < 0 ) _caretPos = 0;
@@ -173,7 +179,8 @@ void GuiEdit::onMessage(gui::Message* message)
             if( _caretPos < int( _text.size() ) )
             {
                 std::string temp;
-                for( int i=0; i<_caretPos; i++ ) temp += _text[i];
+                int i;
+				for( i=0; i<_caretPos; i++ ) temp += _text[i];
                 for( i=_caretPos+1; i<int(_text.size()); i++ ) temp += _text[i];
                 if( _caretPos > int(_text.size()) ) _caretPos = _text.size();
                 _text = temp;
@@ -205,7 +212,8 @@ void GuiEdit::onMessage(gui::Message* message)
             if( characterIsApproved )
             {
                 std::string temp;
-                for( int i=0; i<_caretPos; i++ ) temp += _text[i];
+				int i;
+                for( i=0; i<_caretPos; i++ ) temp += _text[i];
                 temp += char( message->keyChar );
                 for( i=_caretPos; i<int(_text.size()); i++ ) temp += _text[i];
                 _caretPos++;

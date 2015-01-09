@@ -31,6 +31,9 @@ protected:
     std::string                 _name;
     bool                        _visible;
     RECT                        _rect;
+	RECT						_target_rect;
+	bool						_animating;
+	float						_animation_prog;
     RECT                        _textureRect;
     Texture*                    _texture;
     Color                       _color;
@@ -84,6 +87,10 @@ public:
 public:
     // module internals
     void render(void);
+
+	// animation
+	virtual void __stdcall slideIn(void);
+
     RECT clientToScreen(const RECT& rect);
     RECT screenToClient(const RECT& rect);
     RECT childToScreen(const RECT& rect);

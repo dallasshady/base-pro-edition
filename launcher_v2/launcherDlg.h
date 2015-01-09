@@ -16,16 +16,16 @@ static void diReportResult(const char* file, int line, HRESULT result)
 
     switch( result )
     {
-    case DIERR_BETADIRECTINPUTVERSION:
-        description = "The application was written for an unsupported prerelease version of DirectInput.";
-        break;
-    case DIERR_INVALIDPARAM:
-        description = "An invalid parameter was passed to the returning function, or the object was not in a state that permitted the function to be called. This value is equal to the E_INVALIDARG standard COM return value.";
-        break;
-    case DIERR_OLDDIRECTINPUTVERSION:
-        description = "The application requires a newer version of DirectInput.";
-        break;
-    case DIERR_OUTOFMEMORY:
+    //case DIERR_BETADIRECTINPUTVERSION:
+    //    description = "The application was written for an unsupported prerelease version of DirectInput.";
+    //    break;
+    //case DIERR_INVALIDPARAM:
+    //    description = "An invalid parameter was passed to the returning function, or the object was not in a state that permitted the function to be called. This value is equal to the E_INVALIDARG standard COM return value.";
+    //    break;
+    //case DIERR_OLDDIRECTINPUTVERSION:
+    //    description = "The application requires a newer version of DirectInput.";
+    //    break;
+    case E_OUTOFMEMORY:
         description = "The DirectInput subsystem couldn't allocate sufficient memory to complete the call. This value is equal to the E_OUTOFMEMORY standard COM return value.";
         break;
     case E_POINTER:
@@ -44,7 +44,7 @@ static void diReportResult(const char* file, int line, HRESULT result)
 
 static inline void diCheckResult(const char* file, int line, HRESULT result)
 {
-    if( result != DI_OK ) diReportResult( file, line, result );
+    if( result != S_OK ) diReportResult( file, line, result );
 }
 
 #define _diCR(HRESULT) diCheckResult( __FILE__, __LINE__, HRESULT )
@@ -168,4 +168,5 @@ public:
     afx_msg void OnBnClickedShadows();
     CButton m_PitchShift;
     afx_msg void OnBnClickedPitchShift();
+	afx_msg void OnCbnSelchangeSkinnedmesh2();
 };

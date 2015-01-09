@@ -13,6 +13,8 @@ GuiPanel::GuiPanel()
     _visible = true;
     _renderCallback = NULL;
     _renderCallbackData = NULL;
+	_animating = false;
+
 }
 
 GuiPanel::GuiPanel(const char* panelName)
@@ -26,6 +28,7 @@ GuiPanel::GuiPanel(const char* panelName)
     _visible = true;
     _renderCallback = NULL;
     _renderCallbackData = NULL;
+	_animating = false;
 }
 
 GuiPanel::~GuiPanel()
@@ -352,12 +355,26 @@ gui::IGuiSlider* GuiPanel::getSlider(void)
  * module internals
  */
 
+void GuiPanel::slideIn() {
+	_target_rect = _rect;
+	_rect.left = 0;//_rect.right = _rect.top = _rect.bottom = 0;
+	_animating = true;
+	_animation_prog = 0.5f;
+
+}
+
 void GuiPanel::render(void)
 {
 	if( !_visible ) {
 		return;
 	}
 
+	if (_animating) {
+		_rect.left += _target_rect.left * _animation_prog;
+		_animation_prog += 0.01f;
+		_animating = _rect.left < _target_rect.left;
+		getCore()->logMessage("anim: %2.2f", _animation_prog);
+	}
     RECT screenRect = clientToScreen( _rect );
 	
     Gui::instance->renderRect( screenRect, _texture, _textureRect, _color );

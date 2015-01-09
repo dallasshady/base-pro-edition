@@ -15,7 +15,7 @@
 #endif
 
 #ifndef _WIN32_WINNT		// Allow use of features specific to Windows NT 4 or later.
-#define _WIN32_WINNT 0x0400		// Change this to the appropriate value to target Windows 98 and Windows 2000 or later.
+#define _WIN32_WINNT 0x0500		// Change this to the appropriate value to target Windows 98 and Windows 2000 or later.
 #endif						
 
 #ifndef _WIN32_WINDOWS		// Allow use of features specific to Windows 98 or later.
@@ -42,7 +42,6 @@
 #include "d3dx9shader.h"
 #include "ddraw.h"
 #include "d3dx9math.h"
-#include "dinput.h"
 
 // XML includes
 #include "tinyxml.h"

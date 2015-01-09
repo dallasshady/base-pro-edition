@@ -426,7 +426,8 @@ void CameraEffect::applyBloom(void)
     _dxCR( iDirect3DDevice->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, black, 1.0f, 0L ) );
     UINT numPasses;
     _pEffect->Begin( &numPasses, D3DXFX_DONOTSAVESTATE );
-    for( UINT iPass = 0; iPass < numPasses; iPass++ )
+	UINT iPass;
+    for( iPass = 0; iPass < numPasses; iPass++ )
     {   
         _pEffect->BeginPass( iPass );
         dxRenderRect( 
@@ -444,7 +445,8 @@ void CameraEffect::applyBloom(void)
     float filterHeight = float( _renderTarget->getHeight() );
 
     Quartector texelKernel[13];
-    for( int i=0; i<13; i++ )
+	int i;
+    for( i=0; i<13; i++ )
     {
         texelKernel[i] = Quartector(
 	    float( i-6 ) / filterWidth,

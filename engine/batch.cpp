@@ -213,9 +213,21 @@ void Batch::createBatchTree(unsigned int leafSize, const char* resourceName)
 void Batch::forAllInstancesInAABB(Vector3f aabbInf, Vector3f aabbSup, engine::IBatchCallback callback, void* data)
 {
     AABB aabb( wrap( aabbInf ), wrap( aabbSup ) );
-    assert( aabb.inf.x < aabb.sup.x );
-    assert( aabb.inf.y < aabb.sup.y );
-    assert( aabb.inf.z < aabb.sup.z );
+
+	// basepro
+	if (aabb.inf.x >= aabb.sup.x) {
+		aabb.sup.x = aabb.inf.x - 1.0f;
+	}
+	if (aabb.inf.y >= aabb.sup.y) {
+		aabb.sup.y = aabb.inf.y - 1.0f;
+	}
+	if (aabb.inf.z >= aabb.sup.z) {
+		aabb.sup.z = aabb.inf.z - 1.0f;
+	}
+
+    //assert( aabb.inf.x < aabb.sup.x );
+    //assert( aabb.inf.y < aabb.sup.y );
+    //assert( aabb.inf.z < aabb.sup.z );
 
     if( _rootSector )
     {
@@ -914,7 +926,10 @@ void HardwareBatch::renderLODs(void)
     for( unsigned int lodId=0; lodId<_batchScheme.numLods; lodId++ ) 
     {        
         // set technique
-        _dxCR( _effect->SetTechnique( _effect->GetTechniqueByName( "HardwareBatch" ) ) );
+        //_dxCR(
+			D3DXHANDLE h = _effect->GetTechniqueByName( "HardwareBatch" );
+			_effect->SetTechnique( h );
+		//	); // ms2010error
 
         // render batch LOD using HLSL effect
         UINT iPass, cPasses;

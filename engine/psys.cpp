@@ -122,7 +122,8 @@ void ParticleSystem::render(void)
 {
     // update number of active particles
     _numActiveParticles = 0;
-    for( unsigned int i=0; i<_numParticles; i++ ) if( _particles[i].visible ) _numActiveParticles++;
+	unsigned int i;
+    for( i=0; i<_numParticles; i++ ) if( _particles[i].visible ) _numActiveParticles++;
     
     // break rendering if nothing to render
     if( !_numActiveParticles ) return;

@@ -105,6 +105,7 @@ BEGIN_MESSAGE_MAP(ClauncherDlg, CDialog)
     ON_CBN_SELCHANGE(IDC_FOREST, OnCbnSelchangeForest)
     ON_BN_CLICKED(IDC_SHADOWS, OnBnClickedShadows)
     ON_BN_CLICKED(IDC_PITCH_SHIFT, OnBnClickedPitchShift)
+	ON_CBN_SELCHANGE(IDC_SKINNEDMESH2, OnCbnSelchangeSkinnedmesh2)
 END_MESSAGE_MAP()
 
 
@@ -117,7 +118,8 @@ CComboBox* ClauncherDlg::SetupMappingControl(CComboBox* comboBox, TiXmlElement* 
 
     // fill combo box with mapping variants
     int stringId;
-    for( int i=0; i<int(::getNumCodes()); i++ )
+	int i;
+    for( i=0; i<int(::getNumCodes()); i++ )
     {
         stringId = comboBox->AddString( ::getCodeHint( i ) );
         comboBox->SetItemData( stringId, ::getCode( i ) );
@@ -187,7 +189,8 @@ BOOL ClauncherDlg::OnInitDialog()
 
     // enumerate adapters
     m_numAdapters = m_iDirect3D9->GetAdapterCount();
-    for( int i=0; i<m_numAdapters; i++ )
+	int i;
+    for( i=0; i<m_numAdapters; i++ )
     {
         // retrieve adapter ID
         D3DADAPTER_IDENTIFIER9 adapterIdentifier;
@@ -540,7 +543,8 @@ void ClauncherDlg::OnCbnSelchangeAdapter()
     char str[512];
     D3DDISPLAYMODE displayMode;
     int numModes = m_iDirect3D9->GetAdapterModeCount( adapterId, D3DFMT_X8R8G8B8 );
-    for( int i=0; i<numModes; i++ )
+	int i;
+    for( i=0; i<numModes; i++ )
     {
         m_iDirect3D9->EnumAdapterModes( adapterId, D3DFMT_X8R8G8B8, i, &displayMode );
         if( displayMode.Width >= 640 && displayMode.Height >= 480 )
@@ -1093,4 +1097,9 @@ void ClauncherDlg::OnBnClickedPitchShift()
 
     // save config
     m_config->SaveFile();
+}
+
+void ClauncherDlg::OnCbnSelchangeSkinnedmesh2()
+{
+	// TODO: Add your control notification handler code here
 }

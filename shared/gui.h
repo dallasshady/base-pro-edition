@@ -150,6 +150,9 @@ public:
     virtual void __stdcall setTextureRect(const Rect& rect) = 0;
     virtual Vector4f __stdcall getColor(void) = 0;
     virtual void __stdcall setColor(const Vector4f& color) = 0;    
+
+	// animation
+	virtual void __stdcall slideIn(void) = 0;
     /**
      * rendering & customization
      */

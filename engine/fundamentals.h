@@ -445,7 +445,8 @@ public:
         assert( numPoints );
         // calculate center of bounding sphere
         center = *points;
-        for( int i=1; i<numPoints; i++ ) center += points[i];
+		int i=1;
+        for( i=1; i<numPoints; i++ ) center += points[i];
         center /= float( numPoints );
         // calculate radius of bounding sphere
         Vector radiusV;
@@ -465,7 +466,8 @@ public:
         assert( numMatrices );
         // calculate center of bounding sphere
         center = dxPos( matrices[0] );
-        for( int i=1; i<numMatrices; i++ ) center += dxPos( matrices[i] );
+		int i=1;
+        for( i=1; i<numMatrices; i++ ) center += dxPos( matrices[i] );
         center /= float( numMatrices );
         // calculate radius of bounding sphere
         Vector radiusV;

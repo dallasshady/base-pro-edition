@@ -23,6 +23,22 @@ bool ComponentMgr::loadComponent(const char * name, Object * param) {
     // Try to load library
     HINSTANCE hLib = LoadLibrary(buf);
     if (NULL==hLib) {
+		// retrieve error. PRO Edition
+		LPVOID lpMsgBuf;
+		DWORD dw = GetLastError(); 
+		FormatMessage(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			dw,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR) &lpMsgBuf,
+			0, NULL );
+
+    MessageBox(NULL, (LPCTSTR)lpMsgBuf, TEXT("Error"), MB_OK); 
+    LocalFree(lpMsgBuf);
+
         icore->logMessage("core: LoadLibrary failed on %s", name);
         return false;
     }

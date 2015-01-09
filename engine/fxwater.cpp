@@ -128,7 +128,7 @@ void FxWater::render(Mesh* mesh, int subsetId, Shader* shader)
     for( unsigned int pass = 0; pass < numPasses; pass++ )
     {
         _effect->BeginPass( pass );
-        mesh->renderSubset( subsetId, shader );
+        mesh->renderSubset( subsetId, shader ); // ms2010error
         _effect->EndPass();
     }
     _effect->End();

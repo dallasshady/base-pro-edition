@@ -24,7 +24,7 @@
 				Optimization="0"
 				GlobalOptimizations="FALSE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="..\Includes\DirectX\Include;..\Includes\TinyXML\include;..\Includes\Novodex\Cooking\include;..\Includes\Novodex\Foundation\include;..\Includes\Novodex\Physics\include\fluids;&quot;$(PHYSXSDK)\PhysXLoader\include\&quot;"
+				AdditionalIncludeDirectories="..\Includes\DirectX\Include;..\Includes\TinyXML\include;..\Includes\Novodex\Cooking\include;..\Includes\Novodex\Foundation\include;..\Includes\Novodex\Physics\include\fluids;&quot;$(PHYSXSDK)\PhysXLoader\include\&quot;;D:\Games\BASEsrc\engine"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;RWDEBUG"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"

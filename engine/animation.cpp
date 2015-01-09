@@ -98,6 +98,8 @@ unsigned int Animation::getSRT(float time, SRT* srt, unsigned int cacheId)
             if( ( _keys[kId].time <= time && _keys[kId+1].time > time ) ) break;
             if( _keys[kId].time > time ) endId = kId;
             else if( _keys[kId].time < time ) startId = kId;
+
+			if (time != time) break;	// break QNAN
         }
         while( true );
         cacheId = kId;
@@ -334,8 +336,9 @@ float AnimationController::getTrackSpeed(unsigned int trackId)
 void AnimationController::setTrackSpeed(unsigned int trackId, float speed)
 {
     assert( trackId>=0 && trackId<engine::maxAnimationTracks );
-    assert( speed>=0 );
-    _track[trackId].speed = speed;
+	if ( speed >= 0 ) {
+		_track[trackId].speed = speed;
+	}
 }
 
 float AnimationController::getTrackWeight(unsigned int trackId)
@@ -481,7 +484,7 @@ void AnimationController::advanceMultipleTracks(float dt)
             weightSet.weight[k] = _track[k].weight;
             weightSum += weightSet.weight[k];
         }
-        if( _activeWeightSetI != NULL )
+        if( !_activeWeightSetI_isNULL )
         {
             weightSum = 0.0f;
             for( j=0; j<numActiveTracks; j++ )
@@ -638,12 +641,14 @@ void AnimationController::enableWeightSet(const char* weightSetName)
 {
     _activeWeightSetI = _weightSetMap.find( weightSetName );
     assert( _activeWeightSetI != _weightSetMap.end() );
-    if( _activeWeightSetI == _weightSetMap.end() ) _activeWeightSetI = NULL;
+    if( _activeWeightSetI == _weightSetMap.end() ) {
+		_activeWeightSetI_isNULL = true;
+	}
 }
 
 void AnimationController::disableWeightSet(void)
 {
-    _activeWeightSetI = NULL;
+	_activeWeightSetI_isNULL = true;
 }
 
 engine::WeightSet* AnimationController::getWeightSet(const char* weightSetName)

@@ -2,10 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="component">
-      <UniqueIdentifier>{50d8a07d-f02f-4cdd-aae3-eecada56cafd}</UniqueIdentifier>
+      <UniqueIdentifier>{16b07745-55a6-49d0-8e3b-47c5149be865}</UniqueIdentifier>
     </Filter>
     <Filter Include="interface">
-      <UniqueIdentifier>{fcf4ccc9-ca1f-4773-b82a-af6c281b8945}</UniqueIdentifier>
+      <UniqueIdentifier>{f5736c51-0bc0-441e-9f84-e135242e29ca}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

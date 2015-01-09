@@ -20,7 +20,7 @@ private:
     DWORD           _threadId;
     HANDLE          _threadHandle;
     std::string     _resourcePath;
-    IResource*      _resource;
+    ccor::IResource*      _resource;
     int             _resourceSize;
     engine::IAsset* _asset;
 private:

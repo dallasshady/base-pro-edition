@@ -339,6 +339,8 @@ void SmokeTrail::update(float dt)
     Vector heatAcceleration;
     float windDirectionVelocity;
     float windAccelerationFactor;
+	TrailParticleI lastParticleI = _particles.begin();
+	float lastParticleI_lifeTime = -1;
     for( TrailParticleI particleI = _particles.begin(); 
                         particleI != _particles.end(); 
                         particleI++ )
@@ -367,12 +369,14 @@ void SmokeTrail::update(float dt)
         // simulate damping force
         dampingAcceleration = -particleI->velocity * _scheme.damping;
         particleI->velocity += dampingAcceleration * dt;
+
+		// save last particle iterator
+		lastParticleI = particleI;
+		lastParticleI_lifeTime = particleI->lifeTime;
     }
 
     // remove scattered particles
-    TrailParticleI lastParticleI = _particles.end();
-    lastParticleI--;
-    if( lastParticleI->lifeTime > _scheme.lifeTime )
+    if( lastParticleI_lifeTime > _scheme.lifeTime )
     {
         _particles.erase( lastParticleI );
     }

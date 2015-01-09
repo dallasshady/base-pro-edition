@@ -13,26 +13,30 @@ Build Log
 Command Lines
 </font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>Build machine environment variables may not be correct.
 Build machine environment variables may not be correct.
-Build machine environment variables may not be correct.
-Build machine environment variables may not be correct.
-Build machine environment variables may not be correct.
-Build machine environment variables may not be correct.
-Creating temporary file "d:\Games\BASEsrc\input\Debug\RSP000001.rsp" with contents
+Creating temporary file "d:\games\BASEsrc\input\Debug\RSP000001.rsp" with contents
 [
-/OUT:"../../game/sys/input-d.dll" /INCREMENTAL:NO /NOLOGO /LIBPATH:"\lib" /DLL /DEBUG /PDB:".\Debug/input-d.pdb" /SUBSYSTEM:WINDOWS /IMPLIB:".\Debug/input-d.lib" /MACHINE:X86 dxguid.lib dxerr.lib dinput8.lib comctl32.lib dxguid.lib d3dxof.lib d3dx9dt.lib d3d9.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
+/Od /G5 /I "\Include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /EHsc /RTC1 /MDd /YX"stdafx.h" /Fp".\Debug/input.pch" /Fo".\Debug/" /Fd".\Debug/" /FR".\Debug/" /W3 /c /ZI /TP
+.\component.cpp
+]
+Creating command line "cl.exe @d:\games\BASEsrc\input\Debug\RSP000001.rsp /nologo"
+Creating temporary file "d:\games\BASEsrc\input\Debug\RSP000002.rsp" with contents
+[
+/OUT:"../../B.A.S.E. Game/sys/input-d.dll" /INCREMENTAL:NO /NOLOGO /LIBPATH:"D:\Games\BASEsrc\Libraries" /DLL /DEBUG /PDB:".\Debug/input-d.pdb" /SUBSYSTEM:WINDOWS /IMPLIB:".\Debug/input-d.lib" /MACHINE:X86 dxguid.lib dxerr9.lib dinput8.lib comctl32.lib dxguid.lib d3dxof.lib d3dx9dt.lib d3d9.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
 .\Debug\component.obj
 ]
-Creating command line "link.exe @d:\Games\BASEsrc\input\Debug\RSP000001.rsp"
+Creating command line "link.exe @d:\games\BASEsrc\input\Debug\RSP000002.rsp"
 </pre></table><table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>
 Output Window
-</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>Linking...
-LINK : fatal error LNK1181: cannot open input file 'dxerr.lib'
+</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>Compiling...
+component.cpp
+Linking...
+LINK : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
+   Creating library .\Debug/input-d.lib and object .\Debug/input-d.exp
 Project : warning PRJ0018 : The following environment variables were not found:
 $(DX9SDK)
-Build machine environment variables may not be correct.
 </pre></table><table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>
 Results
 </font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>
-Build log was saved at "file://d:\Games\BASEsrc\input\Debug\BuildLog.htm"
-input - 1 error(s), 0 warning(s)</pre></table><table   width=100% height=20 bgcolor=#CFCFE5><tr><td><font face=arial size=+2>
+Build log was saved at "file://d:\games\BASEsrc\input\Debug\BuildLog.htm"
+input - 0 error(s), 1 warning(s)</pre></table><table   width=100% height=20 bgcolor=#CFCFE5><tr><td><font face=arial size=+2>
 </font></table></body></html>

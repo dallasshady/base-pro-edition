@@ -199,7 +199,7 @@ void ComponentMgr::refreshMapComp() {
             // add suffix
             if (debugComponent)
             {
-                char * s = ::strstr(str, ".");
+                char * s = ::strstr((char *)str, ".");
                 if (s && s < name) {
                     path.assign(str, s-str);
                     path.append("-d");

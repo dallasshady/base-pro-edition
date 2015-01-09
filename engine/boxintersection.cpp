@@ -38,8 +38,9 @@ bool Engine::intersectOBB(const engine::BoundingBox& obb1, const engine::Boundin
     Vector vertex[8], temp;
     Line edge;
 
-    // retrieve vertices of obb1 in object-space of obb2    
-    for( unsigned int i=0; i<8; i++ ) 
+    // retrieve vertices of obb1 in object-space of obb2  
+	unsigned int i=0;
+    for( i=0; i<8; i++ ) 
     {
         AABBVERTEX( temp, box1, i );
         D3DXVec3TransformCoord( vertex+i, &temp, &t12 );

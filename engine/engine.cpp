@@ -424,8 +424,13 @@ engine::IAsset* Engine::createAsset(engine::AssetType assetType, const char* res
             IResource* resource = getCore()->getResource( resourcePath, "rb" );
             if( resource ) 
             {
+				getCore()->logMessage(resourcePath);
                 BinaryAsset* result = new BinaryAsset( resource );
                 resource->release();
+				//if (strcmp(resourcePath, "./res/dropzone/dropzone.ba") == 0) {
+					//result->setResourcePath("test.blet");
+					//result->serialize();
+				//}
                 return result;
             }
             else 

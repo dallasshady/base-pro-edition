@@ -23,7 +23,7 @@ namespace engine
 
 using namespace ccor;
 
-const maxNameLength = 256;
+const unsigned int maxNameLength = 256;
 
 /**
  * common definitions

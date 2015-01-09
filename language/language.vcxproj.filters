@@ -2,14 +2,14 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{1011fedc-248f-4530-8561-f4170868452c}</UniqueIdentifier>
+      <UniqueIdentifier>{822ef351-5e10-4aac-8ed4-5738045f3b98}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
     <Filter Include="Interface">
-      <UniqueIdentifier>{63adf2f2-0296-483f-8229-1433778616f8}</UniqueIdentifier>
+      <UniqueIdentifier>{90982a34-a343-4a02-aebc-a155e3d157bf}</UniqueIdentifier>
     </Filter>
     <Filter Include="Implementation">
-      <UniqueIdentifier>{67dcd13c-9845-4b3e-804b-9c4596a4e664}</UniqueIdentifier>
+      <UniqueIdentifier>{8c9ca865-5d6a-4daa-b145-864e5eccfa21}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

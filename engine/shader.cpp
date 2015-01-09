@@ -554,7 +554,8 @@ void Shader::apply(void)
     }
 
     // fixed function pipeline : multitextures
-    for( int stageId=1; stageId<_numLayers; stageId++ )
+	int stageId;
+    for( stageId=1; stageId<_numLayers; stageId++ )
     {
         assert( _layerTexture[stageId] );
         _layerTexture[stageId]->apply( stageId );
@@ -695,7 +696,7 @@ void Shader::apply(void)
     }*/
 
     _dxCR( dxSetTextureStageState( stageId, D3DTSS_ALPHAOP, D3DTOP_DISABLE ) );
-    _dxCR( dxSetTextureStageState( stageId, D3DTSS_COLOROP, D3DTOP_DISABLE ) );
+    //_dxCR( dxSetTextureStageState( stageId, D3DTSS_COLOROP, D3DTOP_DISABLE ) ); // ms2010error
 }
 
 /**

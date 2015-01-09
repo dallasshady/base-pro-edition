@@ -1019,7 +1019,8 @@ AssetObjectT BSP::read(IResource* resource, AssetObjectM& assetObjects)
     bsp->_fogColor   = chunk.fogColor;
 
     // read shaders
-    for( int i=0; i<chunk.numShaders; i++ )
+	int i;
+    for( i=0; i<chunk.numShaders; i++ )
     {
         AssetObjectT assetObjectT = Shader::read( resource, assetObjects );
         bsp->setShader( i, reinterpret_cast<Shader*>( assetObjectT.second ) );

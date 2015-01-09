@@ -126,7 +126,8 @@ void dxRenderSphere(Sphere* sphere, const Color* color, Matrix* ltm)
     Line   circleLines[SPHERE_DETAILS];
 
     // generate circle in XY plane
-    for( int i=0; i<SPHERE_DETAILS + 1; i++)
+	int i;
+    for( i=0; i<SPHERE_DETAILS + 1; i++)
     {
         circleVertex[i].x = cos(i / (SPHERE_DETAILS / 2.0f) * D3DX_PI) * sphere->radius;
         circleVertex[i].y = sin(i / (SPHERE_DETAILS / 2.0f) * D3DX_PI) * sphere->radius; 

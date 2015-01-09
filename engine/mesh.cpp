@@ -58,7 +58,8 @@ void Mesh::init(void)
 
     effectCode += strformat( "VertexShader vsVariant[%d] = {\n", 4 * ( _lightPaletteSize + 1 ) );
     bool commaMode = false;
-    for( int i=0; i<=_lightPaletteSize; i++ )
+	int i;
+    for( i=0; i<=_lightPaletteSize; i++ )
     {       
         for( int j=1; j<=4; j++ )
         {

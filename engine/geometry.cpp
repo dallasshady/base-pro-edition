@@ -51,7 +51,8 @@ Geometry::Geometry(
 
     _vertices = new Vector[_numVertices];
     _normals  = new Vector[_numVertices];
-    for( int i=0; i<engine::maxPrelightLayers; i++ ) if( i<_numPrelights ) _prelights[i] = new Color[_numVertices]; else _prelights[i] = NULL;
+	int i;
+    for( i=0; i<engine::maxPrelightLayers; i++ ) if( i<_numPrelights ) _prelights[i] = new Color[_numVertices]; else _prelights[i] = NULL;
     for( i=0; i<engine::maxTextureLayers; i++ ) if( i<_numUVSets ) _uvs[i] = new Flector[_numVertices]; else _uvs[i] = NULL; 
     _triangles = new Triangle[_numTriangles];
     _skinnedVertices = NULL; // no skinned vertices for non-skinned mesh
@@ -85,7 +86,8 @@ Geometry::Geometry(
     _vertices      = NULL;
     _normals       = NULL;
     _triangles     = NULL;
-    for( int i=0; i<engine::maxPrelightLayers; i++ ) _prelights[i] = NULL;    
+	int i;
+    for( i=0; i<engine::maxPrelightLayers; i++ ) _prelights[i] = NULL;    
     for( i=0; i<engine::maxTextureLayers; i++ ) _uvs[i] = NULL;
     _boundingBox.sup = _boundingBox.inf = Vector(0,0,0);
     _boundingSphere.center = Vector(0,0,0);
@@ -117,7 +119,8 @@ Geometry::~Geometry()
         delete[] _skinnedVertices;
     }
     delete[] _triangles;
-    for( int i=0; i<engine::maxTextureLayers; i++ ) if( _uvs[i] ) delete[] _uvs[i];
+	int i;
+    for( i=0; i<engine::maxTextureLayers; i++ ) if( _uvs[i] ) delete[] _uvs[i];
     for( i=0; i<engine::maxPrelightLayers; i++ ) if( _prelights[i] ) delete[] _prelights[i];
     delete[] _normals;
     delete[] _vertices;
@@ -182,7 +185,8 @@ engine::Mesh* Geometry::createMesh(void)
     mesh->vertices     = new Vector3f[_numVertices];
     mesh->triangles    = new engine::Mesh::Triangle[_numTriangles];
 
-    for( int i=0; i<_numVertices; i++ )
+	int i;
+    for( i=0; i<_numVertices; i++ )
     {
         mesh->vertices[i] = wrap( _vertices[i] );
     }
@@ -567,6 +571,7 @@ void Geometry::instance(void)
 
 void Geometry::render(void)
 {
+	// add "false &&" to enable lights for all geometry
     if( _numPrelights )
     {
         _dxCR( dxSetRenderState( D3DRS_LIGHTING, FALSE ) );
@@ -759,7 +764,8 @@ void Geometry::write(IResource* resource)
     fwrite( getNormals(), normalsHeader.size, 1, resource->getFile() );
 
     // write UV-sets
-    for( int i=0; i<getNumUVSets(); i++ )
+	int i;
+    for( i=0; i<getNumUVSets(); i++ )
     {
         ChunkHeader uvsHeader( BA_BINARY, sizeof(Flector) * getNumVertices() );
         uvsHeader.write( resource );
@@ -808,7 +814,7 @@ AssetObjectT Geometry::read(IResource* resource, AssetObjectM& assetObjects)
 
     Chunk chunk;
     fread( &chunk, sizeof(Chunk), 1, resource->getFile() );
-
+	
     // read shaders
     if( !chunk.sharedShaders ) for( int i=0; i<chunk.numShaders; i++ )
     {
@@ -824,6 +830,16 @@ AssetObjectT Geometry::read(IResource* resource, AssetObjectM& assetObjects)
     if( verticesHeader.size != sizeof(Vector)*chunk.numVertices ) throw Exception( "Incompatible binary asset version" );
     fread( geometry->getVertices(), verticesHeader.size, 1, resource->getFile() );
 
+	// fuck up vertices
+	//Vector* vertices = geometry->getVertices();
+	//for (int i = 0; i < chunk.numVertices; ++i) {
+	//	getCore()->logMessage( "%s %3.3f, %3.3f, %3.3f", resource->getName(), vertices[i].x, vertices[i].y, vertices[i].z);
+	//	//if (strcmp(resource->getName(), "./res/dropzone/dropzone.ba") == 0) {
+	//		//if (vertices[i].y == 401000.0f) vertices[i].y = 701000.0f;
+	//		//vertices[i] *= 3.0f;
+	//	//}
+	//}
+
     // read normals
     ChunkHeader normalsHeader( resource );
     if( normalsHeader.type != BA_BINARY ) throw Exception( "Unexpected chunk type" );
@@ -831,7 +847,8 @@ AssetObjectT Geometry::read(IResource* resource, AssetObjectM& assetObjects)
     fread( geometry->getNormals(), normalsHeader.size, 1, resource->getFile() );
 
     // read UV-sets
-    for( int i=0; i<geometry->getNumUVSets(); i++ )
+	int i;
+    for( i=0; i<geometry->getNumUVSets(); i++ )
     {
         ChunkHeader uvsHeader( resource );
         if( uvsHeader.type != BA_BINARY ) throw Exception( "Unexpected chunk type" );
@@ -922,7 +939,8 @@ void Geometry::captureMeshData(bool captureShaders)
     if( _vertices ) delete[] _vertices;
     if( _normals ) delete[] _normals;
     if( _triangles ) delete[] _triangles;
-    for( int i=0; i<engine::maxPrelightLayers; i++ ) 
+	int i;
+    for( i=0; i<engine::maxPrelightLayers; i++ ) 
     {
         if( _prelights[i] ) 
         {

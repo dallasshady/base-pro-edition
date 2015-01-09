@@ -1,4 +1,3 @@
-
 #include "headers.h"
 #include "memstream.h"
 #include "gameplay.h"
@@ -7,7 +6,8 @@
 /**
  * memory streams
  */
-
+//PHYSX3
+/*
 MemoryWriteBuffer::MemoryWriteBuffer() : currentSize(0), maxSize(0), data(NULL)
 	{
 	}
@@ -17,39 +17,39 @@ MemoryWriteBuffer::~MemoryWriteBuffer()
 	NX_FREE(data);
 	}
 
-NxStream& MemoryWriteBuffer::storeByte(NxU8 b)
+NxStream& MemoryWriteBuffer::storeByte(PxU8 b)
 	{
-	storeBuffer(&b, sizeof(NxU8));
+	storeBuffer(&b, sizeof(PxU8));
 	return *this;
 	}
-NxStream& MemoryWriteBuffer::storeWord(NxU16 w)
+NxStream& MemoryWriteBuffer::storeWord(PxU16 w)
 	{
-	storeBuffer(&w, sizeof(NxU16));
+	storeBuffer(&w, sizeof(PxU16));
 	return *this;
 	}
-NxStream& MemoryWriteBuffer::storeDword(NxU32 d)
+NxStream& MemoryWriteBuffer::storeDword(PxU32 d)
 	{
-	storeBuffer(&d, sizeof(NxU32));
+	storeBuffer(&d, sizeof(PxU32));
 	return *this;
 	}
-NxStream& MemoryWriteBuffer::storeFloat(NxReal f)
+NxStream& MemoryWriteBuffer::storeFloat(PxReal f)
 	{
-	storeBuffer(&f, sizeof(NxReal));
+	storeBuffer(&f, sizeof(PxReal));
 	return *this;
 	}
-NxStream& MemoryWriteBuffer::storeDouble(NxF64 f)
+NxStream& MemoryWriteBuffer::storeDouble(PxF64 f)
 	{
-	storeBuffer(&f, sizeof(NxF64));
+	storeBuffer(&f, sizeof(PxF64));
 	return *this;
 	}
-NxStream& MemoryWriteBuffer::storeBuffer(const void* buffer, NxU32 size)
+NxStream& MemoryWriteBuffer::storeBuffer(const void* buffer, PxU32 size)
 	{
-	NxU32 expectedSize = currentSize + size;
+	PxU32 expectedSize = currentSize + size;
 	if(expectedSize > maxSize)
 		{
 		maxSize = expectedSize + 4096;
 
-		NxU8* newData = (NxU8*)NX_ALLOC(maxSize);
+		PxU8* newData = (PxU8*)NX_ALLOC(maxSize);
 		if(data)
 			{
 			memcpy(newData, data, currentSize);
@@ -63,7 +63,7 @@ NxStream& MemoryWriteBuffer::storeBuffer(const void* buffer, NxU32 size)
 	}
 
 
-MemoryReadBuffer::MemoryReadBuffer(const NxU8* data) : buffer(data)
+MemoryReadBuffer::MemoryReadBuffer(const PxU8* data) : buffer(data)
 	{
 	}
 
@@ -72,27 +72,27 @@ MemoryReadBuffer::~MemoryReadBuffer()
 	// We don't own the data => no delete
 	}
 
-NxU8 MemoryReadBuffer::readByte() const
+PxU8 MemoryReadBuffer::readByte() const
 	{
-	NxU8 b;
-	memcpy(&b, buffer, sizeof(NxU8));
-	buffer += sizeof(NxU8);
+	PxU8 b;
+	memcpy(&b, buffer, sizeof(PxU8));
+	buffer += sizeof(PxU8);
 	return b;
 	}
 
-NxU16 MemoryReadBuffer::readWord() const
+PxU16 MemoryReadBuffer::readWord() const
 	{
-	NxU16 w;
-	memcpy(&w, buffer, sizeof(NxU16));
-	buffer += sizeof(NxU16);
+	PxU16 w;
+	memcpy(&w, buffer, sizeof(PxU16));
+	buffer += sizeof(PxU16);
 	return w;
 	}
 
-NxU32 MemoryReadBuffer::readDword() const
+PxU32 MemoryReadBuffer::readDword() const
 	{
-	NxU32 d;
-	memcpy(&d, buffer, sizeof(NxU32));
-	buffer += sizeof(NxU32);
+	PxU32 d;
+	memcpy(&d, buffer, sizeof(PxU32));
+	buffer += sizeof(PxU32);
 	return d;
 	}
 
@@ -112,20 +112,20 @@ double MemoryReadBuffer::readDouble() const
 	return f;
 	}
 
-void MemoryReadBuffer::readBuffer(void* dest, NxU32 size) const
+void MemoryReadBuffer::readBuffer(void* dest, PxU32 size) const
 	{
 	memcpy(dest, buffer, size);
 	buffer += size;
 	}
 
-
+	*/
 /**
  * debug renderer
  */
 
-void DebugRenderer::renderData(const NxDebugRenderable &data) const
-{
-    const void* voidData = &data;
-
-    Gameplay::iEngine->renderDebugInfo( const_cast<void*>(voidData) );
-}
+//void DebugRenderer::renderData(const NxDebugRenderable &data) const
+//{
+//    const void* voidData = &data;
+//
+//    Gameplay::iEngine->renderDebugInfo( const_cast<void*>(voidData) );
+//}

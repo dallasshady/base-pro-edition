@@ -54,12 +54,13 @@ private:
     CatToy*      _catToy;     // cat toy object for AI
     NPCProgram*  _npcProgram; // AI program
     bool         _ownsCattoy; // true, if NPC owns its cat toy object
+	Jumper*		 _player;
 private:
     void forceFBEquipment(void);
     void forceNonFBEquipment(void);
 public:
     // class implementation
-    NPC(Actor* parent, unsigned int databaseId, Airplane* airplane, Enclosure* enclosure, CatToy* catToy, bool dropzone = false);
+    NPC(Actor* parent, unsigned int databaseId, Airplane* airplane, Enclosure* enclosure, CatToy* catToy, Jumper *player = NULL, bool dropzone = false);
     virtual ~NPC(void);
 public:
     // actor abstracts

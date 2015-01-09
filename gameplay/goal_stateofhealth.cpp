@@ -1,7 +1,6 @@
 
 #include "headers.h"
 #include "goal.h"
-#include "version.h"
 
 /**
  * class implementation

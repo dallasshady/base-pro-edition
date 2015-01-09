@@ -15,6 +15,7 @@ const wchar_t* ActionChannel::getInputActionDescription(void)
 		case iaRightWarp : return Gameplay::iLanguage->getUnicodeString(132);
 		case iaLeftRearRiser : return Gameplay::iLanguage->getUnicodeString(889);
 		case iaRightRearRiser : return Gameplay::iLanguage->getUnicodeString(890);
+		case iaRearBrake : return Gameplay::iLanguage->getUnicodeString(914);
 		case iaHeadLeft : return Gameplay::iLanguage->getUnicodeString(133);
 		case iaHeadRight : return Gameplay::iLanguage->getUnicodeString(134);
 		case iaHeadUp : return Gameplay::iLanguage->getUnicodeString(135);

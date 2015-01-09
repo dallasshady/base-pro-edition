@@ -87,9 +87,8 @@ float CanopySimulator::Section::getTargetAngle(void)
     if( !_canopySimulator->getActor() ) return 0.0f;
 
     // transformation in to local coordinate system of canopy simulator    
-    NxMat34 pose = _canopySimulator->getActor()->getGlobalPose();
-    NxMat34 iPose;
-    bool iResult = pose.getInverse( iPose ); assert( iResult );
+	PxTransform pose = _canopySimulator->getActor()->getGlobalPose();
+    PxTransform iPose = pose.getInverse();
     Matrix4f iLTM = wrap( iPose );
 
     // collapse detection frame

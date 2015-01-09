@@ -61,7 +61,7 @@ void NPCAssist::onUpdate(float dt)
             _ward->getPilotchuteSimulator()->updateActivity( 0.0f );
 
             // and drop
-            _ward->getPilotchuteSimulator()->drop( NxVec3( 0,0,0 ) );
+            _ward->getPilotchuteSimulator()->drop( PxVec3( 0,0,0 ) );
             _ward->getPilotchuteSimulator()->setInflation( 0.25f );
         }
 

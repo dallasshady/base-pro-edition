@@ -76,7 +76,7 @@ void GoalSmokeball::onUpdatePhysics(void)
     if( _player->getPhase() == ::jpFreeFalling ||
         _player->getCanopySimulator()->getInflation() < 0.25f )
     {
-        Vector3f playerPos = wrap( _player->getFreefallActor()->getGlobalPosition() );
+        Vector3f playerPos = wrap( _player->getFreefallActor()->getGlobalPose().p );
 
         for( unsigned int i=0; i<_smokeballs.size(); i++ )
         {

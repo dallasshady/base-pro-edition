@@ -56,7 +56,8 @@ SmokeBall::SmokeBall(Actor* parent, SmokeBallDesc* desc) : Actor( parent )
     // generate constant properties for each particle
     Vector3f offset;
     engine::Particle* particles = _particleSystem->getParticles();
-    for( unsigned int i=0; i<_desc.numParticles; i++ )
+	unsigned int i;
+    for( i=0; i<_desc.numParticles; i++ )
     {
         particles[i].visible = true;
         particles[i].color = _desc.color;

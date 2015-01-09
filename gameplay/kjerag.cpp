@@ -96,6 +96,9 @@ void castingCallback_Kjerag_Freejump(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 1.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
@@ -182,6 +185,9 @@ void castingCallback_KjeragBoogie_IntervalJumps(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btUnderground, 1.25f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
@@ -260,6 +266,9 @@ void castingCallback_KjeragBoogie_6wayFromEP2(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btUnderground, 1.375f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
@@ -338,6 +347,9 @@ void castingCallback_KjeragBoogie_6wayFromTW(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btUnderground, 1.625f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
@@ -404,6 +416,9 @@ void castingCallback_KjeragBoogie_3wingsFromEP1(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btUnderground, 1.75f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
@@ -470,6 +485,9 @@ void castingCallback_KjeragBoogie_3wingsFromEP3(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btUnderground, 1.75f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
@@ -540,7 +558,10 @@ void castingCallback_KjeragBoogie_Proxi(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalProximity( mission->getPlayer(), &proximityDesc );
-    
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
 }
@@ -584,6 +605,9 @@ void castingCallback_KjeragBoogie_HeliBASE(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 1.75f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
 
     // play original music for this mission    
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
@@ -628,6 +652,9 @@ void castingCallback_KjeragBoogie_HeliBASE2(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 2.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
 
     // play original music for this mission    
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
@@ -672,6 +699,9 @@ void castingCallback_KjeragBoogie_HeliBASE3(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 2.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
 
     // play original music for this mission    
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_insectosound.ogg" );
@@ -779,7 +809,10 @@ void castingCallback_KjeragSmokeball_RGBTracking(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSmokeball( mission->getPlayer(), smokeballs, 0.75f * mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
-    
+    new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_extinct.ogg" );
 }
@@ -882,7 +915,10 @@ void castingCallback_KjeragSmokeball_RGBSlalom01(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSmokeball( mission->getPlayer(), smokeballs, 0.875f * mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
-    
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_extinct.ogg" );
 }
@@ -949,7 +985,10 @@ void castingCallback_KjeragSmokeball_RGBZigzag(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSmokeball( mission->getPlayer(), smokeballs, 1.0f * mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
-    
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_extinct.ogg" );
 }

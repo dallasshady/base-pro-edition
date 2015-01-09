@@ -19,7 +19,7 @@ static engine::AnimSequence linetwistsSequence =
  * class implementation
  */
 
-Jumper::Linetwists::Linetwists(Jumper* jumper, NxActor* phFlight, MatrixConversion* mcFlight) :
+Jumper::Linetwists::Linetwists(Jumper* jumper, PxRigidDynamic* phFlight, MatrixConversion* mcFlight) :
     JumperAction( jumper )
 {
     // set action properties

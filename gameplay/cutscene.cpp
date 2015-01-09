@@ -96,11 +96,12 @@ Cutscene::Cutscene(Scene* scene, CutsceneDesc* desc) : Mode( scene )
     // setup sequence playing
     if( _animSequenceL.size() == 0 )
     {
-        _animSequenceI = NULL;
+        _animSequenceI_isNULL = true;
     }
     else
     {
         _animSequenceI = _animSequenceL.begin();
+		_animSequenceI_isNULL = false;
     }
 
     // set title
@@ -128,7 +129,7 @@ void Cutscene::onUpdateActivity(float dt)
     if( _clump->getAnimationController()->isEndOfAnimation( 0 ) )
     {
         // look for another sequence
-        if( _animSequenceI != NULL &&
+        if( !_animSequenceI_isNULL &&
             _animSequenceI != _animSequenceL.end() )
         {
             _animSequenceI++;
@@ -181,7 +182,7 @@ void Cutscene::onSuspend(void)
     _scene->getStage()->remove( _clump );
     _clump->release();
     _clump = NULL;
-    if( _animSequenceI != NULL ) _animSequenceI = _animSequenceL.begin();
+    if( !_animSequenceI_isNULL ) _animSequenceI = _animSequenceL.begin();
 }
 
 void Cutscene::onResume(void)
@@ -195,7 +196,7 @@ void Cutscene::onResume(void)
     _clump = _desc.source->clone( "CutsceneClump" ); assert( _clump );
 
     // setup animation
-    if( _animSequenceI != NULL )
+    if( !_animSequenceI_isNULL )
     {
         _clump->getAnimationController()->setTrackAnimation( 0, &(*_animSequenceI) );
         _clump->getAnimationController()->setTrackSpeed( 0, _desc.speed );

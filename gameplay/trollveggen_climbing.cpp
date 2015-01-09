@@ -151,6 +151,8 @@ void castingCallback_TrollClimbing_TrollveggenRoute(Actor* parent)
     new GoalExperience( mission->getPlayer() );
     new GoalFootage( mission->getPlayer(), joeBlack, &footageDesc );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 1.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // reward goal
     /*
@@ -222,6 +224,8 @@ void castingCallback_TrollClimbing_TrollryggenRoute(Actor* parent)
     new GoalExperience( mission->getPlayer() );
     new GoalFootage( mission->getPlayer(), joeBlack, &footageDesc );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 1.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // reward goal
     /*
@@ -294,6 +298,8 @@ void castingCallback_TrollClimbing_TrollRoute(Actor* parent)
     new GoalExperience( mission->getPlayer() );
     new GoalFootage( mission->getPlayer(), joeBlack, &footageDesc );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 1.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // reward goal
     /*

@@ -77,15 +77,22 @@ private:
     float           _restAltitude;
     unsigned int    _waypointId;
     float           _waypointFactor;
+
+	PxRigidDynamic			*_phActor;
+	MatrixConversion     _mcFreeFall;      // free fall matrix conversion
 public:
     // actor abstracts
     virtual void onUpdateActivity(float dt);
     virtual void onUpdatePhysics();
     virtual void onEvent(Actor* initiator, unsigned int eventId, void* eventData);
-    virtual Matrix4f getPose(void) { return _clump->getFrame()->getLTM(); }
+    virtual Matrix4f getPose(void) { return _clump->getFrame()->getLTM();  }
+	virtual void setPose(Matrix4f pose) { _clump->getFrame()->setLTM(pose);  }
 	virtual Vector3f getPosition(void) { return _clump->getFrame()->getPos(); }
     virtual Vector3f getVel(void) { return _velocity; }
+	virtual engine::IClump* getClump(void) { return _clump; }
+	inline PxRigidDynamic* getPhActor(void) { return _phActor; }
 	AirplaneDesc *getDesc(void) { return &_desc; }
+	engine::IFrame *getPropFrame(void) { return _propellerFrame; }
 public:
     // class implementation
     Airplane(Actor* parent, AirplaneDesc *desc);

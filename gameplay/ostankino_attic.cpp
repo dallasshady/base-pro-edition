@@ -7,7 +7,6 @@
 #include "landingaccuracy.h"
 #include "script.h"
 #include "equip.h"
-#include "version.h"
 
 /**
  * clearance functions
@@ -97,7 +96,7 @@ NPC* castAssistNPC(Mission* mission, Enclosure* enclosure, Jumper* player, std::
         // select NPC
         unsigned int index = getCore()->getRandToolkit()->getUniformInt() % npcs.size();
         unsigned int npcId = npcs[index];
-        npcs.erase( &npcs[index] );
+		npcs.erase( npcs.begin() + index );
         // create NPC
         NPC* npc = new NPC( mission, npcId, NULL, enclosure, CatToy::wrap( mission->getPlayer() ) );
         // setup assistant behaviour
@@ -148,6 +147,35 @@ public:
     }
 }; }
 
+
+// Pilot chute in hand jump
+void castingCallback_AU_PCIH(Actor* parent) {
+    Mission* mission = dynamic_cast<Mission*>( parent ); assert( mission );    
+
+    // exit point
+    Enclosure* exitPoint = parent->getScene()->getExitPointEnclosure( mission->getMissionInfo()->exitPointId );
+
+    // cast player on exit point
+    mission->setPlayer( new Jumper( mission, NULL, exitPoint, NULL, NULL, NULL ) );
+
+    // setup full signature for player
+    mission->getPlayer()->setSignatureType( stFull );
+
+    // cast goals
+    new GoalStateOfHealth( mission->getPlayer() );
+    new GoalStateOfGear( mission->getPlayer() );
+    new GoalLanding( mission->getPlayer() );
+    new GoalExperience( mission->getPlayer() );
+    new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btUnderground, 1.5f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+
+    // play original music for this mission
+    Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_delinquent.ogg" );
+}
+
+
+// Pilot chute assist jump
 void castingCallback_AU_PCA(Actor* parent)
 {
     Mission* mission = dynamic_cast<Mission*>( parent ); assert( mission );    
@@ -180,6 +208,8 @@ void castingCallback_AU_PCA(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btUnderground, 1.5f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_delinquent.ogg" );
@@ -193,6 +223,18 @@ bool equipCallback_AU_PCA(Career* career, float windAmbient, float windBlast, da
     // set slider down and 48' pilotchute 
     career->getVirtues()->equipment.sliderOption = ::soDown;
     career->getVirtues()->equipment.pilotchute   = 0;
+
+    return true;
+}
+bool equipCallback_AU_PCIH(Career* career, float windAmbient, float windBlast, database::MissionInfo* missionInfo)
+{
+    // equip best rig and canopy
+    if( !equipBestBASEEquipment( career, windAmbient, windBlast ) ) return false;
+
+    // set slider down, pc in hand and  48' pilotchute 
+    career->getVirtues()->equipment.sliderOption = ::soDown;
+    career->getVirtues()->equipment.pilotchute   = 0;
+	career->getVirtues()->equipment.rig.rig_aad = -1;
 
     return true;
 }

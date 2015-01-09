@@ -11,6 +11,7 @@
 
 const float windfluence = 0.5f;
 
+#define BRAKE_STOW_LEVEL 0.5f
 /**
  * related animation sequences
  */
@@ -127,7 +128,8 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
     Actor( jumper )
 {
     assert( _gear );
-	
+	Jumper* castedJumper = dynamic_cast<Jumper*>( jumper );
+
     _name = "CanopySimulator";
     _gear = gear; 
     _collideJumper = false;
@@ -145,6 +147,8 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
     _roughJoints[0] = _roughJoints[1] = _roughJoints[2] = _roughJoints[3] = NULL;
     _frontLeftRiser = _frontRightRiser = _rearLeftRiser = _rearRightRiser= NULL;
     _leftDeep = _rightDeep = 0.0f;
+	_leftForcedDeep = _rightForcedDeep = -1.0f;
+	_leftStowed = _rightStowed = castedJumper->isPlayer();	// STUB: stow only for players
     _leftWarpDeep = _rightWarpDeep = 0.0f;
 	_leftRearRiser = _rightRearRiser = 0.0f;
     _leftLOW = 0.0f;
@@ -155,13 +159,14 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
     _lineoverIsEliminated = true;
     _mBlinkTime = 0.0f;
     _cohesionState = false;
-    _cohesionPoint = NxVec3( 0,0,0 );
+    _cohesionPoint = PxVec3( 0,0,0 );
     _cohesionJoint = NULL;
 	isCutAway = false;
+	cutOnOpening = false;
     // initialize burden calculation
     _bcStep = 0;
-    _bcPrevVel.set( 0,0,0 );
-    _bcBurden.set( 0,0,0 );
+    _bcPrevVel = PxVec3( 0,0,0 );
+    _bcBurden = PxVec3( 0,0,0 );
 
     // create 3d-models
     engine::IClump* canopyTemplate = Gameplay::iGameplay->findClump( _gearRecord->templateName ); assert( canopyTemplate );
@@ -176,7 +181,8 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
     // initialize cords    
     _numCords = 4 * _gearRecord->riserScheme->getNumCords();
     _cords = new CordSimulator*[_numCords];
-    for( unsigned int i=0; i<_numCords; i++ ) _cords[i] = NULL;
+	unsigned int i;
+    for( i=0; i<_numCords; i++ ) _cords[i] = NULL;
     _leftBrake = _rightBrake = NULL;
     _cordBatch = NULL;
 
@@ -185,10 +191,10 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
     scale *= _gearRecord->scale;
 
     _canopyClump->getFrame()->setMatrix( Matrix4f( 
-        scale[0], 0,0,0,
-        0, scale[1], 0,0,
-        0,0, scale[2], 0,
-        0,0,0,1
+        scale[0],        0,        0, 0,
+               0, scale[1],        0, 0,
+               0,        0, scale[2], 0,
+               0,        0,        0, 1
     ) );
 
     // setup animation
@@ -249,8 +255,7 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
     _pilotAnchor = wrap( Vector3f( childM[3][0], childM[3][1], childM[3][2]+10.5f ) );
 
     // enable shadows
-    Jumper* castedJumper = dynamic_cast<Jumper*>( jumper );
-    if( castedJumper->isPlayer() )
+    if( true || castedJumper->isPlayer() )
     {
         int shadows = atoi( Gameplay::iGameplay->getConfigElement( "video" )->Attribute( "shadows" ) );
         if( shadows )
@@ -273,16 +278,29 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
     {
         engine::IClump* sliderTemplate = Gameplay::iGameplay->findClump( "Slider" ); assert( sliderTemplate );
         _sliderClump = sliderTemplate->clone( "Slider" ); assert( _sliderClump );       
+		// scale model
+		Vector3f scale = ::calcScale( _sliderClump->getFrame()->getMatrix() );
+		scale *= 0.3f;
+
+		_sliderClump->getFrame()->setMatrix( Matrix4f( 
+			scale[0],        0,        0, 0,
+				0, scale[1],        0, 0,
+				0,        0, scale[2], 0,
+				0,        0,        0, 1
+		) );
+
         engine::IClump* cordTemplate = Gameplay::iGameplay->findClump( "Cord" ); assert( cordTemplate );
         _sliderCordFL = cordTemplate->clone( "SliderCordFL" );
         _sliderCordFR = cordTemplate->clone( "SliderCordFR" );
         _sliderCordRL = cordTemplate->clone( "SliderCordRL" );
         _sliderCordRR = cordTemplate->clone( "SliderCordRR" );
 
-        // slider half-diagonal
+	     // slider half-diagonal
         _sliderClump->getFrame()->setMatrix( Matrix4f( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 ) );
         _sliderClump->getFrame()->getLTM();
         _sliderHD = ( getSliderJointFrontLeft( _sliderClump )->getPos() - _sliderClump->getFrame()->getPos() ).length();
+
+
     }
 
     // reset animation
@@ -343,6 +361,7 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
     // dispatch player canopy
     if( jumperIsPlayer )
     {
+		// skydiving canopy doesn't get WLO or hook knife
         if( _gearRecord->skydiving || !castedJumper->getVirtues()->equipment.malfunctions )
         {            
             _wloToggles = NULL;
@@ -353,6 +372,12 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
             _wloToggles = new WLOToggles( jumperIsPlayer );
             _hookKnife = new HookKnife( jumperIsPlayer );
         }
+		// RDS
+		if (gear->type != gtReserve && _gearRecord->skydiving && _gearRecord->square <= 130) {
+			_RDS = new RDS(jumperIsPlayer);
+		} else {
+			_RDS = NULL;
+		}
     }
     else
     {
@@ -366,14 +391,18 @@ CanopySimulator::CanopySimulator(Actor* jumper, Gear* gear, bool sliderUp) :
             _wloToggles = new WLOToggles( jumperIsPlayer );
             _hookKnife = new HookKnife( jumperIsPlayer );
         }
+		// RDS
+		_RDS = NULL;
     }
 
     // sound actor
-    if( jumperIsPlayer ) new FlightSound( this );
+    //if( jumperIsPlayer ) 
+	new FlightSound( this );
 }
 
 CanopySimulator::~CanopySimulator()
 {
+	
     // release PABs
     for( unsigned int i=0; i<_gearRecord->riserScheme->getNumPABs(); i++ ) if( _pabs[i] ) delete _pabs[i];
     delete[] _pabs;
@@ -384,36 +413,45 @@ CanopySimulator::~CanopySimulator()
     // release rigging simulators
     if( _wloToggles ) delete _wloToggles;
     if( _hookKnife ) delete _hookKnife;
+	if (_RDS) delete _RDS;
 
     // release signature window
-    _signature->getPanel()->release();
-    _leftLineoverSignature->getPanel()->release();
-    _rightLineoverSignature->getPanel()->release();
-    _linetwistsSignature->getPanel()->release();
+	if (_signature) _signature->getPanel()->release();
+    if (_leftLineoverSignature) _leftLineoverSignature->getPanel()->release();
+	if (_rightLineoverSignature) _rightLineoverSignature->getPanel()->release();
+    if (_linetwistsSignature) _linetwistsSignature->getPanel()->release();
 
-    if( isOpened() )
-    {
+    if( _frontLeftRope ) {
         if( _frontLeftRope ) delete _frontLeftRope;
         if( _frontRightRope ) delete _frontRightRope;
         if( _rearLeftRope ) delete _rearLeftRope;
         if( _rearRightRope ) delete _rearRightRope;
-		if (!isCutAway) {
-			if( _roughJoints[0] ) _scene->getPhScene()->releaseJoint( *(_roughJoints[0]) );
-			if( _roughJoints[1] ) _scene->getPhScene()->releaseJoint( *(_roughJoints[1]) );
-			if( _roughJoints[2] ) _scene->getPhScene()->releaseJoint( *(_roughJoints[2]) );
-			if( _roughJoints[3] ) _scene->getPhScene()->releaseJoint( *(_roughJoints[3]) );
-			if( _cohesionJoint ) _scene->getPhScene()->releaseJoint( *_cohesionJoint );
-		}
-        if( _nxCanopy ) _scene->getPhScene()->releaseActor( *_nxCanopy );
-    }
-    if (_cords) for( unsigned int i=0; i<_numCords; i++ ) if( _cords[i] ) delete _cords[i];
-    delete[] _cords;
+	}
+	if (_roughJoints) {
+		if( _roughJoints[0] ) _roughJoints[0]->release();
+		if( _roughJoints[1] ) _roughJoints[1]->release();
+		if( _roughJoints[2] ) _roughJoints[2]->release();
+		if( _roughJoints[3] ) _roughJoints[3]->release();
+		if( _cohesionJoint ) _cohesionJoint->release();
+	}
+		
+	if (_nxCanopy ) _nxCanopy->release();
+	if (isCutAway && _nxConnected ) _nxConnected->release();
+    
+	
+	if (_cords) {
+		for( unsigned int i=0; i<_numCords; i++ ) if( _cords[i] ) delete _cords[i];
+		delete[] _cords;
+	}
+	
+
     if( _leftBrake ) delete _leftBrake;
     if( _rightBrake ) delete _rightBrake;
     if( isOpened() ) _scene->getStage()->remove( _canopyClump );
     _renderCallback->restore( _canopyClump );
     delete _renderCallback;
     _canopyClump->release();
+	
     if( _sliderUp )
     {
         if( isOpened() ) 
@@ -430,6 +468,7 @@ CanopySimulator::~CanopySimulator()
         _sliderCordRL->release();
         _sliderCordRR->release();
     }
+
     if( _cordBatch ) 
     {
         getScene()->getStage()->remove( _cordBatch );
@@ -441,79 +480,127 @@ CanopySimulator::~CanopySimulator()
  * class behaviour
  */
 
-void CanopySimulator::disconnect(
-        NxActor* actor, // connected weight simulator
-        NxVec3 fla, NxVec3 fra, NxVec3 rla, NxVec3 rra, // quartet of local anchors for physics simulation
-        engine::IFrame* flr, engine::IFrame* frr, engine::IFrame* rlr, engine::IFrame* rrr  // quartet of joints to place cord connections
-) {
+void CanopySimulator::disconnect() {
+
+    // create new actor
+	_nxConnected = PxGetPhysics().createRigidDynamic(this->getActor()->getGlobalPose());
+	_nxConnected->userData = this;
+	_nxConnected->setMass(0.17f);
+	_nxConnected->setLinearDamping(1.0f);
+	_nxConnected->setAngularDamping(0.0f);
+	_nxConnected->setSolverIterationCounts(16);
+	_nxConnected->setMassSpaceInertiaTensor(PxVec3(0,0,0));
+	_nxConnected->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+	getScene()->getPhScene()->addActor(*_nxConnected);
+
+	Matrix4f localPose( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
+	localPose = Gameplay::iEngine->rotateMatrix( localPose, Vector3f( 1,0,0 ), 90.0f );
+
+	PxShape *shape = _nxConnected->createShape(PxCapsuleGeometry(_gearRecord->scale * 0.65f, _gearRecord->scale * 0.35f),
+					*_scene->getPhFleshMaterial(), PxTransform(wrap(localPose)));
+	_nxConnected->attachShape(*shape);
+	
+	_nxConnected->wakeUp();
+	_nxConnected->setGlobalPose(_nxCanopy->getGlobalPose());
+	_nxConnected->setLinearVelocity(_nxCanopy->getLinearVelocity());
+
+    if( _sliderUp )
+    {
+        //if( isOpened() ) 
+        //{
+        //    _scene->getStage()->remove( _sliderClump );
+        //    _scene->getStage()->remove( _sliderCordFL );
+        //    _scene->getStage()->remove( _sliderCordFR );
+        //    _scene->getStage()->remove( _sliderCordRL );
+        //    _scene->getStage()->remove( _sliderCordRR );
+        //}
+        //_sliderClump->release();
+        //_sliderCordFL->release();
+        //_sliderCordFR->release();
+        //_sliderCordRL->release();
+        //_sliderCordRR->release();
+		//_frontLeftRiser = _frontRightRiser = _rearLeftRiser = _rearRightRiser = NULL;
+		_sliderUp = false;
+    }
+    if( _cordBatch ) 
+    {
+        getScene()->getStage()->remove( _cordBatch );
+        _cordBatch->release();
+		_cordBatch = NULL;
+    }
+    if (_cords) for( unsigned int i=0; i<_numCords; i++ ) if( _cords[i] ) delete _cords[i];
+    delete[] _cords;
+	_cords = NULL;
+
 	if( _leftBrake ) {
-		// release
-		if( _leftBrake ) { delete _leftBrake; _leftBrake = NULL; }
-		if( _rightBrake ) { delete _rightBrake; _rightBrake = NULL; }
-
-		for( unsigned int i=0; i<_numCords; i++ ) if( _cords[i] ) { delete _cords[i]; _cords[i] = NULL; }
-		delete[] _cords;
-		_cords = NULL;
-		this->isCutAway = true;
-return;
-
-		// create new actor
-		NxBodyDesc nxBodyDesc;
-		nxBodyDesc.massSpaceInertia.set( 0,0,0 ); // tensor will be computed automatically
-		nxBodyDesc.mass = 10.00f;
-		nxBodyDesc.linearDamping = 1.0f;
-		nxBodyDesc.angularDamping = 0.0f;
-		nxBodyDesc.flags = NX_BF_VISUALIZATION;    
-		nxBodyDesc.solverIterationCount = 16;
-
-		NxCapsuleShapeDesc nxFreefallDesc;
-		nxFreefallDesc.setToDefault();
-		nxFreefallDesc.radius = _gearRecord->square * 0.65f;
-		nxFreefallDesc.height = _gearRecord->square * 0.65f;
-		
-		Matrix4f localPose( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
-		localPose = Gameplay::iEngine->rotateMatrix( localPose, Vector3f( 1,0,0 ), 90.0f );
-		nxFreefallDesc.localPose = wrap( localPose );
-		nxFreefallDesc.materialIndex = _scene->getPhFleshMaterial()->getMaterialIndex();
-		
-		NxActorDesc nxActorDesc;
-		nxActorDesc.userData = this;
-		//nxActorDesc.setToDefault();
-		nxActorDesc.shapes.pushBack( &nxFreefallDesc );
-		nxActorDesc.body = &nxBodyDesc;
-		if (nxActorDesc.isValid()) {
-			getCore()->logMessage( "VALID" );
-		} else {
-			getCore()->logMessage( "INVALID" );
-		}
-
-		NxActor *_nx = _scene->getPhScene()->createActor( nxActorDesc );
-		_nx->setGlobalPose(_nxCanopy->getGlobalPose());
-		_nx->setLinearVelocity(_nxCanopy->getLinearVelocity());
-		_nx->wakeUp();
-
-
-		this->connect(_nx, NxVec3(0,0,0), NxVec3(0,0,0), NxVec3(0,0,0), NxVec3(0,0,0),
-			flr,
-			frr,
-			rlr,
-			rrr
-		);
-///		_scene->getStage()->remove( _cordClump );
+		delete _leftBrake;
+		_leftBrake = NULL;
 	}
+	if( _rightBrake ) {
+		delete _rightBrake;
+		_rightBrake = NULL;
+	}
+
+    // release signature window
+	if (_signature) _signature->getPanel()->release();
+    if (_leftLineoverSignature) _leftLineoverSignature->getPanel()->release();
+	if (_rightLineoverSignature) _rightLineoverSignature->getPanel()->release();
+    if (_linetwistsSignature) _linetwistsSignature->getPanel()->release();
+	_signature = _leftLineoverSignature = _rightLineoverSignature = _linetwistsSignature = NULL;
+
+    if( isOpened() )
+    {
+        if( _frontLeftRope ) delete _frontLeftRope;
+        if( _frontRightRope ) delete _frontRightRope;
+        if( _rearLeftRope ) delete _rearLeftRope;
+        if( _rearRightRope ) delete _rearRightRope;
+	
+		if( _roughJoints[0] ) _roughJoints[0]->release();
+		if( _roughJoints[1] ) _roughJoints[1]->release();
+		if( _roughJoints[2] ) _roughJoints[2]->release();
+		if( _roughJoints[3] ) _roughJoints[3]->release();
+		for (int i = 0; i < 4; ++i) _roughJoints[i] = NULL;
+
+		_frontLeftRope = _frontRightRope = _rearLeftRope = _rearRightRope = NULL;
+		_roughJoints[0] = _roughJoints[1] = _roughJoints[2] = _roughJoints[3] = NULL;
+    }
+    
+
+    _nxConnected->setLinearVelocity( _nxCanopy->getLinearVelocity() );
+    _nxConnected->setAngularVelocity( _nxCanopy->getAngularVelocity() );  
+	
+	_nxConnected->wakeUp();
+	_nxCanopy->wakeUp();
+	isCutAway = true;
+
+	// remove rds
+	if (_RDS) {
+		delete _RDS;
+		_RDS = NULL;
+	}
+
+   // re-initialize joint
+    if( _cohesionJoint ) {        
+		_cohesionJoint->release();
+	}
+
+	_cohesionJoint = :: PxDistanceJointCreate(PxGetPhysics(), _nxConnected, PxTransform(PxIDENTITY::PxIdentity), _nxCanopy, PxTransform(PxVec3(10.0f, -2.0f, 0.0f)));
+	_cohesionJoint->setMinDistance(1.0f);
+	_cohesionJoint->setMaxDistance(1.0);
+	_cohesionJoint->setDistanceJointFlag(PxDistanceJointFlag::eMIN_DISTANCE_ENABLED, true);
+	_cohesionJoint->setDistanceJointFlag(PxDistanceJointFlag::eMAX_DISTANCE_ENABLED, true);
 }
 
 
-
 void CanopySimulator::connect(
-    NxActor* actor,
-    NxVec3 fla, NxVec3 fra, NxVec3 rla, NxVec3 rra,
+    PxRigidDynamic* actor,
+    PxVec3 fla, PxVec3 fra, PxVec3 rla, PxVec3 rra,
     engine::IFrame* flr, engine::IFrame* frr, engine::IFrame* rlr, engine::IFrame* rrr
 )
 {
     assert( actor );
-    assert( flr ); assert( frr );
-    assert( rlr ); assert( rrr );
+    //assert( flr ); assert( frr );
+    //assert( rlr ); assert( rrr );
     _nxConnected = actor;
     _frontLeftAnchor[0] = fla;
     _frontRightAnchor[0] = fra;
@@ -555,25 +642,36 @@ void CanopySimulator::connect(
     unsigned int instanceId = 0;
     engine::IFrame* innerJoint;
     engine::IFrame* outerJoint;
-    for( unsigned int i=0; i<_gearRecord->riserScheme->getNumCords(); i++ )
-    {
-        innerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtInnerFrontLeft, i ) );
-        outerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtOuterFrontLeft, i ) );
-        _cords[cordId] = new CordSimulator( cascade, _sliderUp ? getSliderJointFrontLeft( _sliderClump ) : _frontLeftRiser, innerJoint, outerJoint, _cordBatch, instanceId );
-        cordId++;
-        innerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtInnerFrontRight, i ) );
-        outerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtOuterFrontRight, i ) );
-        _cords[cordId] = new CordSimulator( cascade, _sliderUp ? getSliderJointFrontRight( _sliderClump ) : _frontRightRiser, innerJoint, outerJoint, _cordBatch, instanceId );
-        cordId++;
-        innerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtInnerRearLeft, i ) );
-        outerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtOuterRearLeft, i ) );
-        _cords[cordId] = new CordSimulator( cascade, _sliderUp ? getSliderJointRearLeft( _sliderClump ) : _rearLeftRiser, innerJoint, outerJoint, _cordBatch, instanceId );
-        cordId++;
-        innerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtInnerRearRight, i ) );
-        outerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtOuterRearRight, i ) );
-        _cords[cordId] = new CordSimulator( cascade, _sliderUp ? getSliderJointRearRight( _sliderClump ) : _rearRightRiser, innerJoint, outerJoint, _cordBatch, instanceId );
-        cordId++;
-    }
+
+	// create cords if needed
+	if (_cords == NULL) {
+		_cords = new CordSimulator*[_numCords];
+		for( unsigned int i=0; i<_numCords; i++ ) _cords[i] = NULL;
+		_inflation = 0.0f;
+	}
+
+	unsigned int i;
+	if (_frontLeftRiser) {
+		for( i=0; i<_gearRecord->riserScheme->getNumCords(); i++ )
+		{
+			innerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtInnerFrontLeft, i ) );
+			outerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtOuterFrontLeft, i ) );
+			_cords[cordId] = new CordSimulator( cascade, _sliderUp ? getSliderJointFrontLeft( _sliderClump ) : _frontLeftRiser, innerJoint, outerJoint, _cordBatch, instanceId );
+			cordId++;
+			innerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtInnerFrontRight, i ) );
+			outerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtOuterFrontRight, i ) );
+			_cords[cordId] = new CordSimulator( cascade, _sliderUp ? getSliderJointFrontRight( _sliderClump ) : _frontRightRiser, innerJoint, outerJoint, _cordBatch, instanceId );
+			cordId++;
+			innerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtInnerRearLeft, i ) );
+			outerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtOuterRearLeft, i ) );
+			_cords[cordId] = new CordSimulator( cascade, _sliderUp ? getSliderJointRearLeft( _sliderClump ) : _rearLeftRiser, innerJoint, outerJoint, _cordBatch, instanceId );
+			cordId++;
+			innerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtInnerRearRight, i ) );
+			outerJoint = Gameplay::iEngine->findFrame( _canopyClump->getFrame(), _gearRecord->riserScheme->getJointName( database::RiserScheme::rtOuterRearRight, i ) );
+			_cords[cordId] = new CordSimulator( cascade, _sliderUp ? getSliderJointRearRight( _sliderClump ) : _rearRightRiser, innerJoint, outerJoint, _cordBatch, instanceId );
+			cordId++;
+		}
+	}
 
     // create brakes
     float brakeAspect = 0.85f;
@@ -595,7 +693,7 @@ void CanopySimulator::connect(
 
 #define MAX(X,Y) ( X > Y ? X : Y )
 
-void CanopySimulator::open(const NxMat34& pose, const NxVec3& velocity, float leftLOW, float rightLOW, float linetwists)
+void CanopySimulator::open(const PxTransform& pose, const PxVec3& velocity, float leftLOW, float rightLOW, float linetwists)
 {
     assert( isConnected() );
 
@@ -606,6 +704,7 @@ void CanopySimulator::open(const NxMat34& pose, const NxVec3& velocity, float le
 
     // setup lineovers
     _leftLOW = leftLOW;
+	
     _rightLOW = rightLOW;
     // setup lineover flag
     if( _leftLOW > 0 || _rightLOW > 0 ) _lineoverIsEliminated = false;
@@ -652,6 +751,17 @@ void CanopySimulator::open(const NxMat34& pose, const NxVec3& velocity, float le
     _scene->getStage()->add( _canopyClump );
     if( _sliderUp )
     {
+				// scale model
+		Vector3f scale = ::calcScale( _sliderClump->getFrame()->getMatrix() );
+		scale *= 10.3f;
+
+		_sliderClump->getFrame()->setMatrix( Matrix4f( 
+			scale[0],        0,        0, 0,
+				0, scale[1],        0, 0,
+				0,        0, scale[2], 0,
+				0,        0,        0, 1
+		) );
+
         _scene->getStage()->add( _sliderClump );
         _scene->getStage()->add( _sliderCordFL );
         _scene->getStage()->add( _sliderCordFR );
@@ -659,14 +769,18 @@ void CanopySimulator::open(const NxMat34& pose, const NxVec3& velocity, float le
         _scene->getStage()->add( _sliderCordRR );
     }
     
+	// create actor
+	_nxCanopy = PxGetPhysics().createRigidDynamic(this->getActor()->getGlobalPose());
+	_nxCanopy->userData = this;
+	_nxCanopy->setMass(_gearRecord->square * 0.020f);
+	_nxCanopy->setLinearDamping(0.0f);
+	_nxCanopy->setAngularDamping(0.0f);
+	_nxCanopy->setSolverIterationCounts(32);
+	_nxCanopy->setMassSpaceInertiaTensor(PxVec3(0,0,0));
+	_nxCanopy->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+	getScene()->getPhScene()->addActor(*_nxCanopy);
+
     // initialize canopy physics simulator
-    NxBodyDesc nxBodyDesc;
-    nxBodyDesc.massSpaceInertia.set( 0,0,0 ); // tensor will be computed automatically
-    nxBodyDesc.mass = _gearRecord->mass;
-    nxBodyDesc.linearDamping = 0.0f;
-    nxBodyDesc.angularDamping = 0.0f;
-    nxBodyDesc.flags = NX_BF_VISUALIZATION;
-    nxBodyDesc.solverIterationCount = 32;
     Vector3f aabbScale(
         getCollisionGeometry( _canopyClump )->getFrame()->getRight().length(),
         getCollisionGeometry( _canopyClump )->getFrame()->getUp().length(),
@@ -678,27 +792,20 @@ void CanopySimulator::open(const NxMat34& pose, const NxVec3& velocity, float le
     aabbDim[0] *= aabbScale[0] * 0.5f,
     aabbDim[1] *= aabbScale[1] * 0.5f,
     aabbDim[2] *= aabbScale[2] * 0.5f;
-    NxBoxShapeDesc nxBoxDesc;
-    nxBoxDesc.dimensions = wrap( aabbDim );
-    nxBoxDesc.materialIndex = _scene->getPhClothMaterial()->getMaterialIndex();
-    NxActorDesc nxActorDesc;
-    nxActorDesc.userData = this;
-    nxActorDesc.shapes.pushBack( &nxBoxDesc );
-    nxActorDesc.body = &nxBodyDesc;        
-    nxActorDesc.globalPose = pose;
-    _nxCanopy = _scene->getPhScene()->createActor( nxActorDesc );
-    assert( _nxCanopy );
-    unsigned int flags = _scene->getPhScene()->getActorPairFlags( *_scene->getPhTerrain(), *_nxCanopy );
-    flags = flags | NX_NOTIFY_ON_START_TOUCH | NX_NOTIFY_ON_TOUCH;
-    _scene->getPhScene()->setActorPairFlags( *_scene->getPhTerrain(), *_nxCanopy, flags );
 
+	// add shape
+	PxShape *shape = _nxCanopy->createShape(PxBoxGeometry(wrap( aabbDim )),
+					*_scene->getPhClothMaterial(), PxTransform(PxIDENTITY::PxIdentity));
+	_nxCanopy->attachShape(*shape);
+
+	//PHYSX3
     // disable collision btw. canopy and base jumper
-    flags = _scene->getPhScene()->getActorPairFlags( *_nxCanopy, *jumper->getFlightActor() );
-    flags = flags | NX_IGNORE_PAIR;
-    _scene->getPhScene()->setActorPairFlags( *_nxCanopy, *jumper->getFlightActor(), flags );
+    //flags = _scene->getPhScene()->getActorPairFlags( *_nxCanopy, *jumper->getFlightActor() );
+    //flags = flags | NX_IGNORE_PAIR;
+    //_scene->getPhScene()->setActorPairFlags( *_nxCanopy, *jumper->getFlightActor(), flags );
 
     // initialize velocity
-    _nxCanopy->addForce( velocity, NX_VELOCITY_CHANGE );
+	_nxCanopy->addForce( velocity, PxForceMode::eVELOCITY_CHANGE );
     
     // initialize PTV transformation
     Matrix4f viewLTM = _canopyClump->getFrame()->getLTM();
@@ -712,40 +819,26 @@ void CanopySimulator::open(const NxMat34& pose, const NxVec3& velocity, float le
     _canopyClump->getFrame()->getLTM();
 
     // initialize rough joints
-    float rjMultiplier = 1.125f;
-    NxDistanceJointDesc jointDesc;
-    jointDesc.actor[0]   = _nxConnected;
-    jointDesc.actor[1]   = _nxCanopy;    
-    jointDesc.flags      = NX_DJF_MAX_DISTANCE_ENABLED;
-    jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+    const float rjMultiplier = 1.125f;
+	_roughJoints[0] = :: PxDistanceJointCreate(PxGetPhysics(), _nxConnected, PxTransform(_frontLeftAnchor[0]), _nxCanopy, PxTransform(_frontLeftAnchor[1]));
+	_roughJoints[0]->setMinDistance(0.0f);
+	_roughJoints[0]->setMaxDistance(_gearRecord->frontCord * rjMultiplier);
+	_roughJoints[0]->setDistanceJointFlag(PxDistanceJointFlag::eMAX_DISTANCE_ENABLED, true);
 
-    jointDesc.localAnchor[0] = _frontLeftAnchor[0];
-    jointDesc.localAnchor[1] = _frontLeftAnchor[1];
-    jointDesc.maxDistance    = _gearRecord->frontCord * rjMultiplier;
-    jointDesc.minDistance    = 0.0f;
-    _roughJoints[0] = _scene->getPhScene()->createJoint( jointDesc );
-    assert( _roughJoints[0] );
+	_roughJoints[1] = :: PxDistanceJointCreate(PxGetPhysics(), _nxConnected, PxTransform(_frontRightAnchor[0]), _nxCanopy, PxTransform(_frontRightAnchor[1]));
+	_roughJoints[1]->setMinDistance(0.0f);
+	_roughJoints[1]->setMaxDistance(_gearRecord->frontCord * rjMultiplier);
+	_roughJoints[1]->setDistanceJointFlag(PxDistanceJointFlag::eMAX_DISTANCE_ENABLED, true);
 
-    jointDesc.localAnchor[0] = _frontRightAnchor[0];
-    jointDesc.localAnchor[1] = _frontRightAnchor[1];
-    jointDesc.maxDistance    = _gearRecord->frontCord * rjMultiplier;
-    jointDesc.minDistance    = 0.0f;
-    _roughJoints[1] = _scene->getPhScene()->createJoint( jointDesc );
-    assert( _roughJoints[1] );
+	_roughJoints[2] = :: PxDistanceJointCreate(PxGetPhysics(), _nxConnected, PxTransform(_rearLeftAnchor[0]), _nxCanopy, PxTransform(_rearLeftAnchor[1]));
+	_roughJoints[2]->setMinDistance(0.0f);
+	_roughJoints[2]->setMaxDistance(_gearRecord->rearCord * rjMultiplier);
+	_roughJoints[2]->setDistanceJointFlag(PxDistanceJointFlag::eMAX_DISTANCE_ENABLED, true);
 
-    jointDesc.localAnchor[0] = _rearLeftAnchor[0];
-    jointDesc.localAnchor[1] = _rearLeftAnchor[1];
-    jointDesc.maxDistance    = _gearRecord->rearCord * rjMultiplier;
-    jointDesc.minDistance    = 0.0f;
-    _roughJoints[2] = _scene->getPhScene()->createJoint( jointDesc );
-    assert( _roughJoints[2] );
-
-    jointDesc.localAnchor[0] = _rearRightAnchor[0];
-    jointDesc.localAnchor[1] = _rearRightAnchor[1];
-    jointDesc.maxDistance    = _gearRecord->rearCord * rjMultiplier;
-    jointDesc.minDistance    = 0.0f;
-    _roughJoints[3] = _scene->getPhScene()->createJoint( jointDesc );
-    assert( _roughJoints[3] );
+	_roughJoints[3] = :: PxDistanceJointCreate(PxGetPhysics(), _nxConnected, PxTransform(_rearRightAnchor[0]), _nxCanopy, PxTransform(_rearRightAnchor[1]));
+	_roughJoints[3]->setMinDistance(0.0f);
+	_roughJoints[3]->setMaxDistance(_gearRecord->rearCord * rjMultiplier);
+	_roughJoints[3]->setDistanceJointFlag(PxDistanceJointFlag::eMAX_DISTANCE_ENABLED, true);
 
     // initialize ropes
     unsigned int ropeJoints = jumper->isPlayer() ? 5 : 2;
@@ -768,14 +861,52 @@ void CanopySimulator::reset(void)
 
 void CanopySimulator::setLeftDeep(float value)
 {
-    _leftDeep = value;
+	if (getLeftForcedDeep() != -1.0f) {
+		_leftDeep = getLeftForcedDeep();
+	} else {
+		_leftDeep = value;
+	}
 }
 
 void CanopySimulator::setRightDeep(float value)
 {
-    _rightDeep = value;
+	if (getRightForcedDeep() != -1.0f) {
+		_rightDeep = getRightForcedDeep();
+	} else {
+		_rightDeep = value;
+	}
+}
+float CanopySimulator::getLeftForcedDeep(void) {
+	if (_leftStowed && _leftForcedDeep < BRAKE_STOW_LEVEL) return BRAKE_STOW_LEVEL;
+	return _leftForcedDeep;
+}
+float CanopySimulator::getRightForcedDeep(void) {
+	if (_rightStowed && _rightForcedDeep < BRAKE_STOW_LEVEL) return BRAKE_STOW_LEVEL;
+	return _rightForcedDeep;
+}
+void CanopySimulator::setLeftForcedDeep(float value) {
+	_leftForcedDeep = value;
+}
+void CanopySimulator::setRightForcedDeep(float value) {
+	_rightForcedDeep = value;
 }
 
+
+// brake stowing
+void CanopySimulator::setLeftStowed(bool trigger) {
+	_leftStowed = trigger;
+}
+void CanopySimulator::setRightStowed(bool trigger) {
+	_rightStowed = trigger;
+}
+bool CanopySimulator::getLeftStowed(void) {
+	return _leftStowed;
+}
+bool CanopySimulator::getRightStowed(void) {
+	return _rightStowed;
+}
+
+// riser control
 void CanopySimulator::setLeftWarpDeep(float value)
 {
     _leftWarpDeep = value;
@@ -836,16 +967,12 @@ float getBrakingFactor(float i)
 
 void CanopySimulator::onUpdateActivity(float dt)
 {
-	if (this->isCutAway) {
-		//this->disconnect();
-	}
-
     _mBlinkTime += dt;
 
     if( isOpened() )
     {
         // sound processing
-        if( !_flightSoundEnabled && _inflation > 0.125f )
+        if( !_flightSoundEnabled && _inflation > 0.025f )
         {
             happen( this, EVENT_CANOPY_OPEN );
             _flightSoundEnabled = true;
@@ -855,6 +982,9 @@ void CanopySimulator::onUpdateActivity(float dt)
 
         // animate canopy, and synchronize canopy simulator & canopy model
         float animTime = animStartTime * ( 1.0f - _inflation ) + animEndTime * _inflation;
+		//if (_inflation <= 0.26f) {
+			//animTime = powf(animTime, 1.6487212707f);
+		//}
         _canopyClump->getAnimationController()->resetTrackTime( 0 );
         _canopyClump->getAnimationController()->advance( animTime );
         _canopyClump->getFrame()->setMatrix( _mcCanopy.convert( wrap( _nxCanopy->getGlobalPose() ) ) );
@@ -869,11 +999,11 @@ void CanopySimulator::onUpdateActivity(float dt)
         // place cords
 		if (!isCutAway) {
 			for( unsigned int i=0; i<_numCords; i++ ) _cords[i]->update( dt );
-			_leftBrake->update( dt );
-			_rightBrake->update( dt );
+			if (_leftBrake) _leftBrake->update( dt );
+			if (_rightBrake) _rightBrake->update( dt );
 		}
 
-        if( _sliderUp )
+        if( _sliderUp && !isCutAway)
         {
             Jumper::placeCord( _sliderCordFL, _frontLeftRiser->getPos(), getSliderJointFrontLeft( _sliderClump )->getPos(), 2.0f );
             Jumper::placeCord( _sliderCordFR, _frontRightRiser->getPos(), getSliderJointFrontRight( _sliderClump )->getPos(), 2.0f );
@@ -883,7 +1013,7 @@ void CanopySimulator::onUpdateActivity(float dt)
     }
 }
 
-static NxVec3 getResistanceForce(const NxVec3& normal, const NxVec3& vel, float K)
+static PxVec3 getResistanceForce(const PxVec3& normal, const PxVec3& vel, float K)
 {
     float normalVel = normal.dot( vel );
     normalVel = ( normalVel < 0 ) ? 0 : normalVel;
@@ -903,10 +1033,12 @@ static float getDragPower(float angle)
 
 static float getWingPower(float inflation)
 {
-   return pow( inflation, 3 );
+	//if (inflation <= 0.3f) return 0.1f;
+	//return inflation * inflation;
+	return pow( inflation, 3 );
 }
 
-void CanopySimulator::entangle(const NxVec3& cohesionPoint)
+void CanopySimulator::entangle(const PxVec3& cohesionPoint)
 {
     _cohesionState = true;
     _cohesionPoint = cohesionPoint;
@@ -919,6 +1051,15 @@ void CanopySimulator::onUpdatePhysics(void)
 {
     if( !isOpened() ) return;
 	if( !isConnected() ) return;
+
+	// control override
+	// set forced brake settings
+	if (getLeftForcedDeep() != -1.0f) {
+		setLeftDeep(getLeftForcedDeep());
+	}
+	if (getRightForcedDeep() != -1.0f) {
+		setRightDeep(getRightForcedDeep());
+	}
 
     // determine brake deep taking into account canopy mode
     float modeLeftDeep  = _leftDeep;
@@ -937,24 +1078,20 @@ void CanopySimulator::onUpdatePhysics(void)
 		modeLeftRearRiser = 0.0f;
 		modeRightRearRiser = 0.0f;
 	}
+
     // collapse
     updateCollapse( ::simulationStepTime );
 
     // simulate canopy inflation
-    updateInflation();
+    updateInflation( ::simulationStepTime );
 
     // simulate canopy cohesion
     if( !isCutAway && _cohesionState && !_cohesionJoint )
     {
-        NxDistanceJointDesc cohesionDesc;
-        cohesionDesc.actor[0] = NULL;
-        cohesionDesc.actor[1] = _nxCanopy;
-        cohesionDesc.setGlobalAnchor( _cohesionPoint );
-        cohesionDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED;
-        cohesionDesc.maxDistance = 0.25f;
-        assert( cohesionDesc.isValid() );
-        _cohesionJoint = _scene->getPhScene()->createJoint( cohesionDesc );
-        assert( _cohesionJoint );
+		_cohesionJoint = :: PxDistanceJointCreate(PxGetPhysics(), NULL, PxTransform(PxIDENTITY::PxIdentity), _nxCanopy, PxTransform(PxIDENTITY::PxIdentity));
+		_cohesionJoint->setMinDistance(0.0f);
+		_cohesionJoint->setMaxDistance(0.25f);
+		_cohesionJoint->setDistanceJointFlag(PxDistanceJointFlag::eMAX_DISTANCE_ENABLED, true);
     }
 
     // simulate rigging gear
@@ -962,13 +1099,32 @@ void CanopySimulator::onUpdatePhysics(void)
     if( jumper && _wloToggles ) _wloToggles->simulate( ::simulationStepTime, jumper->getVirtues() );
     if( jumper && _hookKnife ) _hookKnife->simulate( ::simulationStepTime, jumper->getVirtues() );
 
+	// RDS
+	if( jumper && _RDS && _RDS->getWeight() < 1.0f) {
+		_RDS->setTrigger(jumper->getSpinalCord()->trigger_rearBrake);
+		_RDS->simulate( ::simulationStepTime, jumper->getVirtues() );
+	}
+
     // simulate lineover removal
     if( !_lineoverIsEliminated )
     {
         // remove by WLO
         if( _wloIsEffective && _wloToggles && _wloToggles->getWeight() == 1 )
         {
+			// remove brake toggles after WLO use
+			if (_leftLOW > _rightLOW) {
+				delete _leftBrake;
+				_leftBrake = NULL;
+				setLeftForcedDeep(0.0f);
+				_leftDeep = 0.0f;
+			} else {
+				delete _rightBrake;
+				_rightBrake = NULL;
+				setRightForcedDeep(0.0f);
+				_rightDeep = 0.0f;
+			}
             _lineoverIsEliminated = true;
+			
         }
         if( _hookKnife && _hookKnife->getWeight() == 1 )
         {
@@ -983,26 +1139,367 @@ void CanopySimulator::onUpdatePhysics(void)
         _rightLOW -= removalSpeed * ::simulationStepTime;
         if( _rightLOW < 0 ) _rightLOW = 0;
     }
+	if (_nxConnected->getMass() < 10) {
+		return;
+	}
+	
+
+	/*
+	// wind speed
+	PxVec3 wind = _scene->getWindAtPoint( _nxCanopy->getGlobalPose().t );
+    // ground speed
+    PxVec3 velocity = _nxCanopy->getLinearVelocity();
+	// indicated airspeed
+	PxVec3 airspeed = _nxCanopy->getLinearVelocity() + wind;
+	// altitude [m]
+	PxVec3 pos = _nxCanopy->getGlobalPosition();
+	float altitude = pos.y;
+
+	// air density: converted to linear from barometric equation [0:10] km altitude
+	// http://www.denysschen.com/catalogue/density.aspx
+	const float AirDensityOld = altitude <= 10000.0f ? (1.196f - 0.0000826f * altitude) : (0.27f);
+
+	const float FT_TO_METER = 0.092903f;
+	PxVec3 area = PxVec3(0,0,0);
+	//PxVec3 Fd = PxVec3(0,0,0);
+	area.y = _gearRecord->square * FT_TO_METER;
+	const float canopy_width = sqrt((_gearRecord->square * FT_TO_METER) / (1/_gearRecord->aspect));
+	const float canopy_length = sqrt((_gearRecord->square * FT_TO_METER) / (_gearRecord->aspect));
+	//Fd.y = 0.5f * AirDensityOld * airspeed.y*airspeed.y * 1.2 * area.y;
+
+	// cell inflation
+	const unsigned int cells_c = 7;
+	const unsigned int side_cells_c = (cells_c-1)/2;
+	// inflation required to begin inflating adjacent cell
+	const float infl_barrier = 1 / cells_c;
+	float center_cell, left_cells[side_cells_c], right_cells[side_cells_c];
+	center_cell = _inflation * 2;
+	
+	for (int i = 0; i < side_cells_c; ++i) {
+		left_cells[i] = center_cell - ((i+1.0f) / 3.0f);
+		if (left_cells[i] > 1.0f) left_cells[i] = 1.0f;
+		if (left_cells[i] < 0.0f) left_cells[i] = 0.0f;
+		
+		right_cells[i] = center_cell - ((i+1.0f) / 3.0f);
+		if (right_cells[i] > 1.0f) right_cells[i] = 1.0f;
+		if (right_cells[i] < 0.0f) right_cells[i] = 0.0f;
+	}
+	if (center_cell > 1.0f) center_cell = 1.0f;
+	if (center_cell < 0.0f) center_cell = 0.0f;
+
+	//// canopy bottom skin drag normal
+	PxVec3 canopyAt = wrap(_canopyClump->getFrame()->getAt());
+	canopyAt.normalize();
+	canopyAt.z = (1.0f - canopyAt.y);
+	canopyAt.x = 0;
+
+	
+	//90 degrees CW about x-axis: (x, y, z) -> (x, -z, y)
+	//90 degrees CCW about x-axis: (x, y, z) -> (x, z, -y)
+
+	//90 degrees CW about y-axis: (x, y, z) -> (-z, y, x)
+	//90 degrees CCW about y-axis: (x, y, z) -> (z, y, -x)
+
+	//90 degrees CW about z-axis: (x, y, z) -> (y, -x, z)
+	//90 degrees CCW about z-axis: (x, y, z) -> (-y, x, z)
+	//If you're using a left-handed coordinate system, simply switch 'CW' with 'CCW' above. 
+
+	// drag/list cooef based on aoa
+	//PxVec3 motionDir = _nxCanopy->getLinearVelocity(); motionDir.normalize();
+	//PxVec3 canopyDown  = _nxCanopy->getGlobalPose().M.getColumn(2); canopyDown.normalize();
+	//const float aoa = canopyDown.dot( motionDir ) * -90.0f;
+
+	// local coordinate system of canopy
+    NxMat34 pose = _nxCanopy->getGlobalPose();
+    PxVec3 cx = pose.M.getColumn(0);
+    PxVec3 cy = pose.M.getColumn(1);
+    PxVec3 cz = pose.M.getColumn(2);
+	
+    // 3dmax conversion
+    PxVec3 z = -cy;
+    PxVec3 y = cz;
+    PxVec3 x = cx;
+	
+	PxVec3 airspeedN = airspeed;
+	airspeedN.normalize();
+	const PxVec3 dragDir = -airspeedN;
+
+	float aoa = -calcAngle( z, airspeedN, x );
+    if( airspeedN.magnitude() == 0.0f ) aoa = 0.0f;
+	if( aoa > 90 ) aoa = 90;
+
+	float dragCoeff, liftCoeff, momentCoeff;
+	//if (aoa <= -80.0f) {
+	//	dragCoeff = 0.8f;
+	//	liftCoeff = 0.2f;
+	//} else if (aoa < 80.0f) {
+	//	dragCoeff = 0.3f;
+	//	liftCoeff = 0.8f;
+	//} else {
+	//	dragCoeff = 0.8f;
+	//	liftCoeff = 0.2f;
+	//}
+
+	const float lifts[20] = {
+0.15f,
+0.25f,
+0.35f,
+0.45f,
+0.55f,
+0.65f,
+0.75f,
+0.85f,
+0.95f,
+1.0f,
+1.1f,
+1.2f,
+1.3f,
+1.4f,
+0.9f,
+0.6f,
+0.5f,
+0.4f,
+0.2f};			// 90
+	int i = (aoa / 10) + 9;
+	if (i < 0) i = 0;
+	if (i > 19) i = 19;
+	if (i < 8) {
+		liftCoeff = 0.0f;
+	} else if (aoa - ((i-9.0f)*10.0f) == 0) {
+		liftCoeff = lifts[i];
+	} else if (i < 19) {
+		liftCoeff = lifts[i] + (lifts[i+1]-lifts[i]) / (10.0f/(aoa - ((i-9.0f)*10.0f)));
+	} else {
+		liftCoeff = lifts[19];
+	}
+
+	// DRAG
+	const float drags[20] = {
+0.733333333f,
+0.666666667f,
+0.6f,
+0.533333333f,
+0.466666667f,
+0.4f,
+0.333333333f,
+0.266666667f,
+0.2f,
+0.2f,
+0.23f,
+0.28f,
+0.32f,
+0.35f,
+0.5f,
+0.577777778f,
+0.655555556f,
+0.733333333f,
+0.811111111f
+};		// 90
+	if (aoa - ((i-9.0f)*10.0f) == 0) {
+		dragCoeff = drags[i];
+	} else if (i < 19) {
+		dragCoeff = drags[i] + (drags[i+1]-drags[i]) / (10.0f/(aoa - ((i-9.0f)*10.0f)));
+	} else {
+		dragCoeff = drags[19];
+	}
+
+	// MOMENTUM
+	const float moments[20] = {
+0.3198f,		// -90
+0.3031f,
+0.2467f,
+0.185f,
+0.109f,
+0.065f,
+0.0368f,
+-0.0481f,
+-0.049f,
+-0.0404f,		// 0
+-0.0309f,
+-0.031341f,
+-0.075f,
+-0.0521f,
+-0.0577f,
+-0.1029f,
+-0.178f,
+-0.2468f,
+-0.2994f,
+-0.32f};		// 90
+	if (aoa - ((i-9.0f)*10.0f) == 0) {
+		momentCoeff = moments[i];
+	} else if (i < 19) {
+		momentCoeff = moments[i] + (moments[i+1]-moments[i]) / (10.0f/(aoa - ((i-9.0f)*10.0f)));
+	} else {
+		momentCoeff = moments[19];
+	}
+
+	momentCoeff = 0.0f;
+
+	// 90 degrees CW about x-axis: (x, y, z) -> (x, -z, y)
+	//const PxVec3 liftDir = PxVec3(dragDir.x, -dragDir.z, dragDir.y);
+	PxVec3 liftDir;
+	liftDir.cross( airspeedN, x );
+    liftDir.normalize();
+
+	getCore()->logMessage("Cd: %2.5f; Cl: %2.5f; AOA: %2.5f", dragCoeff, liftCoeff, aoa);
+	// add drag from cells based on inflation
+	// center cell
+	const float A = (area.y/cells_c) * (center_cell);
+	const PxVec3 center_cell_airspeed = _nxCanopy->getLocalPointVelocity(PxVec3(0,0,0)) + wind;
+	const float IASsq = center_cell_airspeed.magnitudeSquared();
+	const float F = 0.5f * AirDensityOld * IASsq * 1.0f * A;
+
+	_nxCanopy->addForce(F * dragDir * dragCoeff);
+	_nxCanopy->addForce(F * liftDir * liftCoeff);
+
+	// side cells
+	for (int i = 0; i < side_cells_c; ++i) {
+		if (left_cells[i] <= 0.0f) break;
+
+		// common area
+		const float A = (area.y/cells_c) * (left_cells[i]);
+		// left cell
+		const PxVec3 left_cell_pos = PxVec3((canopy_width / cells_c) * (i+1), 0, 0);
+		const PxVec3 left_cell_airspeed = _nxCanopy->getLocalPointVelocity(left_cell_pos) + wind;
+		PxVec3 left_cell_airspeedN = left_cell_airspeed;left_cell_airspeedN.normalize();
+		const PxVec3 LeftDragDir = -left_cell_airspeedN;
+		PxVec3 LeftLiftDir;
+		LeftLiftDir.cross( left_cell_airspeedN, x );
+		LeftLiftDir.normalize();
+		const float LeftIASsq = left_cell_airspeed.magnitudeSquared();
+		const float LeftF = 0.5f * AirDensityOld * LeftIASsq * A;
+
+		// right cell
+		const PxVec3 right_cell_pos = -PxVec3((canopy_width / cells_c) * (i+1), 0, 0);
+		const PxVec3 right_cell_airspeed = _nxCanopy->getLocalPointVelocity(right_cell_pos) + wind;
+		PxVec3 right_cell_airspeedN = right_cell_airspeed;right_cell_airspeedN.normalize();
+		const PxVec3 RightDragDir = -right_cell_airspeedN;
+		PxVec3 RightLiftDir;
+		RightLiftDir.cross( right_cell_airspeedN, x );
+		RightLiftDir.normalize();
+		const float RightIASsq = right_cell_airspeed.magnitudeSquared();
+		const float RightF = 0.5f * AirDensityOld * RightIASsq * A;
+
+		// lift modifiers
+		float left_cell_lift_mod = 1.0f;
+		float right_cell_lift_mod = 1.0f;
+		// drag modifiers
+		float left_cell_drag_mod = 1.0f;
+		float right_cell_drag_mod = 1.0f;
+		
+		const float outer_toggle_drag = 4.0f;
+		const float inner_toggle_drag = 3.0f;
+		const float outer_toggle_lift = 0.2f;
+		const float inner_toggle_lift = 0.3f;
+
+		// toggle input
+		if (i == 2) { // outermost cells
+			left_cell_lift_mod += modeLeftDeep * outer_toggle_lift;
+			left_cell_drag_mod += modeLeftDeep * outer_toggle_drag;
+			right_cell_lift_mod += modeRightDeep * outer_toggle_lift;
+			right_cell_drag_mod += modeRightDeep * outer_toggle_drag;
+		} else if (i == 1) { // adjacent to outermost cells
+			left_cell_lift_mod += modeLeftDeep * inner_toggle_lift;
+			left_cell_drag_mod += modeLeftDeep * inner_toggle_drag;
+			right_cell_lift_mod += modeRightDeep * inner_toggle_lift;
+			right_cell_drag_mod += modeRightDeep * inner_toggle_drag;
+		}
+
+
+		// left
+		//_nxCanopy->addForceAtLocalPos(F * canopyAt, -pos);
+		_nxCanopy->addForceAtLocalPos(LeftF * LeftDragDir * dragCoeff * left_cell_drag_mod, left_cell_pos);
+		_nxCanopy->addForceAtLocalPos(LeftF * LeftLiftDir * liftCoeff * left_cell_lift_mod, left_cell_pos);
+		// right
+		//_nxCanopy->addForceAtLocalPos(F * canopyAt, pos);
+		_nxCanopy->addForceAtLocalPos(RightF * RightDragDir * dragCoeff * right_cell_drag_mod, right_cell_pos);
+		_nxCanopy->addForceAtLocalPos(RightF * RightLiftDir * liftCoeff * right_cell_lift_mod, right_cell_pos);
+	}
+
+    // control force
+    PxVec3 leftPoint = wrap( CanopySimulator::getPhysicsJointRearLeft( _canopyClump )->getPos() );
+    PxVec3 rightPoint = wrap( CanopySimulator::getPhysicsJointRearRight( _canopyClump )->getPos() );
+    PxVec3 leftPointVel = _nxCanopy->getPointVelocity( leftPoint ) + wind;
+    PxVec3 rightPointVel = _nxCanopy->getPointVelocity( rightPoint ) + wind;
+
+	leftPointVel = rightPointVel = airspeed;
+
+    float leftPointNormalVel = z.dot( leftPointVel );
+    float rightPointNormalVel = z.dot( rightPointVel );
+    leftPointNormalVel = leftPointNormalVel < 0 ? 0 : leftPointNormalVel;
+    rightPointNormalVel = rightPointNormalVel < 0 ? 0 : rightPointNormalVel;
+
+	// stabilizers
+	//const float leftStabNormalVel = x.dot( leftPointVel );
+	//const float rightStabNormalVel = x.dot( rightPointVel );
+	//const PxVec3 stabL = PxVec3(x.dot( leftPointVel ), 0,0)*-0.5f * (area.y/cells_c);
+	//_nxCanopy->addForceAtPos(stabL, leftPoint );
+	//const PxVec3 stabR = PxVec3(x.dot( rightPointVel ), 0,0)*-0.5f * (area.y/cells_c);
+	//_nxCanopy->addForceAtPos(stabR, rightPoint );
+
+	// toggle input
+    //PxVec3 ToggleLDrag = -z * modeLeftDeep * sqr(leftPointNormalVel) * (area.y/cells_c)*0.5f * 0.2f;
+    //PxVec3 ToggleRDrag = -z * modeRightDeep * sqr(rightPointNormalVel) * (area.y/cells_c)*0.5f * 0.2f;
+    //PxVec3 ToggleLLift = y * modeLeftDeep * sqr(leftPointNormalVel) * (area.y/cells_c)*1.0f * 0.2f;
+    //PxVec3 ToggleRLift = y * modeRightDeep * sqr(rightPointNormalVel) * (area.y/cells_c)*1.0f * 0.2f;
+    //_nxCanopy->addForceAtPos( ToggleLDrag, leftPoint );
+    //_nxCanopy->addForceAtPos( ToggleRDrag, rightPoint );
+    //_nxCanopy->addForceAtPos( ToggleLLift, leftPoint );
+    //_nxCanopy->addForceAtPos( ToggleRLift, rightPoint );
+
+	// damping
+	_nxCanopy->setAngularDamping(IASsq * 0.003f * area.y);
+
+
+
+	if (jumper->_debug_window) {
+		gui::IGuiPanel* panel = jumper->_debug_window->getPanel()->find( "Message" );
+		assert( panel && panel->getStaticText() );
+
+	//	// airspeed
+	//	//PxVec3 airspeedN = airspeed;
+	//	//airspeedN.normalize();
+	//	//panel->getStaticText()->setText( wstrformat(L"VcanopyN: %2.2f %2.2f %2.2f", airspeedN.x, airspeedN.y, airspeedN.z).c_str() );
+
+		// cells
+		//PxVec3 pos = PxVec3((canopy_width / cells_c) * (0+1), 0, 0);
+		//PxVec3 airspeed = _nxCanopy->getLocalPointVelocity(-pos);
+		//panel->getStaticText()->setText( wstrformat(L"canop airspeed: %2.4f %2.4f %2.4f\nccell airspeed: %2.4f %2.4f %2.4f", airspeed.x, airspeed.y, airspeed.z, center_cell_airspeed.x, center_cell_airspeed.y, center_cell_airspeed.z).c_str() );
+		panel->getStaticText()->setText( wstrformat(L"left point: %2.4f %2.4f %2.4f\nright point: %2.4f %2.4f %2.4f", leftPoint.x, leftPoint.y, leftPoint.z, rightPoint.x, rightPoint.y, rightPoint.z).c_str() );
+
+		//panel->getStaticText()->setText( wstrformat(L"AOAi: %d; AOA: %2.4f\nLift: %2.4f\nDrag: %2.4f", i, aoa, liftCoeff, dragCoeff).c_str() );
+		//panel->getStaticText()->setText( wstrformat(L"Cells: %2.2f %2.2f %2.2f (%2.2f) %2.2f %2.2f %2.2f", left_cells[2], left_cells[1], left_cells[0], center_cell, right_cells[0], right_cells[1], right_cells[2]).c_str() );
+
+	//	// canopy direction
+	//	//PxVec3 at = wrap(_canopyClump->getFrame()->getAt());
+	//	//at.normalize();
+	//	//const float F = 0.5f * AirDensityOld * airspeed.y*airspeed.y * 1.2f * A;
+	//	//PxVec3 Fdir = F * at;
+	//	//at.z = 1.0f - at.y;
+	//	panel->getStaticText()->setText( wstrformat(L"Canopy At: %2.2f %2.2f %2.2f", canopyAt.x, canopyAt.y, canopyAt.z).c_str() );
+	}
+	return;*/
+
+	//////////////////////
+	// wind speed
+	PxVec3 wind = _scene->getWindAtPoint( _nxCanopy->getGlobalPose().p );
+    // ground speed
+    PxVec3 velocity = _nxCanopy->getLinearVelocity();
+	// indicated airspeed
+	PxVec3 airspeed = _nxCanopy->getLinearVelocity() + wind;
     
-    // velocity of canopy
-    NxVec3 velocity = _nxCanopy->getLinearVelocity();       
-    if( _enableWind )
-    {
-        // wind velocity
-        NxVec3 wind = _scene->getWindAtPoint( _nxCanopy->getGlobalPose().t );
-        // final canopy velocity
-        velocity += wind * windfluence;
-    }
     // normalized velocity
-    NxVec3 velocityN = velocity; velocityN.normalize();
+    PxVec3 velocityN = velocity; velocityN.normalize();
+	// normalized airspeed
+	PxVec3 airspeedN = airspeed; airspeedN.normalize();
 
     // calculate overburden
     _bcStep++;
     if( _bcStep >= 10 )
     {
-        _bcBurden.set( 0, -9.8f, 0 );
-        _bcBurden -= ( velocity - _bcPrevVel ) / ( float( _bcStep ) * ::simulationStepTime );
-        _bcPrevVel = velocity;
+        _bcBurden= PxVec3( 0, -9.81f, 0 );
+        _bcBurden -= ( airspeed - _bcPrevVel ) / ( float( _bcStep ) * ::simulationStepTime );
+        _bcPrevVel = airspeed;
         _bcStep = 0;
     }
 
@@ -1017,31 +1514,31 @@ void CanopySimulator::onUpdatePhysics(void)
     if( _gear->state < 0.1f ) _gear->state = 0.1f;
 
     // local coordinate system of canopy
-    NxMat34 pose = _nxCanopy->getGlobalPose();
-    NxVec3 cx = pose.M.getColumn(0);
-    NxVec3 cy = pose.M.getColumn(1);
-    NxVec3 cz = pose.M.getColumn(2);
+	PxTransform pose = _nxCanopy->getGlobalPose();
+	PxVec3 cx = pose.q.getBasisVector0();
+    PxVec3 cy = pose.q.getBasisVector1();
+    PxVec3 cz = pose.q.getBasisVector2();
 	
     // 3dmax conversion
-    NxVec3 z = -cy;
-    NxVec3 y = cz;
-    NxVec3 x = cx;
+    PxVec3 z = -cy;
+    PxVec3 y = cz;
+    PxVec3 x = cx;
 
     // dynamic perfomance, as a function of gear state
     float perfomance = sqrt( sqrt( _gear->state ) );
 
     // air resistance force
     float Kzaird = _gearRecord->Kzair * _inflation * perfomance + _gearRecord->Kyair * ( 1.0f - _inflation ) * perfomance;
-    NxVec3 Fair = _inflation * getResistanceForce( -y, velocity, _gearRecord->Kyair * perfomance ) +
-                  _inflation * getResistanceForce( y, velocity, _gearRecord->Kyair * perfomance ) +
-                  _inflation * getResistanceForce( z, velocity, Kzaird * perfomance ) +
-                  _inflation * getResistanceForce( -z, velocity, Kzaird * perfomance ) +
-                  _inflation * getResistanceForce( x, velocity, _gearRecord->Kxair * perfomance ) +
-                  _inflation * getResistanceForce( -x, velocity, _gearRecord->Kxair * perfomance );
+	PxVec3 Fair = _inflation * getResistanceForce( -y, airspeed, _gearRecord->Kyair * perfomance ) +
+                  _inflation * getResistanceForce( y, airspeed, _gearRecord->Kyair * perfomance ) +
+                  _inflation * getResistanceForce( z, airspeed, Kzaird * perfomance ) +
+                  _inflation * getResistanceForce( -z, airspeed, Kzaird * perfomance ) +
+                  _inflation * getResistanceForce( x, airspeed, _gearRecord->Kxair * perfomance ) +
+                  _inflation * getResistanceForce( -x, airspeed, _gearRecord->Kxair * perfomance );
 
     // attack angle
-    float attackAngle = -calcAngle( z, velocityN, x );
-    if( velocityN.magnitude() == 0.0f ) attackAngle = 0.0f;
+	float attackAngle = -calcAngle( z, airspeedN, x );
+    if( airspeedN.magnitude() == 0.0f ) attackAngle = 0.0f;
 	
 	bool stall = false;
 	if( attackAngle < -5.0f) {
@@ -1054,9 +1551,32 @@ void CanopySimulator::onUpdatePhysics(void)
 	}
     if( attackAngle > 90 ) attackAngle = 90;
 
+	// velocity debug
+	if (jumper->_debug_window) {
+		gui::IGuiPanel* panel = jumper->_debug_window->getPanel()->find( "Message" );
+		assert( panel && panel->getStaticText() );
+		//float gnd = _nxCanopy->getLinearVelocity().magnitude();
+		//float ias = (_nxCanopy->getLinearVelocity() + wind).magnitude();
+
+		float attackAngle = -calcAngle( z, airspeedN, x );
+		PxVec3 FairG = _inflation * getResistanceForce( -y, velocity, _gearRecord->Kyair * perfomance ) +
+                _inflation * getResistanceForce( y, velocity, _gearRecord->Kyair * perfomance ) +
+                _inflation * getResistanceForce( z, velocity, Kzaird * perfomance ) +
+                _inflation * getResistanceForce( -z, velocity, Kzaird * perfomance ) +
+                _inflation * getResistanceForce( x, velocity, _gearRecord->Kxair * perfomance ) +
+                _inflation * getResistanceForce( -x, velocity, _gearRecord->Kxair * perfomance );
+		PxVec3 FairI = _inflation * getResistanceForce( -y, airspeed, _gearRecord->Kyair * perfomance ) +
+                _inflation * getResistanceForce( y, airspeed, _gearRecord->Kyair * perfomance ) +
+                _inflation * getResistanceForce( z, airspeed, Kzaird * perfomance ) +
+                _inflation * getResistanceForce( -z, airspeed, Kzaird * perfomance ) +
+                _inflation * getResistanceForce( x, airspeed, _gearRecord->Kxair * perfomance ) +
+                _inflation * getResistanceForce( -x, airspeed, _gearRecord->Kxair * perfomance );
+		//panel->getStaticText()->setText( wstrformat(L"GND: %2.2f\nIAS: %2.2f\nFair (gnd): %2.2f %2.2f %2.2f\nFair (ias): %2.2f %2.2f %2.2f\n\nbrakes: %2.2f", velocity.magnitude(), airspeed.magnitude(), FairG.x, FairG.y, FairG.z, FairI.x, FairI.y, FairI.z, _gearRecord->Kbraking).c_str() );
+	}
+
     // average deep of brakes affects the lift & drag force and also attack angle
-	float avgDeep = NxMath::max(modeLeftDeep * modeRightDeep, modeLeftRearRiser * modeRightRearRiser * 0.8f);
-	avgDeep -= (modeLeftFrontRiser * modeLeftRearRiser);
+	float avgDeep = PxMax(modeLeftDeep * modeRightDeep, modeLeftRearRiser * modeRightRearRiser * 0.8f);
+	avgDeep -= (modeLeftFrontRiser * modeRightFrontRiser * 0.5f);
     attackAngle += _gearRecord->AAdeep * avgDeep;
 
 	if( attackAngle <= 0.0f ) {
@@ -1068,91 +1588,85 @@ void CanopySimulator::onUpdatePhysics(void)
     //WF = _inflation;
 
     // linetwists will reduces wing function
-    float wfLoss = fabs( _linetwists ) / 90.0f;
-    if( wfLoss > 1 ) wfLoss = 1.0f;
-    WF *= ( 1 - wfLoss );
+    //float wfLoss = fabs( _linetwists ) / 90.0f;
+    //if( wfLoss > 1 ) wfLoss = 1.0f;
+    //WF *= ( 1 - wfLoss );
 
     // lineover will also reduces wing function
-    wfLoss = 0.5f * ( _leftLOW + _rightLOW );
-    if( wfLoss > 1 ) wfLoss = 1.0f;
-    WF *= ( 1 - wfLoss );    
+    //wfLoss = 0.5f * ( _leftLOW + _rightLOW );
+    //if( wfLoss > 1 ) wfLoss = 1.0f;
+    //WF *= ( 1 - wfLoss );    
 
     // lift force
     float Klift = _gearRecord->Klifts * perfomance * ( 1.0f - avgDeep ) + _gearRecord->Kliftd * avgDeep * perfomance;
-    NxVec3 Nlift;
-    Nlift.cross( velocityN, x );
+    PxVec3 Nlift = airspeedN;
+	Nlift.cross( x );
     Nlift.normalize();
-    NxVec3 Flift = Nlift * WF * Klift * getLiftPower( attackAngle ) * sqr( velocity.magnitude() );
+	PxVec3 Flift = Nlift * WF * Klift * getLiftPower( attackAngle ) * sqr( airspeed.magnitude() );
 
     // drag force
-    float Kdrag = _gearRecord->Kdrags * perfomance * ( 1.0f - avgDeep ) + _gearRecord->Kdragd * avgDeep * perfomance;
-    NxVec3 Ndrag = -velocityN;
-    NxVec3 Fdrag = Ndrag * WF * Kdrag * getDragPower( attackAngle ) * sqr( velocity.magnitude() );
+    const float Kdrag =  _gearRecord->Kdrags * perfomance * ( 1.0f - avgDeep ) + _gearRecord->Kdragd * avgDeep * perfomance;
+    PxVec3 Ndrag = -airspeedN;
+    PxVec3 Fdrag = Ndrag * WF * Kdrag * getDragPower( attackAngle ) * sqr( airspeed.magnitude() );
 
     // control force
-    NxVec3 leftPoint = wrap( CanopySimulator::getPhysicsJointRearLeft( _canopyClump )->getPos() );
-    NxVec3 rightPoint = wrap( CanopySimulator::getPhysicsJointRearRight( _canopyClump )->getPos() );
-    NxVec3 leftPointVel = _nxCanopy->getPointVelocity( leftPoint );
-    NxVec3 rightPointVel = _nxCanopy->getPointVelocity( rightPoint );
+    PxVec3 leftPoint = wrap( CanopySimulator::getPhysicsJointRearLeft( _canopyClump )->getPos() );
+    PxVec3 rightPoint = wrap( CanopySimulator::getPhysicsJointRearRight( _canopyClump )->getPos() );
+    PxVec3 leftPointVel = PxRigidBodyExt::getLocalVelocityAtLocalPos(*_nxCanopy, leftPoint) + wind;
+	PxVec3 rightPointVel = PxRigidBodyExt::getLocalVelocityAtLocalPos(*_nxCanopy, rightPoint) + wind;
+	
+	//leftPointVel = rightPointVel = airspeed;
 
-    // wind simulation
-    if( _enableWind )
-    {
-        // include wind velocity
-        leftPointVel  += _scene->getWindAtPoint( leftPoint ) * windfluence;
-        rightPointVel += _scene->getWindAtPoint( rightPointVel ) * windfluence;
-    }   
-
-    float leftPointNormalVel = z.dot( leftPointVel );
-    float rightPointNormalVel = z.dot( rightPointVel );
-    leftPointNormalVel = leftPointNormalVel < 0 ? 0 : leftPointNormalVel;
-    rightPointNormalVel = rightPointNormalVel < 0 ? 0 : rightPointNormalVel;
+	float leftPointNormalVel = z.dot( leftPointVel );
+	float rightPointNormalVel = z.dot( rightPointVel );
+	leftPointNormalVel = leftPointNormalVel < 0 ? 0 : leftPointNormalVel;
+	rightPointNormalVel = rightPointNormalVel < 0 ? 0 : rightPointNormalVel;
 
 	// toggle input
-    NxVec3 Fcl = -z * modeLeftDeep * WF * sqr(leftPointNormalVel) * _gearRecord->Kbraking * perfomance;
-    NxVec3 Fcr = -z * modeRightDeep * WF * sqr(rightPointNormalVel) * _gearRecord->Kbraking * perfomance;
+    PxVec3 Fcl = -z * modeLeftDeep * WF * sqr(leftPointNormalVel) * _gearRecord->Kbraking * perfomance * 1.3f;
+    PxVec3 Fcr = -z * modeRightDeep * WF * sqr(rightPointNormalVel) * _gearRecord->Kbraking * perfomance * 1.3f;
     Fcl += -y * _gearRecord->Kturn * _nxConnected->getMass() * modeLeftDeep * perfomance;
     Fcr += -y * _gearRecord->Kturn * _nxConnected->getMass() * modeRightDeep * perfomance;
 
     // angular damping is a function of canopy velocity
-    float Idamp = velocity.magnitude() / _gearRecord->Vdampmax;
+	float Idamp = airspeed.magnitude() / _gearRecord->Vdampmax;
     Idamp = Idamp > 1.0f ? 1.0f : Idamp;
     float Kdamp = _gearRecord->Kdampmin * perfomance * ( 1.0f - Idamp ) + _gearRecord->Kdampmax * Idamp * perfomance;
-    _nxCanopy->setAngularDamping( Kdamp );
+    _nxCanopy->setAngularDamping( Kdamp*1.6f );
 
     // total unit force
-    NxVec3 Funit = Fair + Flift + Fdrag;
+    PxVec3 Funit = Fair + Flift + Fdrag;
 
     // finalize motion equation
-    _nxCanopy->addForceAtPos( Fcl, leftPoint );
-    _nxCanopy->addForceAtPos( Fcr, rightPoint );
+	PxRigidBodyExt::addForceAtPos(*_nxCanopy, Fcl, leftPoint);
+	PxRigidBodyExt::addForceAtPos(*_nxCanopy, Fcr, rightPoint);
     _nxCanopy->addForce( Funit );
 
 	// Helicopter wake turbulance
 	if (jumper->getAirplane() != NULL && strcmp(jumper->getAirplane()->getDesc()->templateClump->getName(), "Helicopter01") == 0) {
-
-		NxVec3 pos = this->getActor()->getGlobalPosition();				// canopy position
-		NxVec3 helipos = wrap( jumper->getAirplane()->getPosition() );	// heli position
+		PxVec3 pos = this->getActor()->getGlobalPose().p;				// canopy position
+		PxVec3 helipos = wrap( jumper->getAirplane()->getPosition() );	// heli position
 		if (helipos.y >= pos.y) {	// if below heli
 			float dstV = helipos.y - pos.y;	  // vertical distance
 			helipos.y = pos.y = 0;			  
 			if (dstV <= 1.0f) dstV = 1.0f;	 
 
 			// wind moves turbulence
-			NxVec3 wind = _scene->getWindAtPoint( _nxCanopy->getGlobalPose().t ) * windfluence;
+			//PxVec3 wind = _scene->getWindAtPoint( _nxCanopy->getGlobalPose().t );
 			helipos -= wind * (dstV/50.0f);
 
-			if (pos.distance(helipos) <= (10.0f + 6.0f/dstV)) {		// area of influence: diameter of 10.0m from the center of the craft + no more than 6m. depending on vertical distance (close to zero at 50m distance)
+			const PxVec3 distance = helipos - pos;
+			if (distance.magnitude() <= (10.0f + 6.0f/dstV)) {		// area of influence: diameter of 10.0m from the center of the craft + no more than 6m. depending on vertical distance (close to zero at 50m distance)
 				// calculate force
 				float F = -100000000.0f / (dstV*dstV);				
 				F *= getCore()->getRandToolkit()->getUniform( 0.8f, 1.4f );
 
 				// apply force to push the canopy down
-				_nxCanopy->addForceAtPos( wrap(Vector3f(0, F, 0)), helipos);
+				PxRigidBodyExt::addForceAtPos(*_nxCanopy, PxVec3(0, F, 0), helipos);
 
 				// give a little spin
-				_nxCanopy->addForceAtLocalPos( wrap(Vector3f(0, 0, F*0.2f)), wrap(Vector3f(2.5f,0,0)));
-				_nxCanopy->addForceAtLocalPos( wrap(Vector3f(0, 0, -F*0.2f)), wrap(Vector3f(-2.5f,0,0)));
+				PxRigidBodyExt::addForceAtLocalPos(*_nxCanopy, PxVec3(0, 0, F*0.2f), PxVec3(2.5f,0,0));
+				PxRigidBodyExt::addForceAtLocalPos(*_nxCanopy, PxVec3(0, 0, -F*0.2f), PxVec3(-2.5f,0,0));
 
 				//getCore()->logMessage("dstV: %2.5f; dstH: %2.5f; infl: %2.2f F: %2.16f", dstV, pos.distance(helipos), _inflation, F);
 				//getCore()->logMessage("rand: %2.5f", getCore()->getRandToolkit()->getUniform( 0.99999f, 1.0f ));
@@ -1175,32 +1689,43 @@ void CanopySimulator::onUpdatePhysics(void)
     if( collapsePenalty > 1.0f ) collapsePenalty = 1.0f;
     _nxCanopy->addForce( Funit * -collapsePenalty );
 
-    // lineover bracking force
-    NxVec3 Fllob = -z * _leftLOW * WF * sqr(leftPointNormalVel) * _gearRecord->Kbraking * getCore()->getRandToolkit()->getUniform( 5,10 );
-    NxVec3 Frlob = -z * _rightLOW * WF * sqr(rightPointNormalVel) * _gearRecord->Kbraking * getCore()->getRandToolkit()->getUniform( 5,10 );
-    _nxCanopy->addForceAtPos( Fllob, leftPoint );
-    _nxCanopy->addForceAtPos( Frlob, rightPoint );
+    // lineover or linetwist bracking force
+	float malfunctionLeftForce = _leftLOW;
+	float malfunctionRightForce = _rightLOW;
 
+	if (_linetwists < 0.0f) {
+		malfunctionLeftForce -= _linetwists / 6000.0f;
+	} else if (_linetwists > 0.0f) {
+		malfunctionRightForce += _linetwists / 6000.0f;
+	}
+
+    PxVec3 Fllob = -z * malfunctionLeftForce * sqr(leftPointNormalVel) * _gearRecord->Kbraking * 10.0f;
+    PxVec3 Frlob = -z * malfunctionRightForce * sqr(rightPointNormalVel) * _gearRecord->Kbraking * 10.0f;
+    PxRigidBodyExt::addForceAtPos(*_nxCanopy, Fllob, leftPoint );
+    PxRigidBodyExt::addForceAtPos(*_nxCanopy, Frlob, rightPoint );
+
+	
     // simulate risers
     //*
     {
-        NxVec3 backLeftPoint = wrap( CanopySimulator::getPhysicsJointRearLeft( _canopyClump )->getPos() );
-        NxVec3 backRightPoint = wrap( CanopySimulator::getPhysicsJointRearRight( _canopyClump )->getPos() );
-        NxVec3 backLeftPointVel = _nxCanopy->getPointVelocity( backLeftPoint );
-        NxVec3 backRightPointVel = _nxCanopy->getPointVelocity( backRightPoint );
-        NxVec3 frontLeftPoint = wrap( CanopySimulator::getPhysicsJointFrontLeft( _canopyClump )->getPos() );
-        NxVec3 frontRightPoint = wrap( CanopySimulator::getPhysicsJointFrontRight( _canopyClump )->getPos() );
-        NxVec3 frontLeftPointVel = _nxCanopy->getPointVelocity( frontLeftPoint );
-        NxVec3 frontRightPointVel = _nxCanopy->getPointVelocity( frontRightPoint );
+        PxVec3 backLeftPoint = wrap( CanopySimulator::getPhysicsJointRearLeft( _canopyClump )->getPos() );
+        PxVec3 backRightPoint = wrap( CanopySimulator::getPhysicsJointRearRight( _canopyClump )->getPos() );
+		
+		PxVec3 backLeftPointVel = PxRigidBodyExt::getVelocityAtPos(*_nxCanopy, backLeftPoint);
+        PxVec3 backRightPointVel = PxRigidBodyExt::getVelocityAtPos(*_nxCanopy, backRightPoint );
+        PxVec3 frontLeftPoint = wrap( CanopySimulator::getPhysicsJointFrontLeft( _canopyClump )->getPos() );
+        PxVec3 frontRightPoint = wrap( CanopySimulator::getPhysicsJointFrontRight( _canopyClump )->getPos() );
+        PxVec3 frontLeftPointVel = PxRigidBodyExt::getVelocityAtPos(*_nxCanopy, frontLeftPoint );
+        PxVec3 frontRightPointVel = PxRigidBodyExt::getVelocityAtPos(*_nxCanopy, frontRightPoint );
 
-        if( _enableWind )
-        {
-            // include wind velocity
-            frontLeftPointVel  += _scene->getWindAtPoint( frontLeftPointVel ) * windfluence;
-            frontRightPointVel += _scene->getWindAtPoint( frontRightPointVel ) * windfluence;
-            backLeftPointVel  += _scene->getWindAtPoint( backLeftPointVel ) * windfluence;
-            backRightPointVel += _scene->getWindAtPoint( backRightPointVel ) * windfluence;
-        }
+        //if( _enableWind )
+        //{
+        //    // include wind velocity
+        //    frontLeftPointVel  += _scene->getWindAtPoint( frontLeftPointVel ) * windfluence;
+        //    frontRightPointVel += _scene->getWindAtPoint( frontRightPointVel ) * windfluence;
+        //    backLeftPointVel  += _scene->getWindAtPoint( backLeftPointVel ) * windfluence;
+        //    backRightPointVel += _scene->getWindAtPoint( backRightPointVel ) * windfluence;
+        //}
 
         float backLeftPointNormalVel = z.dot( backLeftPointVel );
         float backRightPointNormalVel = z.dot( backRightPointVel );
@@ -1215,25 +1740,30 @@ void CanopySimulator::onUpdatePhysics(void)
         frontRightPointNormalVel = frontRightPointNormalVel < 0 ? 0 : frontRightPointNormalVel;
 
         if (modeLeftRearRiser > 0.0f) {
-            NxVec3 force = -y * modeLeftRearRiser * 50.0f * backLeftPointNormalVel * _gearRecord->Kbraking;
-            _nxCanopy->addForceAtPos( force, backLeftPoint );
+            PxVec3 force = -y * modeLeftRearRiser * 50.0f * backLeftPointNormalVel * _gearRecord->Kbraking;
+			//_nxCanopy->addLocalTorque(PxVec3(0, modeLeftRearRiser * 200.0f * backLeftPointNormalVel * _gearRecord->Kbraking, 0));
+			PxRigidBodyExt::addForceAtPos(*_nxCanopy, force, backLeftPoint );
         }
         if (modeRightRearRiser > 0.0f) {
-            NxVec3 force = -y * modeRightRearRiser * 50.0f * backRightPointNormalVel * _gearRecord->Kbraking;
-            _nxCanopy->addForceAtPos( force, backRightPoint );
+            PxVec3 force = -y * modeRightRearRiser * 50.0f * backRightPointNormalVel * _gearRecord->Kbraking;
+            //_nxCanopy->addLocalTorque(PxVec3(0, modeRightRearRiser * -200.0f * backRightPointNormalVel * _gearRecord->Kbraking, 0));
+			PxRigidBodyExt::addForceAtPos(*_nxCanopy, force, backRightPoint );
         }
 
 		if (modeLeftFrontRiser > 0.0f && !stall) {
-            NxVec3 force = -y * modeLeftFrontRiser * 7.0f * sqr(frontLeftPointNormalVel) * _gearRecord->Kbraking;
-            _nxCanopy->addForceAtPos( force, frontLeftPoint );
+			PxVec3 force = -y * modeLeftFrontRiser * 7.0f * sqr(frontLeftPointNormalVel) * _gearRecord->Kbraking;
+			//_nxCanopy->addLocalTorque(PxVec3(0, modeLeftFrontRiser * 80.0f * airspeed.magnitude(), 0));
+            PxRigidBodyExt::addForceAtPos(*_nxCanopy, force, frontLeftPoint );
         }
 		if (modeRightFrontRiser > 0.0f && !stall) {
-            NxVec3 force = -y * modeRightFrontRiser * 7.0f * sqr(frontRightPointNormalVel) * _gearRecord->Kbraking;
-            _nxCanopy->addForceAtPos( force, frontRightPoint );
+            PxVec3 force = -y * modeRightFrontRiser * 7.0f * sqr(frontRightPointNormalVel) * _gearRecord->Kbraking;
+			//_nxCanopy->addLocalTorque(PxVec3(0, modeRightFrontRiser * -80.0f * airspeed.magnitude(), 0));
+			//force += 0.4f * z * modeRightFrontRiser * 7.0f * sqr(frontRightPointNormalVel) * _gearRecord->Kbraking;
+            PxRigidBodyExt::addForceAtPos(*_nxCanopy, force, frontRightPoint );
         }
     }
     //*/
-
+	//_nxCanopy->setLinearVelocity(_nxCanopy->getLinearVelocity() - _scene->getWindAtPoint( _nxCanopy->getGlobalPose().t ));
     // down canopy nose at low speed
     /*float minSpeed  = 1.0f;
     float minTorque = 2 * jumper->getVirtues()->appearance.weight;
@@ -1246,17 +1776,17 @@ void CanopySimulator::onUpdatePhysics(void)
     _nxCanopy->addLocalTorque( x * torque );*/
 }
 
-void CanopySimulator::updateInflation(void)
+void CanopySimulator::updateInflation(float dt)
 {
     // poses
-    NxMat34 canopyPose = _nxCanopy->getGlobalPose();
-    NxMat34 connectedPose = _nxConnected->getGlobalPose();
+	PxTransform canopyPose = _nxCanopy->getGlobalPose();
+    PxTransform connectedPose = _nxConnected->getGlobalPose();
 
     // global connection points
-    NxVec3 frontLeftAnchor[2];
-    NxVec3 frontRightAnchor[2];
-    NxVec3 rearLeftAnchor[2];
-    NxVec3 rearRightAnchor[2];    
+    PxVec3 frontLeftAnchor[2];
+    PxVec3 frontRightAnchor[2];
+    PxVec3 rearLeftAnchor[2];
+    PxVec3 rearRightAnchor[2];    
     frontLeftAnchor[0] = connectedPose * _frontLeftAnchor[0];
     frontLeftAnchor[1] = canopyPose * _frontLeftAnchor[1];
     frontRightAnchor[0] = connectedPose * _frontRightAnchor[0];
@@ -1280,16 +1810,113 @@ void CanopySimulator::updateInflation(void)
     averageTension = ( averageTension > 1.0f ) ? 1.0f : averageTension;
     averageTension = sqr( sqr( averageTension ) );
 
+
+	
+	
+	
+	// 
+	PxVec3 pos = _nxCanopy->getGlobalPose().p;
+	PxVec3 canopySpeed = _nxCanopy->getLinearVelocity();
+	float altitude = pos.y;
+
+	// AirDensityOld = 1.1134 @ 1000 m.
+	const float AirDensityOld = altitude <= 10000.0f ? (1.196f - 0.0000826f * altitude) : (0.27f);
+	// airForce = 222.68 @ 1000 m. / 20 m/s
+	const float airForce = 0.5f * AirDensityOld * _nxCanopy->getLinearVelocity().magnitudeSquared() * 1;
+	
+	//float sliderPos = (_sliderPosFL + _sliderPosRL + _sliderPosFR + _sliderPosRR) / 4.0f;
+	const float sliderPos = 1.0f - _sliderPosFL / _gearRecord->frontCord;
+
+    const Vector3f sliderFL = _frontLeftRiser->getPos();
+    const Vector3f sliderFR = _frontRightRiser->getPos();
+    const Vector3f sliderRL = _rearLeftRiser->getPos();
+    const Vector3f sliderRR = _rearRightRiser->getPos();
+
+	const PxVec3 sliderH = wrap(sliderFL - sliderRL);
+	const PxVec3 sliderW = wrap(sliderFL - sliderFR);
+	// sliderArea = 0.54719867 (190')
+	// sliderArea = 17.65157 (190')
+	// sliderArea = 4.3199895 (150')
+	// sliderArea = 12.07739' (130')
+	// sliderArea = 6.410307' (69')
+	/*const*/ float sliderArea = _gearRecord->square * 0.031f * 0.092903f * 5.0f; //14.478f;
+	if (_gear->type == gtReserve) {
+		sliderArea = 4.31f;
+	}
+
+
+	
+	// CLEAN VERSION
+	//sliderArea = 14.5f;
+
+	// ((14.478 * 3.28084) / 190) / 3
+	float maxInflationOnSliderUp = ((sliderArea*3.28084f) / _gearRecord->square) / 2.0f;
+	if (maxInflationOnSliderUp < 0.01f) maxInflationOnSliderUp = 0.01f;
+
+	// (slider force formula)
+	// x => speed;
+	// 0.54719867 => sliderArea; 
+	// AirDensityOld = 1.1134 @ 1000 m.
+	// 0.54719867 * (0.5 * 1.1134 * x^2); 
+	/////////////////////////////////////////
+	float sliderForce_modif = 1.0f;
+	if (_gear->type == gtReserve) {
+		sliderForce_modif = 0.8f;
+	}
+
+	// CLEAN VERSION
+	//sliderForce_modif = 0.6f;
+
+	const float sliderForce = sliderArea * airForce * sliderForce_modif;
+	float inflation = _inflation;
+	// ((0.5 * 1.1134 * x^2) * 190 * 0.092903 * 0.05)*80.0; x - speed
+	// ((0.5 * 1.1134 * x^2) * 190 * 0.092903 * (((14.478 * 3.28084) / 190) / 3))*80.0
+	float inflationForce = powf((airForce * _gearRecord->square * 0.092903f * _inflation), 0.6f)*80.0f;
+	
+	// slider reefing force
+	//_nxCanopy->addLocalForce(PxVec3(0, -sliderForce*0.01f, 0));
+
+	//a0=2&a1=14.478 * (0.5 * 1.1134 * x^2)&a2=(((0.5 * 1.1134 * x^2) * 309 * 0.092903 * (((14.478 * 3.28084) / 309 ) / 2))^0.6)*80&a3=&a4=1&a5=4&a6=8&a7=1&a8=1&a9=1&b0=500&b1=500&b2=0&b3=40&b4=0&b5=5000&b6=10&b7=10&b8=5&b9=5&c0=3&c1=0&c2=1&c3=1&c4=1&c5=1&c6=1&c7=0&c8=0&c9=0&d0=1&d1=20&d2=20&d3=0&d4=&d5=&d6=&d7=&d8=&d9=&e0=&e1=&e2=&e3=&e4=14&e5=14&e6=13&e7=12&e8=0&e9=0&f0=0&f1=1&f2=1&f3=0&f4=0&f5=&f6=&f7=&f8=&f9=&g0=&g1=1&g2=1&g3=0&g4=0&g5=0&g6=Y&g7=ffffff&g8=a0b0c0&g9=6080a0&h0=1&z
+	inflation += inflationForce;
+
+	// left/right tension difference induces torque
+	float leftTension, rightTension, LRtension;
+	leftTension = ( frontLeftAnchor[0] - frontLeftAnchor[1] ).magnitude() / _gearRecord->frontCord;
+	leftTension += ( rearLeftAnchor[0] - rearLeftAnchor[1] ).magnitude() / _gearRecord->rearCord;
+	rightTension = ( frontRightAnchor[0] - frontRightAnchor[1] ).magnitude() / _gearRecord->frontCord;
+	rightTension += ( rearRightAnchor[0] - rearRightAnchor[1] ).magnitude() / _gearRecord->rearCord;
+	
+	LRtension = leftTension - rightTension;
+	float tensionDiff = (leftTension - rightTension);
+	if (tensionDiff > 3.0f) tensionDiff = 3.0f;
+	if (tensionDiff < -3.0f) tensionDiff = -3.0f;
+	PxVec3 tensionTorque = PxVec3(0,1,0) * (leftTension - rightTension);
+	
+	Jumper* jumper = dynamic_cast<Jumper*>( _parent ); assert( jumper );
+	//if (_inflation < maxInflationOnSliderUp*2.0f && !jumper->isLanding() && (leftTension - rightTension) > 0.0f && tensionTorque.magnitude() > 0.001f) {
+	//	_nxCanopy->addLocalTorque( tensionTorque * -16000.0f * (this->_gearRecord->square / 150.0f));
+	//}
+
+	// random snivelling forces
+	//if (!isCutAway && _inflation < maxInflationOnSliderUp*1.3f) {
+	//	const float randomMagnitude = powf(this->_gearRecord->square, 1.1f) * _nxCanopy->getLinearVelocity().magnitude() / 55.0f;
+	//	_nxCanopy->addLocalForce(
+	//		PxVec3(getCore()->getRandToolkit()->getUniform(-randomMagnitude, randomMagnitude),
+	//		getCore()->getRandToolkit()->getUniform(-randomMagnitude, randomMagnitude),
+	//		getCore()->getRandToolkit()->getUniform(-randomMagnitude, randomMagnitude))
+	//	);
+	//}
+
     // determine canopy orientation relative to motion direction
-    NxVec3 motionDir = _nxCanopy->getLinearVelocity(); motionDir.normalize();
-    NxVec3 canopyDown  = _nxCanopy->getGlobalPose().M.getColumn(2); canopyDown.normalize();
+    PxVec3 motionDir = _nxCanopy->getLinearVelocity(); motionDir.normalize();
+    PxVec3 canopyDown  = _nxCanopy->getGlobalPose().q.getBasisVector2(); canopyDown.normalize();
     canopyDown *= -1;
     float relativity = canopyDown.dot( motionDir );
     if( relativity < 0 ) averageTension = 0.0f;
 
     // determine opening factor
-    NxVec3 canopyVel = _nxCanopy->getLinearVelocity();
-    canopyVel += _scene->getWindAtPoint( _nxCanopy->getGlobalPose().t ) * windfluence;
+    PxVec3 canopyVel = _nxCanopy->getLinearVelocity();
+    canopyVel += _scene->getWindAtPoint( _nxCanopy->getGlobalPose().p ) * windfluence;
     float factor;
     float openingK;
     if( _sliderUp )
@@ -1307,18 +1934,105 @@ void CanopySimulator::updateInflation(void)
     }
 
     // inflation by velocity
+	//if (_inflation >= 0.8f) {
+	//	openingK *= 3.3333330f;
+	//} else if (_inflation >= 0.25f) {
+	//	openingK *= 1.2121212f;
+	//} else if (_inflation >= 0.1f) {
+	//	//openingK *= getCore()->getRandToolkit()->getUniform( 0.3f,0.9f );
+	//	openingK *= 4.000000f;
+	//} else {
+	//	openingK *= 0.6666660f;
+	//}
+
+
+
+/*
+3.3333330000
+1.2121212000
+4.0000000000
+0.6666660000
+*/
+
+	// [0.80 1.00] = 2.0	0.20	= 0.400
+	// [0.25 0.80) = 1.5	0.55	= 0.825
+	// [0.10 0.25) = 0.9	0.15	= 0.135
+	// [0.00 0.10) = 1.0	0.10	= 0.100
+
+	//if (sliderPos > 3.0f) openingK = 0.0f;
+	//float canopySpeedScalar = canopySpeed.magnitude();
+	//openingK = (0.5f + (canopySpeedScalar - 10.0f) / 10.0f) * _inflation;
+
     _inflation += averageTension * ::simulationStepTime * openingK;
+	
+
     if( _inflation > 1 ) _inflation = 1;
+	if( _inflation < 0.05f) _inflation = 0.05f;
+
+	// canopy starts to produce more force
+	const float sliderProgress = (_gearRecord->frontCord - _sliderPosFL) / _gearRecord->frontCord;
+	float moveslider = 0.0f;
+	float slidingVel = 0.0f;
+	float sliderMax = sliderProgress;
+	if (sliderForce < inflationForce) {
+		moveslider = dt;
+		sliderMax += dt;
+		slidingVel = 4.0f;
+	}
+
+	// max inflation due to slider
+	float maxInflation = sliderPos + moveslider;
+	if (maxInflation < maxInflationOnSliderUp) {
+		maxInflation = maxInflationOnSliderUp;
+	}
+	if (this->isCutAway) maxInflation = 0.4f;
+	if (_inflation > maxInflation) _inflation = maxInflation;
+	
+	// update slider
+    _slidingTime += dt;
+
+    // simulate sliding
+	if (fabs(_linetwists) > 0.8f) {
+		float maxInflation = 1.0f - fabs(_linetwists) / 1440.0f * 0.3f; // max inflation due to linetwist
+		sliderMax = (fabs(_linetwists) / 2880.0f);
+		if (sliderMax > maxInflation) sliderMax = maxInflation;
+		if (_sliderPosFL > _gearRecord->frontCord * sliderMax) {
+			_sliderPosFL -= slidingVel * dt;
+			_sliderPosFR -= slidingVel * dt;
+			_sliderPosRL -= slidingVel * dt;
+			_sliderPosRR -= slidingVel * dt;
+		}
+
+	} else if (sliderProgress < sliderMax) {
+        _sliderPosFL -= slidingVel * dt;
+        _sliderPosFR -= slidingVel * dt;
+        _sliderPosRL -= slidingVel * dt;
+        _sliderPosRR -= slidingVel * dt;
+        if( _sliderPosFL < 0 ) _sliderPosFL = 0;
+        if( _sliderPosFR < 0 ) _sliderPosFR = 0;
+        if( _sliderPosRL < 0 ) _sliderPosRL = 0;
+        if( _sliderPosRR < 0 ) _sliderPosRR = 0;
+	 }
 
     // enable collision generation for canopy and base jumper
-    if( !_collideJumper && _inflation > 0.25f )
-    {
-        _collideJumper = true;
-        Jumper* jumper = dynamic_cast<Jumper*>( _parent ); assert( jumper );        
-        unsigned int flags = _scene->getPhScene()->getActorPairFlags( *_nxCanopy, *jumper->getFlightActor() );
-        flags = flags & ~NX_IGNORE_PAIR;
-        _scene->getPhScene()->setActorPairFlags( *_nxCanopy, *jumper->getFlightActor(), flags );
-    }
+	//PHYSX3
+    //if( !_collideJumper && _inflation > 0.15f )
+    //{
+    //    _collideJumper = true;
+    //    Jumper* jumper = dynamic_cast<Jumper*>( _parent ); assert( jumper );        
+    //    unsigned int flags = _scene->getPhScene()->getActorPairFlags( *_nxCanopy, *jumper->getFlightActor() );
+    //    flags = flags & ~NX_IGNORE_PAIR;
+    //    _scene->getPhScene()->setActorPairFlags( *_nxCanopy, *jumper->getFlightActor(), flags );
+    //}
+
+
+	// debug
+	//if (jumper->_debug_window) {
+	//	gui::IGuiPanel* panel = jumper->_debug_window->getPanel()->find( "Message" );
+	//	assert( panel && panel->getStaticText() );
+	//	panel->getStaticText()->setText( wstrformat(L"sliderArea: %2.2f\nslider: %2.2f\n_sliderPosFL: %2.2f\nsliderMax: %2.2f\nSlider vs canopy: %2.2f", sliderH.magnitude()*sliderW.magnitude(), (_gearRecord->frontCord - _sliderPosFL) / _gearRecord->frontCord, _sliderPosFL, sliderMax, (sliderForce - inflationForce)).c_str() );
+	//}
+
 
     // remove rough joints
     //
@@ -1359,10 +2073,10 @@ void CanopySimulator::updateWarp(float dt)
     float leftDynamicTwist = _linetwists < 0 ? twistFactor : 0;
     float rightDynamicTwist = _linetwists > 0 ? twistFactor : 0;
 
-    NxVec3 frontLeftOffset( 0, -Kfront * leftDynamicWarp + Kfront * rightDynamicWarp, 0 );
-    NxVec3 frontRightOffset( 0, -Kfront * rightDynamicWarp + Kfront * leftDynamicWarp, 0 );
-    NxVec3 rearLeftOffset( 0, -Krear * leftDynamicWarp + Krear * rightDynamicWarp, 0 );
-    NxVec3 rearRightOffset( 0, -Krear * rightDynamicWarp + Krear * leftDynamicWarp, 0 );
+    PxVec3 frontLeftOffset( 0, -Kfront * leftDynamicWarp + Kfront * rightDynamicWarp, 0 );
+    PxVec3 frontRightOffset( 0, -Kfront * rightDynamicWarp + Kfront * leftDynamicWarp, 0 );
+    PxVec3 rearLeftOffset( 0, -Krear * leftDynamicWarp + Krear * rightDynamicWarp, 0 );
+    PxVec3 rearRightOffset( 0, -Krear * rightDynamicWarp + Krear * leftDynamicWarp, 0 );
 
     Matrix4f lt( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0 );
     Matrix4f rt( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0 );
@@ -1376,16 +2090,18 @@ void CanopySimulator::updateWarp(float dt)
 	rearLeftOffset.y -= 0.3f * _leftRearRiser;
 	rearRightOffset.y -= 0.3f * _rightRearRiser;
 
-    NxVec3 frontLeftAnchor = wrap( Gameplay::iEngine->transformCoord( wrap( _frontLeftAnchor[0] + frontLeftOffset ), lt ) );
-    NxVec3 rearLeftAnchor = wrap( Gameplay::iEngine->transformCoord( wrap( _rearLeftAnchor[0] + rearLeftOffset ), lt ) );
-    NxVec3 frontRightAnchor = wrap( Gameplay::iEngine->transformCoord( wrap( _frontRightAnchor[0] + frontRightOffset ), rt ) );
-    NxVec3 rearRightAnchor = wrap( Gameplay::iEngine->transformCoord( wrap( _rearRightAnchor[0] + rearRightOffset ), rt ) );
+    PxVec3 frontLeftAnchor = wrap( Gameplay::iEngine->transformCoord( wrap( _frontLeftAnchor[0] + frontLeftOffset ), lt ) );
+    PxVec3 rearLeftAnchor = wrap( Gameplay::iEngine->transformCoord( wrap( _rearLeftAnchor[0] + rearLeftOffset ), lt ) );
+    PxVec3 frontRightAnchor = wrap( Gameplay::iEngine->transformCoord( wrap( _frontRightAnchor[0] + frontRightOffset ), rt ) );
+    PxVec3 rearRightAnchor = wrap( Gameplay::iEngine->transformCoord( wrap( _rearRightAnchor[0] + rearRightOffset ), rt ) );
 
     // re-initialize ropes   
-    _frontLeftRope->setAnchor1( frontLeftAnchor );
-    _frontRightRope->setAnchor1( frontRightAnchor );
-    _rearLeftRope->setAnchor1( rearLeftAnchor );
-    _rearRightRope->setAnchor1( rearRightAnchor );
+	if (_frontLeftRope) {
+		_frontLeftRope->setAnchor1( frontLeftAnchor );
+		_frontRightRope->setAnchor1( frontRightAnchor );
+		_rearLeftRope->setAnchor1( rearLeftAnchor );
+		_rearRightRope->setAnchor1( rearRightAnchor );
+	}
 
     // remove twists
     if( _linetwists != 0 && ( _leftWarpDeep != 0 || _rightWarpDeep != 0 ) ) 
@@ -1430,36 +2146,6 @@ void CanopySimulator::updateSlider(float dt)
 {
     if( !_sliderUp ) return;
 
-    // simulation properties
-    float slidingVel = 4.0f;
-    float slidingInflation = 0.25f;
-
-    _slidingTime += dt;
-    
-    // simulate sliding
-	if ( fabs(_linetwists) > 0.0f) {
-		float maxInflation = 1.0f - fabs(_linetwists) / 1440.0f * 0.5f; // max inflation due to linetwist
-		float sliderMax = (fabs(_linetwists) / 1440.0f);
-		slidingVel = 0.1f;
-		if (_sliderPosFL > _gearRecord->frontCord * sliderMax) {
-			_sliderPosFL -= slidingVel * dt;
-			_sliderPosFR -= slidingVel * dt;
-			_sliderPosRL -= slidingVel * dt;
-			_sliderPosRR -= slidingVel * dt;
-		}
-
-	} else if( _inflation > slidingInflation )
-    {
-        _sliderPosFL -= slidingVel * dt;
-        _sliderPosFR -= slidingVel * dt;
-        _sliderPosRL -= slidingVel * dt;
-        _sliderPosRR -= slidingVel * dt;
-        if( _sliderPosFL < 0 ) _sliderPosFL = 0;
-        if( _sliderPosFR < 0 ) _sliderPosFR = 0;
-        if( _sliderPosRL < 0 ) _sliderPosRL = 0;
-        if( _sliderPosRR < 0 ) _sliderPosRR = 0;
-	 }
-
 	// parametric positions
 	float pSliderPosFL = _sliderPosFL / _gearRecord->frontCord;
 	float pSliderPosFR = _sliderPosFR / _gearRecord->frontCord;
@@ -1483,7 +2169,7 @@ void CanopySimulator::updateSlider(float dt)
     Vector3f posFR    = (canopyFR - jumperFR); posFR *= pSliderPosFR; posFR = jumperFR + posFR;
     Vector3f posRL    = (canopyRL - jumperRL); posRL *= pSliderPosRL; posRL = jumperRL + posRL;
     Vector3f posRR    = (canopyRR - jumperRR); posRR *= pSliderPosRR; posRR = jumperRR + posRR;
-    Vector3f clumpPos = (posFL + posFR + posRL + posRR) * 0.25f;
+    Vector3f clumpPos = (posFL + posFR + posRL + posRR) / 4.0f;
 
     MATRIX( C, right, up, at, clumpPos );   
     MATRIX( FL, right, up, at, posFL );
@@ -1492,8 +2178,11 @@ void CanopySimulator::updateSlider(float dt)
     MATRIX( RR, right, up, at, posRR );
 
     _sliderClump->getFrame()->setMatrix( C );
-
     _sliderClump->getFrame()->getLTM();
+
+		// crashes
+	// should try to replicate rotateRelative to scaleRelative instead of rotate to scale
+	//_sliderClump->getFrame()->scale(Vector3f(1.0f, 1.0f, 1.0f));
 }
 
 void CanopySimulator::updateProceduralAnimation(float dt)
@@ -1545,7 +2234,7 @@ void CanopySimulator::updateCollapse(float dt)
     while( isUnited );
 }
 
-const NxVec3 worldUp( 0,-1,0 );
+const PxVec3 worldUp( 0,-1,0 );
 
 void CanopySimulator::rip(float force)
 {
@@ -1559,14 +2248,15 @@ void CanopySimulator::rip(float force)
         _gear->state = _gear->state < 0.1f ? 0.1f : _gear->state;
     }
 }
-
-void CanopySimulator::onContact(NxContactPair &pair, NxU32 events)
+//PHYSX3
+/*
+void CanopySimulator::onContact(NxContactPair &pair, PxU32 events)
 {
     // iterate contact points
     NxContactStreamIterator contactI( pair.stream );
     while( contactI.goNextPair() ) while( contactI.goNextPatch() ) while( contactI.goNextPoint() )
     {
-        NxVec3 point = contactI.getPoint();
+        PxVec3 point = contactI.getPoint();
         float  pointVel = _nxCanopy->getPointVelocity( point ).magnitude();
         // filter slight contacts
         if( pointVel > _gearRecord->Cminvel )
@@ -1597,7 +2287,7 @@ void CanopySimulator::onContact(NxContactPair &pair, NxU32 events)
             NxMat34 pose = _nxCanopy->getGlobalPose();
             NxMat34 ipose;
             bool result = pose.getInverse( ipose ); assert( result );            
-            NxVec3 localPoint = wrap( Gameplay::iEngine->transformCoord( wrap( point ), wrap( ipose ) ) );
+            PxVec3 localPoint = wrap( Gameplay::iEngine->transformCoord( wrap( point ), wrap( ipose ) ) );
             // calculate power & radius of collapse
             float interpolator = ( pointVel - _gearRecord->Cminvel ) / ( _gearRecord->Cmaxvel - _gearRecord->Cminvel );
             interpolator = interpolator < 0 ? 0 : interpolator;
@@ -1640,8 +2330,8 @@ void CanopySimulator::onContact(NxContactPair &pair, NxU32 events)
         }
     }
 }
-
-void CanopySimulator::visualizeForce(NxVec3& pos, NxVec3& force)
+*/
+void CanopySimulator::visualizeForce(PxVec3& pos, PxVec3& force)
 {
 }
 

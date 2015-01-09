@@ -27,7 +27,7 @@ static engine::AnimSequence swingingSequence =
  * class implementation
  */
 
-Jumper::OutOfControl::OutOfControl(Jumper* jumper, NxActor* actor, MatrixConversion* mc, float time) :
+Jumper::OutOfControl::OutOfControl(Jumper* jumper, PxRigidDynamic* actor, MatrixConversion* mc, float time) :
     JumperAction( jumper )
 {
     // set action properties
@@ -93,24 +93,26 @@ void Jumper::OutOfControl::update(float dt)
     engine::IAnimationController* animCtrl = _clump->getAnimationController();
 
     // detect ground under jumper
-    float maxDist = 1.0f;
-    NxRay worldRay;         
-    worldRay.orig = _phActor->getGlobalPosition();
-    worldRay.dir  = NxVec3( 0,-maxDist,0 );
-    NxShape** terrainShapes = _jumper->getScene()->getPhTerrain()->getShapes();
-    NxTriangleMeshShape* triMeshShape = terrainShapes[0]->isTriangleMesh();
-    assert( triMeshShape );   
-    NxRaycastHit raycastHit;
-    if( triMeshShape->raycast( worldRay, maxDist, NX_RAYCAST_DISTANCE | NX_RAYCAST_NORMAL, raycastHit, true ) )
-    {
+	const float maxDist = 1.0f;
+    PxVec3 worldRayOrig = _phActor->getGlobalPose().p;
+	PxVec3 worldRayDir = PxVec3( 0,-maxDist,0 );
+	worldRayDir.normalize();
+    
+	worldRayOrig += worldRayDir * 0.1f;
+	worldRayOrig.normalize();
+	worldRayDir = PxVec3(0, -1, 0);
+    
+
+
+    PxRaycastBuffer raycastHit;
+	PxHitFlags flags = PxHitFlag::eDEFAULT | PxHitFlag::eDISTANCE | PxHitFlag::eNORMAL;
+	if (_jumper->getScene()->getPhScene()->raycast(worldRayOrig, worldRayDir, maxDist, raycastHit, flags)) {
         float weight = animCtrl->getTrackWeight( 0 );
         weight += blendVelocity * dt;
         if( weight > 1 ) weight = 1;
         animCtrl->setTrackWeight( 0, weight );
         animCtrl->setTrackWeight( 1, 1 - weight );
-    }
-    else
-    {
+    } else {
         float weight = animCtrl->getTrackWeight( 0 );
         weight -= blendVelocity * dt;
         if( weight < 0 ) weight = 0;
@@ -122,7 +124,7 @@ void Jumper::OutOfControl::update(float dt)
     _time -= dt;
 
     // finalize action
-    if( _time < 0 && _jumper->getVirtues()->evolution.health > 0 ) _endOfAction = true;
+	if( (_jumper->getSpinalCord()->modifier || _time < 0) && _jumper->getVirtues()->evolution.health > 0 ) _endOfAction = true;
 }
 
 static float getAirResistancePower(float i)
@@ -133,10 +135,10 @@ static float getAirResistancePower(float i)
 void Jumper::OutOfControl::updatePhysics(void)
 {
     // velocity of base jumper's body
-    NxVec3 velocity = _phActor->getLinearVelocity();
+    PxVec3 velocity = _phActor->getLinearVelocity();
 
     // vectical velocity of base jumper's body
-    NxVec3 velocityV( 0, velocity.y, 0 );
+    PxVec3 velocityV( 0, velocity.y, 0 );
 
     // air resistance coefficients
     float AR = _jumper->getVirtues()->getTrackingAirResistance();
@@ -146,14 +148,14 @@ void Jumper::OutOfControl::updatePhysics(void)
     float It = velocityV.magnitude() / Vt;
 
     // air resistance force
-    NxVec3 Far = NxVec3(0,1,0) * getAirResistancePower( velocityV.magnitude() / Vt ) * _phActor->getMass() * 9.8f;
+    PxVec3 Far = PxVec3(0,1,0) * getAirResistancePower( velocityV.magnitude() / Vt ) * _phActor->getMass() * 9.8f;
 
     // gyration resistance
     float GR = 40.0f;
     float GRV = velocity.magnitude() / 25.0f;
     if( GRV > 1.0f ) GRV = 1.0f;
     GR *= GRV;
-    NxVec3 Tr = _phActor->getAngularVelocity() * -GR;
+    PxVec3 Tr = _phActor->getAngularVelocity() * -GR;
 
     // finalize motion equation    
     _phActor->addForce( Far );

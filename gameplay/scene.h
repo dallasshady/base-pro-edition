@@ -1,4 +1,3 @@
-
 #ifndef SCENE_ACTIVITY_INCLUDED
 #define SCENE_ACTIVITY_INCLUDED
 
@@ -10,6 +9,8 @@
 #include "geoscape.h"
 #include "database.h"
 #include "render.h"
+#include "airfoil.h"
+#include "network.h"
 
 class Scene;
 class Actor;
@@ -76,11 +77,15 @@ protected:
     Scene*      _scene;    // scene
     Actor*      _parent;   // parent actor
     ActorV      _children; // team of children actors
+	
+	Airfoil **_airfoils;		// airfoils
+	int _airfoilsC;			// airfoil count
 public:
     // actor abstracts
     virtual void onUpdateActivity(float dt) {}
     virtual void onUpdatePhysics(void) {}
-    virtual void onContact(NxContactPair &pair, NxU32 events) {}
+    //PHYSX3
+	//virtual void onContact(NxContactPair &pair, PxU32 events) {}
     virtual void onEvent(Actor* initiator, unsigned int eventId, void* eventData) {}
     virtual Matrix4f getPose(void) { return defaultPose; }
     virtual Vector3f getVel(void) { return defaultVel; }
@@ -94,6 +99,19 @@ public:
     void happen(Actor* initiator, unsigned int eventId, void* eventData = NULL);
     void updateActivity(float dt);
     void updatePhysics(void);
+
+	ActorV getChildren() { return _children; }
+	// airfoil functions
+	void addAirfoils(int c, Airfoil **airfoils);
+	void clearAirfoils();
+	Airfoil *getAirfoil(int i) { 
+		if (i >= _airfoilsC) return NULL;	
+		return _airfoils[i];
+	}
+
+	// network data
+	int network_id;		// -1 by default, meaning that it doesn't play around the network
+	virtual void consumePacket(NetworkData *packet) {};
 public:
     // actor common : inlines
     inline Scene* getScene(void) { return _scene; }
@@ -123,12 +141,13 @@ public:
 
 #define FRAMETIME(F) ( float(F)*3.0f/100.0f )
 
-const float simulationStepTime = 1.0f/100.0f;
+const float simulationStepTime = 1.0f/60.0f;
 const float maxHoldingTime = HOURS_TO_MINUTES(12);
 
 class Scene : public Activity,
-              virtual public NxUserContactReport,
-              virtual public NxUserTriggerReport,
+			  //PHYSX3
+              //virtual public NxUserContactReport,
+              //virtual public NxUserTriggerReport,
               virtual public RenderSource
 {
 protected:
@@ -189,33 +208,40 @@ private:
 private:
     gui::IGuiWindow*    _loadingWindow;
 private:    
-    NxBounds3           _phSceneBounds;     // NX scene bounds
-    NxSceneLimits       _phSceneLimits;     // NX scene limits
-    NxSceneDesc         _phSceneDesc;       // NX scene descriptor
-    NxScene*            _phScene;           // NX scene
-    NxVec3*             _phTerrainVerts;
-    NxU32*              _phTerrainTriangles;
-    NxMaterialIndex*    _phTerrainMaterials;
-    NxTriangleMeshDesc      _phTerrainDesc;      // NX terrain descriptor
-    NxTriangleMeshShapeDesc _phTerrainShapeDesc; // NX terrain shape descrpitor
-    NxActorDesc             _phTerrainActorDesc; // NX descriptor for terrain actor
-    NxActor*                _phTerrain;          // NX terrain
-    NxTriangleMeshShape*    _phTerrainShape;     // NX terrain shape
-    NxMaterial*             _phFleshMaterial;       // generic flesh material
-    NxMaterial*             _phMovingFleshMaterial; // moving flesh material (like feets motion)
-    NxMaterial*             _phClothMaterial;       // cloth material
+    PxBounds3           _phSceneBounds;     // PX scene bounds
+    PxSceneLimits       _phSceneLimits;     // PX scene limits
+    //PxSceneDesc*         _phSceneDesc;       // PX scene descriptor
+    PxScene*            _phScene;           // PX scene
+    PxVec3*             _phTerrainVerts;
+    PxU32*              _phTerrainTriangles;
+	//PHYSX3
+    PxMaterial*				_phTerrainMaterials;
+	PxTriangleMesh*			_phTerrainMesh;
+    PxTriangleMeshDesc      _phTerrainDesc;      // PX terrain descriptor
+    //PHYSX3
+	//NxTriangleMeshShapeDesc _phTerrainShapeDesc; // NX terrain shape descrpitor
+    //NxActorDesc             _phTerrainActorDesc; // NX descriptor for terrain actor
+    PxRigidStatic*          _phTerrain;				// PX terrain
+
+	PxShape*				_phTerrainShape;		// PX terrain shape
+    PxMaterial*             _phFleshMaterial;       // generic flesh material
+    PxMaterial*             _phMovingFleshMaterial; // moving flesh material (like feets motion)
+    PxMaterial*             _phClothMaterial;       // cloth material
 public:
     // engine progress callback
     static void progressCallback(const wchar_t* description, float progress, void* userData);
     static void postRenderCallback(void* data);
+	// Network
+	Network *network;
 private:
     // decomposition of class behaviour
     void load(void);
     void initializePhysics(void);
 public:
     // physics handlers
-    virtual void onContactNotify(NxContactPair &pair, NxU32 events);
-    virtual void onTrigger(NxShape& triggerShape, NxShape& otherShape, NxTriggerFlag status);
+	//PHYSX3
+    //virtual void onContactNotify(NxContactPair &pair, PxU32 events);
+    //virtual void onTrigger(NxShape& triggerShape, NxShape& otherShape, NxTriggerFlag status);
 public:
     // class implementation
     Scene(Career* career, Location* location, float holdingTime);
@@ -236,6 +262,7 @@ public:
     virtual unsigned int getPassClearFlag(unsigned int passId);
     virtual void renderPass(unsigned int passId);
     virtual void renderLensFlares(void);
+	void updateDaytime();
     // class complicated behaviour
     void endOfScene(void);
     float getHoldingTime(void);
@@ -256,7 +283,7 @@ public:
     float getWalkPitch(void);
     float getBackPitch(void);
     float getTurnPitch(void);
-    NxVec3 getWindAtPoint(const NxVec3& point);
+    PxVec3 getWindAtPoint(const PxVec3& point);
     void addParticleSystem(engine::IParticleSystem* psys);
     void removeParticleSystem(engine::IParticleSystem* psys);
     void addSmokeTrail(engine::IRendering* smokeTrail);
@@ -272,12 +299,12 @@ public:
     inline engine::IBSP* getPanorama(void) { return _panorama; }
     inline engine::IBSP* getStage(void) { return _stage; }
     inline engine::IRendering* getGrass(void) { return _grass; }    
-    inline NxScene* getPhScene(void) { return _phScene; }
-    inline NxActor* getPhTerrain(void) { return _phTerrain; }
-    inline NxTriangleMeshShape* getPhTerrainShape(void) { return _phTerrainShape; }
-    inline NxMaterial* getPhFleshMaterial(void) { return _phFleshMaterial; }
-    inline NxMaterial* getPhMovingFleshMaterial(void) { return _phMovingFleshMaterial; }
-    inline NxMaterial* getPhClothMaterial(void) { return _phClothMaterial; }
+    inline PxScene* getPhScene(void) { return _phScene; }
+	inline PxRigidStatic* getPhTerrain(void) { return _phTerrain; }
+	inline PxShape* getPhTerrainShape(void) { return _phTerrainShape; }
+    inline PxMaterial* getPhFleshMaterial(void) { return _phFleshMaterial; }
+    inline PxMaterial* getPhMovingFleshMaterial(void) { return _phMovingFleshMaterial; }
+    inline PxMaterial* getPhClothMaterial(void) { return _phClothMaterial; }
     inline bool isHUDEnabled(void) { return _isHUDEnabled; }
     inline database::LocationInfo* getLocationInfo(void) { return _locationInfo; }
     inline database::LocationInfo::Weather* getLocationWeather(void) { return _locationWeather; }

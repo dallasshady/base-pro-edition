@@ -142,6 +142,9 @@ void castingCallback_CloudyRodeo_RGB(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSmokeball( mission->getPlayer(), smokeballs, 0.5f * mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
 
     // cast script
     new script::Dropzone_CloudyRodeo_RGB( mission->getPlayer() );
@@ -278,6 +281,9 @@ void castingCallback_CloudyRodeo_SlalomRGB(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSmokeball( mission->getPlayer(), smokeballs, 0.75f * mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast script
     new script::Dropzone_CloudyRodeo_SlalomRGB( mission->getPlayer() );
@@ -381,6 +387,9 @@ void castingCallback_CloudyRodeo_ExtremeRGB(Actor* parent)
     new GoalStateOfHealth( mission->getPlayer() );
     new GoalStateOfGear( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast green smokeball 
     smokeBallDesc.color.set( 0.25f, 1.0f, 0.25f, 0.25f );

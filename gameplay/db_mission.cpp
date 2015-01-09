@@ -12,7 +12,6 @@
 #include "kjerag.h"
 #include "angelfalls.h"
 #include "elcapitan.h"
-#include "version.h"
 
 using namespace database;
 
@@ -61,8 +60,13 @@ static MissionInfo freeJumpingMissions[] =
     { 1, 491, 492, 0, 0, 40.0f, "./res/thumbnails/032.dds", weatherClearanceDropzone, windClearanceDropzone, castingCallback_Freejump_1500, equipCallback_Freejump, NULL },
     { 0, 495, 496, 0, 0, 50.0f, "./res/thumbnails/033.dds", weatherClearanceDropzone, windClearanceDropzone, castingCallback_Freejump_3000, equipCallback_Freejump, NULL },
     { 0, 497, 498, 0, 0, 60.0f, "./res/thumbnails/034.dds", weatherClearanceDropzone, windClearanceDropzone, castingCallback_Freejump_4000, equipCallback_Freejump, NULL },
-    //{ 4, 499, 500, 0, 0, 80.0f, "./res/thumbnails/035.dds", weatherClearanceDropzone, windClearanceDropzone, castingCallback_Freejump_7000, equipCallback_Freejump, NULL },
-    { 0, 0, 0, 0, 0, 0.0f, NULL, NULL, NULL, NULL }
+	// CLEAN VERSION
+	//{ 0, 333, 498, 0, 0, 1.0f, "./res/thumbnails/034.dds", weatherClearanceDropzone, windClearanceDropzone, castingCallback_Freejump_Multi, equipCallback_Freejump, NULL },
+	//{ 4, 499, 500, 0, 0, 60.0f, "./res/thumbnails/headdown.dds", weatherClearanceDropzone, windClearanceDropzone, castingCallback_Freejump_Headdown, equipCallback_Freejump, NULL },
+	//{ 4, 907, 908, 0, 0, 60.0f, "./res/thumbnails/sitfly.dds", weatherClearanceDropzone, windClearanceDropzone, castingCallback_Freejump_Sitfly, equipCallback_Freejump, NULL },
+	//{ 4, 909, 910, 0, 0, 60.0f, "./res/thumbnails/backfly.dds", weatherClearanceDropzone, windClearanceDropzone, castingCallback_Freejump_Backfly, equipCallback_Freejump, NULL },
+    
+	{ 0, 0, 0, 0, 0, 0.0f, NULL, NULL, NULL, NULL }
 };
 
 static MissionInfo skybaseMissions[] = 
@@ -82,7 +86,8 @@ static MissionInfo cloudyRodeoMissions[] =
 
 static MissionInfo moscowUndergroundMissions[] = 
 {
-    { 0, 516, 517, 0, 3, 60, "./res/thumbnails/111.dds", weatherClearanceAU, windClearanceAU, castingCallback_AU_PCA, equipCallback_AU_PCA, NULL },
+    { 4, 516, 517, 0, 3, 60, "./res/thumbnails/111.dds", weatherClearanceAU, windClearanceAU, castingCallback_AU_PCA, equipCallback_AU_PCA, NULL },
+	{ 4, 900, 901, 0, 3, 60, "./res/thumbnails/112.dds", weatherClearanceAU, windClearanceAU, castingCallback_AU_PCIH, equipCallback_AU_PCIH, NULL },
     { 0, 0, 0, 0, 0, 0.0f, NULL, NULL, NULL, NULL }
 };
 
@@ -197,7 +202,8 @@ static MissionInfo goFallSmokeballMissions[] =
 
 static MissionInfo kvlyUndergroundMissions[] =
 {
-    { 0, 612, 772, 0, 0, 4*60.0f, "./res/thumbnails/611.dds", weatherClearanceKVLY, windClearanceKVLY, castingCallback_KVLY_Underground, equipCallback_KVLY, NULL },
+    { 0, 612, 772, 0, 0, 30.0f, "./res/thumbnails/611.dds", weatherClearanceKVLY, windClearanceKVLY, castingCallback_KVLY_Underground, equipCallback_KVLY, NULL },
+	{ 1, 491, 492, 0, 0, 40.0f, "./res/thumbnails/032.dds", weatherClearanceKVLY, windClearanceKVLY, castingCallback_Freejump_4000, equipCallback_Freejump, NULL },
     { 0, 0, 0, 0, 0, 0.0f, NULL, NULL, NULL, NULL }
 };
 
@@ -264,6 +270,36 @@ static MissionInfo elCapitanFreeJumps[] =
     { 0, 0, 0, 0, 0, 0.0f, NULL, NULL, NULL, NULL }
 };
 
+/*
+    unsigned int     rank;             // minimal rank, necessible to achieve this mission
+    unsigned int     nameId;           // (language) mission name id
+    unsigned int     briefId;          // (language) mission briefing text id
+    unsigned int     flags;            // mission flags
+    unsigned int     exitPointId;      // mission exit point (or AIRPLANE_EXIT)
+
+    float            missionTime;      // career time taken when playing this mission
+    const char*      thumbnail;        // thumbnail resource    
+    WeatherClearance weatherClearance; // function checks mission clearance by weather
+    WindClearance    windClearance;    // function checks mission clearance by wind
+    CastingCallback  castingCallback;  // mission casting procedure
+    EquipCallback    equipCallback;    // mission equip procedure
+    TiXmlNode*       missionNode;      // mission node (user missions only)*/
+
+static MissionInfo burjTowerFreeJumps[] =
+{
+    { 0, 612, 772, 0, 0, 4*60.0f, "./res/thumbnails/611.dds", weatherClearanceKVLY, windClearanceKVLY, castingCallback_KVLY_Underground, equipCallback_KVLY, NULL },
+	{ 1, 491, 492, 0, 0, 40.0f, "./res/thumbnails/032.dds", weatherClearanceDropzone, windClearanceDropzone, castingCallback_Freejump_8000, equipCallback_Freejump, NULL },
+    { 0, 0, 0, 0, 0, 0.0f, NULL, NULL, NULL, NULL }
+};
+
+static MissionInfo mnemonicFreeJumps[] =
+{
+    { 0, 747, 748, 0, AIRPLANE_EXIT, 240.0f, "./res/thumbnails/611.dds", weatherClearanceKVLY, windClearanceKVLY, castingCallback_KVLY_Underground, equipCallback_KVLY, NULL },
+	{ 0, 747, 748, 0, 12, 240.0f, "./res/thumbnails/611.dds", weatherClearanceKVLY, windClearanceKVLY, castingCallback_KVLY_Underground, equipCallback_KVLY, NULL },
+	{ 0, 747, 748, 0, 13, 240.0f, "./res/thumbnails/611.dds", weatherClearanceKVLY, windClearanceKVLY, castingCallback_KVLY_Underground, equipCallback_KVLY, NULL },
+
+    { 0, 0, 0, 0, 0, 0.0f, NULL, NULL, NULL, NULL }
+};
 /**
  * tournament database
  */
@@ -298,6 +334,10 @@ static TournamentInfo tournaments[] =
     { 828, 829, 7, tfArbitrary, "T25", "./res/thumbnails/810.dds", angelFallsFreeJumps },
     { 842, 829, 7, tfBoogie,    "T26", "./res/thumbnails/820.dds", angelFallsBoogie },
     { 847, 848, 8, tfArbitrary, "T27", "./res/thumbnails/910.dds", elCapitanFreeJumps },
+	{ 847, 848, 9, tfArbitrary, "T28", "./res/thumbnails/910.dds", burjTowerFreeJumps },
+	{ 769, 746, 10, tfArbitrary, "T29", "./res/thumbnails/610.dds", mnemonicFreeJumps },
+	{ 773, 774, 10, tfBoogie,    "T30", "./res/thumbnails/620.dds", tvBoogieMissions },
+	
     { 0, 0, 0, tfArbitrary, NULL, NULL, NULL }
 };
 

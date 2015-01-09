@@ -2,7 +2,6 @@
 #include "headers.h"
 #include "database.h"
 #include "casting.h"
-#include "version.h"
 
 using namespace database;
 
@@ -79,6 +78,7 @@ static LocationInfo::AssetInfo kvlyAssets[] =
     { "KVLYCutscene", "./res/dropzone/cutscene.x" },
     { "Helicopter01", "./res/x/helicopter01.x" },
     { "Airplane02", "./res/x/cessna_static.x" },
+    { "Airplane01", "./res/dropzone/airplane01.x" },
     { NULL, NULL }
 };
 
@@ -103,6 +103,22 @@ static LocationInfo::AssetInfo elCapitanAssets[] =
     { "Helicopter01", "./res/x/helicopter01.x" },
     { "AngelFallsCutscene", "./res/angelfalls/cutscene.x" },
     { "Airplane02", "./res/x/cessna_static.x" },
+    { NULL, NULL }
+};
+static LocationInfo::AssetInfo burjDubaiAssets[] = 
+{   
+    { "KVLYCutscene", "./res/dropzone/cutscene.x" },
+    { "Helicopter01", "./res/x/helicopter01.x" },
+    { "Airplane02", "./res/x/cessna_static.x" },
+    { "Airplane01", "./res/dropzone/airplane01.x" },
+    { NULL, NULL }
+};
+static LocationInfo::AssetInfo mnemonicAssets[] = 
+{   
+    { "KVLYCutscene", "./res/dropzone/cutscene.x" },
+    { "Helicopter01", "./res/x/helicopter01.x" },
+    { "Airplane02", "./res/x/cessna_static.x" },
+    { "Airplane01", "./res/dropzone/airplane01.x" },
     { NULL, NULL }
 };
 
@@ -155,6 +171,7 @@ static LocationInfo::ExitPoint noExitPoints[] =
 static LocationInfo::ExitPoint dropzoneExitPoints[] = 
 {
     { 279, "Enclosure01", 1.0f },
+	{ 286, "CrowdEnclosure01", 1.0f },
     { 0, NULL }
 };
 
@@ -218,6 +235,30 @@ static LocationInfo::ExitPoint elCapitanExitPoints[] =
     { 0, NULL }
 };
 
+static LocationInfo::ExitPoint burjDubaiExitPoints[] = 
+{
+    { 769, "Enclosure01", 1.0f },
+    { 0, NULL }
+};
+static LocationInfo::ExitPoint mnemonicExitPoints[] = 
+{
+    { 769, "Enclosure02", 1.0f },
+	{ 1, "Enclosure01", 1.0f },
+	{ 2, "Enclosure03", 1.0f },
+	{ 3, "Enclosure04", 1.0f },
+	{ 4, "Enclosure05", 1.0f },
+	{ 5, "Enclosure06", 1.0f },
+	{ 6, "Enclosure07", 1.0f },
+	{ 7, "Enclosure08", 1.0f },
+	{ 8, "Enclosure09", 1.0f },
+	{ 9, "Enclosure10", 1.0f },
+	{ 10, "Enclosure11", 1.0f },
+	{ 11, "Enclosure12", 1.0f },
+	{ 12, "Enclosure13", 1.0f },
+	{ 13, "Enclosure14", 1.0f },
+	{ 14, "Enclosure15", 1.0f },
+    { 0, NULL }
+};
 /**
  * sub-database : lists of grass schemes
  */
@@ -262,6 +303,7 @@ static engine::GrassScheme kvlyGrass =
 static LocationInfo::Weather dropzoneWeatherOptions[] = 
 {
     { ::wtSunny,     engine::fogExp2, 0.00000175f, Vector4f( 0.84f,0.86f,0.88f,1.0f ), 1.0f,  1.0f,  { "./res/dropzone/clearday.ba", 1000, 2500000 } },
+	//{ ::wtSunny,     engine::fogExp2, 0.00000175f, Vector4f( 0.2f,0.2f,0.2f,1.0f ), 0.5f,  0.5f,  { "./res/dropzone/clearnight.ba", 1000, 2500000 } },
     { ::wtVariable,  engine::fogExp2, 0.0000025f,  Vector4f( 0.84f,0.85f,0.88f,1.0f ), 0.95f, 0.95f, { "./res/dropzone/cloudyday.ba", 1000, 2500000 } },
     { ::wtCloudy,    engine::fogExp,  0.000005f,   Vector4f( 0.84f,0.85f,0.88f,1.0f ), 0.85f, 0.9f,  { "./res/dropzone/cloudyday.ba", 1000, 2500000 } },
     { ::wtLightRain, engine::fogExp2, 0.00001f,   Vector4f( 0.65f,0.66f,0.68f,1.0f ), 0.75f, 0.85f, { "./res/dropzone/rainyday.ba", 1000, 2500000 } },
@@ -358,16 +400,27 @@ static LocationInfo::Weather elCapitanWeatherOptions[] =
     { ::wtDatabaseEnding, engine::fogNone, 0.0f, Vector4f( 0,0,0,0 ), 0.0f, 0.0f, { NULL, 0, 0 } }
 };
 
+static LocationInfo::Weather burjDubaiWeatherOptions[] = 
+{
+    { ::wtSunny,     engine::fogExp2, 0.000002f,  Vector4f( 0.84f,0.86f,0.88f,1.0f ), 1.0f,  1.0f,  { "./res/royalgorge/clearday.ba", 1000, 2000000 } },
+    { ::wtVariable,  engine::fogExp2, 0.0000025f, Vector4f( 0.65f,0.66f,0.67f,1.0f ), 0.95f, 0.95f, { "./res/royalgorge/cloudyday.ba", 1000, 2000000 } },
+    { ::wtCloudy,    engine::fogExp2, 0.000003f,  Vector4f( 0.65f,0.66f,0.67f,1.0f ), 0.85f, 0.9f,  { "./res/royalgorge/cloudyday.ba", 1000, 2000000 } },
+    { ::wtLightRain, engine::fogExp2, 0.000005f,  Vector4f( 0.37f,0.40f,0.45f,1.0f ), 0.75f, 0.85f, { "./res/royalgorge/rainyday.ba", 1000, 2000000 } },
+    { ::wtHardRain,  engine::fogExp2, 0.0000075f, Vector4f( 0.37f,0.40f,0.45f,1.0f ), 0.75f, 0.85f, { "./res/royalgorge/rainyday.ba", 1000, 2000000 } },
+    { ::wtThunder,   engine::fogExp2, 0.00001f,   Vector4f( 0.37f,0.40f,0.45f,1.0f ), 0.65f, 0.80f, { "./res/royalgorge/rainyday.ba", 1000, 2000000 } },
+    { ::wtDatabaseEnding, engine::fogNone, 0.0f, Vector4f( 0,0,0,0 ), 0.0f, 0.0f, { NULL, 0, 0 } }
+};
+
 /**
  * reverberation datatbase
  */
 
-LocationInfo::Reverberation dropzoneReverberation = { 1.0f, 0.33f, 0.125f, 0.25f };
-LocationInfo::Reverberation moscowReverberation = { 1.0f, 0.5f, 0.33f, 0.66f };
-LocationInfo::Reverberation caveReverberation = { 1.0f, 0.9f, 1.5f, 0.75f };
-LocationInfo::Reverberation trollveggenReverberation = { 1.0f, 0.419f, 1.740f, 0.158f };
-LocationInfo::Reverberation bridgeReverberation = { 1.0f, 0.5f, 1.0f, 0.9f };
-LocationInfo::Reverberation kvlyReverberation = { 1.0f, 0.5f, 1.0f, 0.9f };
+LocationInfo::Reverberation dropzoneReverberation = { 1.0f, 0.33f, 0.125f, 0.25f, 0.0f };
+LocationInfo::Reverberation moscowReverberation = { 1.0f, 0.5f, 0.33f, 0.66f, 0.0f };
+LocationInfo::Reverberation caveReverberation = { 1.0f, 0.9f, 1.5f, 0.75f, 10.0f };
+LocationInfo::Reverberation trollveggenReverberation = { 1.0f, 0.419f, 1.740f, 0.158f, 0.0f };
+LocationInfo::Reverberation bridgeReverberation = { 1.0f, 0.5f, 1.0f, 0.9f, 200.0f };
+LocationInfo::Reverberation kvlyReverberation = { 1.0f, 0.5f, 1.0f, 0.9f, 0.0f };
 
 /**
  * main location database
@@ -487,11 +540,7 @@ static LocationInfo locations[] =
     },
     // 5 - kvly-tv mast
     { 
-        #ifdef ADDON_WEB_KK
-            true, 
-        #else
-            false,
-        #endif
+        true,
         768, 464, 256, "LGD05", "./res/thumbnails/600.dds", true,
         25.0f,
         773, // boogie event
@@ -514,11 +563,7 @@ static LocationInfo locations[] =
     },
     // 6 - kjerag
     { 
-        #ifdef ADDON_WEB_KK
-            true, 
-        #else
-            false,
-        #endif
+        true,
         784, 1094, 185, "LGD06", "./res/thumbnails/700.dds", true,
         25.0f,
         799, // boogie event
@@ -541,11 +586,7 @@ static LocationInfo locations[] =
     },
     // 7 - angel falls
     { 
-        #ifdef ADDON_WEB_KK
-            true, 
-        #else
-            false,
-        #endif
+        true,
         832, 328*2, 241*2, "LGD07", "./res/thumbnails/800.dds", true,
         25.0f,
         842, // angel falls boogie
@@ -568,11 +609,7 @@ static LocationInfo locations[] =
     },
     // 8 - el capitan
     { 
-        #ifdef ADDON_WEB_EL_CAPITAN
-            true, 
-        #else
-            false,
-        #endif
+        true,
         846, 340, 301, "LGD08", "./res/thumbnails/900.dds", true,
         25.0f,
         0, // el capitan boogie
@@ -590,9 +627,72 @@ static LocationInfo locations[] =
         elCapitanExitPoints,
         casting::castingCallbackElCapitan,
         { 100.0f, 20000.0f, 1.0f, 1.1f, 0.9f, 1.5f, "./res/sounds/footsteps/rock/walk.ogg", "./res/sounds/footsteps/rock/turn.ogg" },
-        elCapitanWeatherOptions,
+        ostankinoWeatherOptions,
         &trollveggenReverberation
     },
+	/*CLEAN VERSION
+    // 9 - Burj Dubai
+    { 
+        true,
+        913, 1100, 290, "FF22", "./res/thumbnails/600.dds", true,
+        25.0f,
+        0, // el capitan boogie
+        0, // no festivals
+        0, // no climbings
+        0, // no smokeballs
+        824, // community event
+        { 1000,1000,1000,1000,1000 },
+        { "./res/Burjtower/Burjrender.ba", 10, 1000000 },
+        { "./res/Burjtower/Burj.ba", 0, 0 },
+        burjDubaiAssets,
+        NULL,
+        { 0.0275f, 0.8f },
+        { NULL, NULL, NULL, NULL, NULL, 0.0f, 0.0f },
+        burjDubaiExitPoints,
+        casting::castingCallbackTestLevel,
+        { 100.0f, 20000.0f, 1.0f, 1.25f, 0.9f, 1.0f, "./res/sounds/footsteps/rock/walk.ogg", "./res/sounds/footsteps/rock/turn.ogg" },
+        burjDubaiWeatherOptions,
+        &kvlyReverberation
+    },*/
+
+	/*
+	bool          accessible;  // location is accessible
+    unsigned int  nameId;      // id of text, naming the location
+    int           worldX;      // "longitude"
+    int           worldY;      // "lattitude"
+    const char*   gameData;    // name of entry in game data pool (serialization)    
+    const char*   thumbnail;   // thumbnail resource (NULL if no)
+    bool          wind;        // wind flag (false for indoor & cave locations)
+    float         stayFee;     // "stay-in-location" fee (collected by Divine event)
+    unsigned int  boogieId;    // (language) id of boogie event (0 for no boogies)
+    unsigned int  festivalId;  // (language) id of festival event (0 for no festivals)
+    unsigned int  climbingId;  // (language) id of climbing event (0 for no climbings)
+    unsigned int  smokeballId; // (language) id of smokeball event (0 for no smokeballs)
+    unsigned int  communityId; // (language) id of user community event (0 for no events)*/
+	// 10 - Mnemonic land
+	/*CLEAN VERSION
+    { 
+        false,
+        916, 1150, 800, "FF23", "./res/thumbnails/600.dds", true,
+        25.0f,
+        773, // el capitan boogie
+        0, // no festivals
+        0, // no climbings
+        0, // no smokeballs
+        824, // community event
+        { 1000,1000,1000,1000,1000 },
+        { "./res/mnemonic/mnemonic.ba", 10, 1000000 },
+        { "./res/mnemonic/gamedata.ba", 0, 0 },
+        mnemonicAssets,
+        NULL,
+        { 0.0275f, 0.8f },
+        { &kvlyGrass, "corn", "./res/particles/corn.dds", "./usr/cache/kvly.grass", "GrassSurface", 7500, 10000 },
+        mnemonicExitPoints,
+        casting::castingCallbackKVLY,
+        { 100.0f, 20000.0f, 1.0f, 1.25f, 0.9f, 1.0f, "./res/sounds/footsteps/rock/walk.ogg", "./res/sounds/footsteps/rock/turn.ogg" },
+        burjDubaiWeatherOptions,
+        &kvlyReverberation
+    },*/
     { 0, 0, 0 }
 };
 

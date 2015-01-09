@@ -3,6 +3,7 @@
 #define MATH_INTELLIGENCE_INCLUDED
 
 #include "headers.h"
+#include "foundation/PxSimpleTypes.h"
 #include "../shared/vector.h"
 #include "gameplay.h"
 
@@ -38,7 +39,7 @@ inline float calcAngle(const Vector3f& v1, const Vector3f& v2, const Vector3f& v
     return angle * -( sgnTest < 0 ? -1 : ( sgnTest > 0 ? 1 : 0 ) );
 }
 
-inline float calcAngle(const NxVec3& v1, const NxVec3& v2, const NxVec3& v3)
+inline float calcAngle(const PxVec3& v1, const PxVec3& v2, const PxVec3& v3)
 {
     float angle;
     float cosA = v1.dot( v2 );
@@ -47,8 +48,7 @@ inline float calcAngle(const NxVec3& v1, const NxVec3& v2, const NxVec3& v3)
     else if( cosA < -1.0f ) angle = 180;
     else angle = acosf( cosA ) * 180 / 3.1415926f;
     // signum of angle
-    NxVec3 crossTest;
-    crossTest.cross( v1, v2 );
+    PxVec3 crossTest = v1.cross(v2);
     float sgnTest = crossTest.dot( v3 );
     return angle * -( sgnTest < 0 ? -1 : ( sgnTest > 0 ? 1 : 0 ) );
 }
@@ -69,7 +69,7 @@ static float calcAngle(const Vector3f& v1, const Vector3f& v2)
     return angle;
 }
 
-static float calcAngle(const NxVec3& v1, const NxVec3& v2)
+static float calcAngle(const PxVec3& v1, const PxVec3& v2)
 {
     float angle;
     float cosA = v1.dot( v2 );
@@ -160,37 +160,81 @@ public:
     Matrix4f getTransformation(void) { return _transformation; }
 };
 
+// matrix multiplication
+static inline PxVec3 operator*(const PxTransform& m, const PxVec3& v) {
+	PxMat44 mat = PxMat44(m);
+	return PxVec3(mat.column0[0] * v.x + mat.column1[0] * v.y + mat.column2[0] * v.z,
+				  mat.column0[1] * v.x + mat.column1[1] * v.y + mat.column2[1] * v.z,
+				  mat.column0[2] * v.x + mat.column1[2] * v.y + mat.column2[2] * v.z
+				 );
+}
+static inline PxVec3 pxVec3Unextend(const PxExtendedVec3& v) {
+	return PxVec3(v.x, v.y, v.z);
+}
+static inline PxExtendedVec3 pxVec3Extend(const PxVec3& v) {
+	return PxExtendedVec3(v.x, v.y, v.z);
+}
 /**
  * wrappers
  */
 
-static inline NxVec3 wrap(const Vector3f& v)
+static inline PxVec3 wrap(const Vector3f& v)
 {
-    return NxVec3( v[0] * 0.01f, v[1] * 0.01f, v[2] * 0.01f );
+    return PxVec3( v[0] * 0.01f, v[1] * 0.01f, v[2] * 0.01f );
 }
 
-static inline Vector3f wrap(const NxVec3& v)
+static inline Vector3f wrap(const PxVec3& v)
 {
     return Vector3f( v.x * 100.0f, v.y * 100.0f, v.z * 100.0f );
 }
 
+static inline PxMat44 wrap(const Matrix4f& rhm) {
+	PxMat44 result;
+    PxVec3  x( rhm[0][0], rhm[1][0], rhm[2][0] );
+    PxVec3  y( rhm[0][1], rhm[1][1], rhm[2][1] );
+    PxVec3  z( rhm[0][2], rhm[1][2], rhm[2][2] );
+    x.normalize();
+    y.normalize();
+    z.normalize();
+	result.column0 = PxVec4(x, rhm[0][3]);
+	result.column1 = PxVec4(y, rhm[1][3]);
+	result.column2 = PxVec4(z, rhm[2][3]);
+	result.setPosition(PxVec3( rhm[3][0] * 0.01f, rhm[3][1] * 0.01f, rhm[3][2] * 0.01f ));
+	return result;
+}
+static inline Matrix4f wrap(const PxTransform& m)
+{
+    PxVec3 x,y,z;
+	x = m.q.getBasisVector0();
+    y = m.q.getBasisVector1();
+    z = m.q.getBasisVector2();
+    return Matrix4f(
+        x.x, x.y, x.z, 0.0f,
+        y.x, y.y, y.z, 0.0f,
+        z.x, z.y, z.z, 0.0f,
+        m.p.x * 100.0f, m.p.y * 100.0f, m.p.z * 100.0f, 1.0f
+    );
+}
+
+/*
 static inline NxMat34 wrap(const Matrix4f& rhm)
 {
     NxMat34 result;
-    NxVec3  x( rhm[0][0], rhm[1][0], rhm[2][0] );
-    NxVec3  y( rhm[0][1], rhm[1][1], rhm[2][1] );
-    NxVec3  z( rhm[0][2], rhm[1][2], rhm[2][2] );
+    PxVec3  x( rhm[0][0], rhm[1][0], rhm[2][0] );
+    PxVec3  y( rhm[0][1], rhm[1][1], rhm[2][1] );
+    PxVec3  z( rhm[0][2], rhm[1][2], rhm[2][2] );
     x.normalize();
     y.normalize();
     z.normalize();
     result.M = NxMat33( x,y,z );
-    result.t = NxVec3( rhm[3][0] * 0.01f, rhm[3][1] * 0.01f, rhm[3][2] * 0.01f );
+    result.t = PxVec3( rhm[3][0] * 0.01f, rhm[3][1] * 0.01f, rhm[3][2] * 0.01f );
     return result;
 }
-
+*/
+/*
 static inline Matrix4f wrap(const NxMat34& m)
 {
-    NxVec3 x,y,z;
+    PxVec3 x,y,z;
     m.M.getColumn( 0, x );
     m.M.getColumn( 1, y );
     m.M.getColumn( 2, z );
@@ -201,5 +245,6 @@ static inline Matrix4f wrap(const NxMat34& m)
         m.t.x * 100.0f, m.t.y * 100.0f, m.t.z * 100.0f, 1.0f
     );
 }
+*/
 
 #endif

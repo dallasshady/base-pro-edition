@@ -31,6 +31,8 @@ void NPCFreefall::onUpdate(float dt)
 
     // update target position
     Matrix4f catToyPose = getNPC()->getCatToy()->getCurrentPose();
+	getNPC()->getJumper()->getFreefallActor()->setGlobalPose(PxTransform(wrap( catToyPose )));
+
     _targetPos.set( catToyPose[3][0], catToyPose[3][1], catToyPose[3][2] );
 
     // if my character is still roaming

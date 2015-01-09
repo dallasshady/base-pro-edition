@@ -4,9 +4,10 @@
 #include "callback.h"
 #include "jumper.h"
 #include "imath.h"
-#include "NxIntersectionBoxBox.h" 
-#include "NxSegment.h"
-#include "NxExportedUtils.h"
+//PHYSX3
+//#include "NxIntersectionBoxBox.h" 
+//#include "NxSegment.h"
+//#include "NxExportedUtils.h"
 
 /**
  * generation routine
@@ -91,7 +92,7 @@ static float getSquaredLength(const Vector3f& v)
 
 float Forest::getDistanceToNearestTree(const Vector3f& pos)
 {
-    if( !_treeMatrix.size() ) return NX_MAX_F32;
+    if( !_treeMatrix.size() ) return PX_MAX_F32;
 
     Matrix4f& matrix = _treeMatrix[0];
     float result = getSquaredLength( Vector3f( matrix[3][0], matrix[3][1], matrix[3][2] ) - pos );
@@ -335,11 +336,11 @@ void Forest::debugRender(void)
     for( unsigned int i=0; i<_debugBoxes.size(); i++ )
     {
         engine::BoundingBox obb;
-        obb.inf = wrap( _debugBoxes[i].extents * -1 );
-        obb.sup = wrap( _debugBoxes[i].extents );
-        NxMat34 transformation;
-        transformation.M = _debugBoxes[i].rot;
-        transformation.t = _debugBoxes[i].center;
+        obb.inf = wrap( _debugBoxes[i].mHalfExtents * -1 );
+        obb.sup = wrap( _debugBoxes[i].mHalfExtents );
+		PxTransform transformation;
+        transformation.q = _debugBoxes[i].mRot;
+        transformation.p = pxVec3Unextend(_debugBoxes[i].mPos);
         obb.matrix = wrap( transformation );
 
         Gameplay::iEngine->renderOBB( obb, Vector4f( 1,1,1,1 ) );
@@ -416,7 +417,7 @@ void Forest::playSqueakSound(const Vector3f& pos)
  * interaction with jumper
  */
 
-static NxBox calculateOBB(engine::IGeometry* geometry, const Matrix4f& matrix, float scale)
+static PxBoxObstacle calculateOBB(engine::IGeometry* geometry, const Matrix4f& matrix, float scale)
 {
     assert( geometry );
     Vector3f aabbInf = geometry->getAABBInf();
@@ -434,111 +435,118 @@ static NxBox calculateOBB(engine::IGeometry* geometry, const Matrix4f& matrix, f
     Vector3f aabbCenter = aabbInf + ( aabbSup - aabbInf ) * 0.5f;
     aabbInf *= scale;
     aabbSup *= scale;
-    NxMat34 transformation = wrap( Matrix4f(
-        right[0], right[1], right[2], 0.0f,
-        up[0], up[1], up[2], 0.0f,
-        at[0], at[1], at[2], 0.0f,
-        pos[0], pos[1], pos[2], 1.0f
-    ) );
-    NxBox result;
-    result.center  = wrap( pos ) + wrap( aabbCenter );
-    result.extents = wrap( ( aabbSup - aabbInf ) * 0.5f );
-    result.rot = transformation.M;
+	
+    PxTransform transformation = PxTransform(PxMat44(
+        PxVec4(right[0], right[1], right[2], 0.0f),
+        PxVec4(up[0], up[1], up[2], 0.0f),
+        PxVec4(at[0], at[1], at[2], 0.0f),
+       PxVec4( pos[0], pos[1], pos[2], 1.0f)
+    ));
+    
+	const Vector3f half_extents = ( aabbSup - aabbInf ) * 0.5f;
+	PxBoxObstacle result;
+	result.mPos = PxExtendedVec3(pos[0], pos[1], pos[2]) + PxExtendedVec3(aabbCenter[0], aabbCenter[1], aabbCenter[2]);
+	result.mHalfExtents = PxVec3(half_extents[0], half_extents[1], half_extents[2]);
+    result.mRot = transformation.q;
     return result; 
 }
 
-static void calculateIntersectionDetails(NxBox& oob1, NxBox& oob2, float& outVolume2, NxVec3& outGlobalIntersectionCenter2)
+static void calculateIntersectionDetails(PxBoxObstacle& oob1, PxBoxObstacle& oob2, float& outVolume2, PxVec3& outGlobalIntersectionCenter2, PxScene *scene)
 {
-    float step = 0.5f;
-    if( step > oob2.extents.x * 2 ) step = oob2.extents.x * 2;
-    if( step > oob2.extents.y * 2 ) step = oob2.extents.y * 2;
-    if( step > oob2.extents.z * 2 ) step = oob2.extents.z * 2;
+	//PHYSX3
+ //   float step = 0.5f;
+ //   if( step > oob2.mHalfExtents.x * 2 ) step = oob2.mHalfExtents.x * 2;
+ //   if( step > oob2.mHalfExtents.y * 2 ) step = oob2.mHalfExtents.y * 2;
+ //   if( step > oob2.mHalfExtents.z * 2 ) step = oob2.mHalfExtents.z * 2;
 
-    float x = -oob2.extents.x;
-    float y = -oob2.extents.y;
-    float z = -oob2.extents.z;
+ //   float x = -oob2.mHalfExtents.x;
+ //   float y = -oob2.mHalfExtents.y;
+ //   float z = -oob2.mHalfExtents.z;
 
-    NxVec3 localPoint;
-    NxVec3 globalPoint;
-    NxVec3 localIntersectionCenter( 0,0,0 );
-    unsigned int numTotalPoints = 0;
-    unsigned int numIntersectedPoints = 0;
+ //   PxVec3 localPoint;
+ //   PxVec3 globalPoint;
+ //   PxVec3 localIntersectionCenter( 0,0,0 );
+ //   unsigned int numTotalPoints = 0;
+ //   unsigned int numIntersectedPoints = 0;
 
-    NxMat34 matrix2;
-    matrix2.M = oob2.rot;
-    matrix2.t = oob2.center;
+ //   PxTransform matrix2;
+ //   matrix2.q = oob2.mRot;
+	//matrix2.p = PxVec3(oob2.mPos.x, oob2.mPos.y, oob2.mPos.z);
 
-    while( x <= oob2.extents.x )
-    {
-        while( y <= oob2.extents.y )
-        {
-            while( z <= oob2.extents.z )
-            {
-                localPoint.set( x,y,z );
-                globalPoint = matrix2 * localPoint;
-                if( NxBoxContainsPoint( oob1, globalPoint ) )
-                {
-                    if( numIntersectedPoints )
-                    {
-                        localIntersectionCenter = localPoint;
-                    }
-                    else
-                    {
-                        localIntersectionCenter += localPoint;
-                    }
-                    numIntersectedPoints++;
-                }
-                numTotalPoints++;
-                z += step;
-            }
-            z = -oob2.extents.z;
-            y += step;
-        }
-        y = -oob2.extents.y;
-        x += step;
-    }
+ //   while( x <= oob2.mHalfExtents.x )
+ //   {
+ //       while( y <= oob2.mHalfExtents.y )
+ //       {
+ //           while( z <= oob2.mHalfExtents.z )
+ //           {
+ //               localPoint = PxVec3( x,y,z );
+ //               globalPoint = matrix2 * localPoint;
+	//		
+	//			
+ //               if( NxBoxContainsPoint( oob1, globalPoint ) )
+ //               {
+ //                   if( numIntersectedPoints )
+ //                   {
+ //                       localIntersectionCenter = localPoint;
+ //                   }
+ //                   else
+ //                   {
+ //                       localIntersectionCenter += localPoint;
+ //                   }
+ //                   numIntersectedPoints++;
+ //               }
+ //               numTotalPoints++;
+ //               z += step;
+ //           }
+ //           z = -oob2.extents.z;
+ //           y += step;
+ //       }
+ //       y = -oob2.extents.y;
+ //       x += step;
+ //   }
 
-    outVolume2 = float( numIntersectedPoints ) / float( numTotalPoints );
-        
-    if( numIntersectedPoints )
-    {
-        localIntersectionCenter = localIntersectionCenter / float( numIntersectedPoints );
-    }   
-    outGlobalIntersectionCenter2 = matrix2 * localIntersectionCenter;
+ //   outVolume2 = float( numIntersectedPoints ) / float( numTotalPoints );
+ //       
+ //   if( numIntersectedPoints )
+ //   {
+ //       localIntersectionCenter = localIntersectionCenter / float( numIntersectedPoints );
+ //   }   
+ //   outGlobalIntersectionCenter2 = matrix2 * localIntersectionCenter;
 
     // getCore()->logMessage( "oobb intersection volume: %3.2f (%d/%d) step: %3.2f", outVolume2, numIntersectedPoints, numTotalPoints, step );
 }
 
 unsigned int Forest::onCollideJumper(unsigned int id, Matrix4f* matrix, void* data)
 {
-    Forest* __this = reinterpret_cast<Forest*>( data );
+	//PHYSX3
+    //Forest* __this = reinterpret_cast<Forest*>( data );
 
-    // determine obb of instance
-    NxBox instanceOBB = calculateOBB( 
-        __this->_canopyBatch->getBatchScheme()->lodGeometry[0], 
-        *matrix,
-        __this->_desc.collScale
-    );
-    __this->_debugBoxes.push_back( instanceOBB );
+    //// determine obb of instance
+    //PxBoxObstacle instanceOBB = calculateOBB( 
+    //    __this->_canopyBatch->getBatchScheme()->lodGeometry[0], 
+    //    *matrix,
+    //    __this->_desc.collScale
+    //);
+    //__this->_debugBoxes.push_back( instanceOBB );
 
-    // collide obbs
-    if( NxBoxBoxIntersect( instanceOBB, __this->_jumperOBB ) )
-    {
-        Jumper* jumper = dynamic_cast<Jumper*>( __this->_currentJumper );
-        // add impulse to jumper body
-        NxVec3 linearVelocity = __this->_currentJumperActor->getLinearVelocity();
-        NxVec3 impulse = linearVelocity * getCore()->getRandToolkit()->getUniform( __this->_desc.minImpulseFactor, __this->_desc.maxImpulseFactor ) * -1;
-        NxVec3 localPos(
-            __this->_jumperOBB.extents.x * getCore()->getRandToolkit()->getUniform( -1, 1 ),
-            __this->_jumperOBB.extents.y * getCore()->getRandToolkit()->getUniform( -1, 1 ),
-            __this->_jumperOBB.extents.z * getCore()->getRandToolkit()->getUniform( -1, 1 )
-        );
-        __this->_currentJumperActor->addForceAtLocalPos( impulse, localPos, NX_IMPULSE );
-        // damage jumper
-        jumper->damage( __this->_desc.damageFactor * impulse.magnitude(), 0.0f, linearVelocity.magnitude() );
-        // play rustle sound
-        __this->playRustleSound( __this->_currentJumperCollision->getFrame()->getPos() );
-    }
+    //// collide obbs
+    //if( NxBoxBoxIntersect( instanceOBB, __this->_jumperOBB ) )
+    //{
+    //    Jumper* jumper = dynamic_cast<Jumper*>( __this->_currentJumper );
+    //    // add impulse to jumper body
+    //    PxVec3 linearVelocity = __this->_currentJumperActor->getLinearVelocity();
+    //    PxVec3 impulse = linearVelocity * getCore()->getRandToolkit()->getUniform( __this->_desc.minImpulseFactor, __this->_desc.maxImpulseFactor ) * -1;
+    //    PxVec3 localPos(
+    //        __this->_jumperOBB.extents.x * getCore()->getRandToolkit()->getUniform( -1, 1 ),
+    //        __this->_jumperOBB.extents.y * getCore()->getRandToolkit()->getUniform( -1, 1 ),
+    //        __this->_jumperOBB.extents.z * getCore()->getRandToolkit()->getUniform( -1, 1 )
+    //    );
+    //    __this->_currentJumperActor->addForceAtLocalPos( impulse, localPos, NX_IMPULSE );
+    //    // damage jumper
+    //    jumper->damage( __this->_desc.damageFactor * impulse.magnitude(), 0.0f, linearVelocity.magnitude() );
+    //    // play rustle sound
+    //    __this->playRustleSound( __this->_currentJumperCollision->getFrame()->getPos() );
+    //}
 
     return id;
 }
@@ -548,41 +556,42 @@ unsigned int Forest::onCollideCanopy(unsigned int id, Matrix4f* matrix, void* da
     Forest* __this = reinterpret_cast<Forest*>( data );
 
     // determine obb of instance
-    NxBox instanceOBB = calculateOBB( 
+    PxBoxObstacle instanceOBB = calculateOBB( 
         __this->_canopyBatch->getBatchScheme()->lodGeometry[0], 
         *matrix,
         __this->_desc.collScale
     );
     __this->_debugBoxes.push_back( instanceOBB );
 
-    // collide obbs
-    if( NxBoxBoxIntersect( instanceOBB, __this->_canopyOBB ) )
-    {
-        CanopySimulator* canopy = dynamic_cast<CanopySimulator*>( __this->_currentCanopy );
-        // calculate intersection details
-        float volume;
-        NxVec3 globalIntersectionCenter;
-        calculateIntersectionDetails( instanceOBB, __this->_canopyOBB, volume, globalIntersectionCenter );
-        assert( volume <= 1.0f );
-        // add force to canopy
-        NxVec3 linearVelocity = __this->_currentCanopyActor->getLinearVelocity();
-        float linearVelocityMagnitude = linearVelocity.magnitude();
-        linearVelocity.normalize();
-        NxVec3 force = linearVelocity * 0.2f * sqr( linearVelocityMagnitude ) * __this->_currentCanopyInfo->square * -volume;
-        __this->_currentCanopyActor->addForceAtPos( force, globalIntersectionCenter, NX_FORCE );
-        // damage canopy
-        canopy->rip( __this->_desc.ripFactor * force.magnitude() );
-        // entangle canopy
-        if( volume > __this->_desc.entangleFactor )
-        {            
-            canopy->entangle( globalIntersectionCenter );
-            __this->playSqueakSound( wrap( globalIntersectionCenter ) );
-        }
-        else
-        {
-            __this->playRustleSound( wrap( globalIntersectionCenter ) );
-        }
-    }
+	//PHYSX3
+    //// collide obbs
+    //if( NxBoxBoxIntersect( instanceOBB, __this->_canopyOBB ) )
+    //{
+    //    CanopySimulator* canopy = dynamic_cast<CanopySimulator*>( __this->_currentCanopy );
+    //    // calculate intersection details
+    //    float volume;
+    //    PxVec3 globalIntersectionCenter;
+    //    calculateIntersectionDetails( instanceOBB, __this->_canopyOBB, volume, globalIntersectionCenter,  );
+    //    assert( volume <= 1.0f );
+    //    // add force to canopy
+    //    PxVec3 linearVelocity = __this->_currentCanopyActor->getLinearVelocity();
+    //    float linearVelocityMagnitude = linearVelocity.magnitude();
+    //    linearVelocity.normalize();
+    //    PxVec3 force = linearVelocity * 0.2f * sqr( linearVelocityMagnitude ) * __this->_currentCanopyInfo->square * -volume;
+    //    __this->_currentCanopyActor->addForceAtPos( force, globalIntersectionCenter, NX_FORCE );
+    //    // damage canopy
+    //    canopy->rip( __this->_desc.ripFactor * force.magnitude() );
+    //    // entangle canopy
+    //    if( volume > __this->_desc.entangleFactor )
+    //    {            
+    //        canopy->entangle( globalIntersectionCenter );
+    //        __this->playSqueakSound( wrap( globalIntersectionCenter ) );
+    //    }
+    //    else
+    //    {
+    //        __this->playRustleSound( wrap( globalIntersectionCenter ) );
+    //    }
+    //}
 
     return id;
 }
@@ -603,7 +612,7 @@ void Forest::simulateInteraction(Actor* actor)
     if( _jumperCanopyIsOpened )
     {
         _currentCanopyCollision = CanopySimulator::getCollisionGeometry( canopy->getClump() );
-        _currentCanopyActor = canopy->getNxActor();
+        _currentCanopyActor = canopy->getActor();
     }
     else
     {
@@ -643,11 +652,12 @@ void Forest::simulateInteraction(Actor* actor)
             _currentJumperCollision->getFrame()->getLTM(),
             1.0f
         );
-        _jumperOBB.center = _currentJumperActor->getGlobalPosition(); 
+
+        _jumperOBB.mPos = pxVec3Extend(_currentJumperActor->getGlobalPose().p);
         _debugBoxes.push_back( _jumperOBB );
 
         float testBoxSize = 250;
-        Vector3f jumperPos = wrap( _jumperOBB.center );
+        Vector3f jumperPos = Vector3f( _jumperOBB.mPos.x, _jumperOBB.mPos.y, _jumperOBB.mPos.z );
         _canopyBatch->forAllInstancesInAABB(
             jumperPos - Vector3f( testBoxSize,testBoxSize,testBoxSize ),
             jumperPos + Vector3f( testBoxSize,testBoxSize,testBoxSize ),
@@ -662,11 +672,11 @@ void Forest::simulateInteraction(Actor* actor)
             _currentCanopyCollision->getFrame()->getLTM(),
             1.0f
         );
-        _canopyOBB.center = _currentCanopyActor->getGlobalPosition();
+        _canopyOBB.mPos = pxVec3Extend(_currentCanopyActor->getGlobalPose().p);
         _debugBoxes.push_back( _canopyOBB );
 
         float testBoxSize = 750;
-        Vector3f canopyPos = wrap( _canopyOBB.center );
+        Vector3f canopyPos = Vector3f( _canopyOBB.mPos.x, _canopyOBB.mPos.y, _canopyOBB.mPos.z );
         _canopyBatch->forAllInstancesInAABB(
             canopyPos - Vector3f( testBoxSize,testBoxSize,testBoxSize ),
             canopyPos + Vector3f( testBoxSize,testBoxSize,testBoxSize ),

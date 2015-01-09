@@ -5,7 +5,6 @@
 #include "../common/istring.h"
 #include "unicode.h"
 #include "messagebox.h"
-#include "version.h"
 
 /**
  * class implementation

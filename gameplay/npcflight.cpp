@@ -48,6 +48,15 @@ void NPCFlight::onUpdate(float dt)
     SpinalCord* spinalCord = getNPC()->getSpinalCord();
     spinalCord->reset();
 
+	// handle linetwist
+	if (getNPC()->getJumper()->getDominantCanopy()->getLinetwists() > 0.0f) {
+		spinalCord->leftWarp = 1.0f;
+		return;
+	} else if (getNPC()->getJumper()->getDominantCanopy()->getLinetwists() < 0.0f) {
+		spinalCord->rightWarp = 1.0f;
+		return;
+	}
+
     // ||                    ||
     // \/ AUTOMATE CONDITION \/
 
@@ -114,6 +123,7 @@ void NPCFlight::onUpdate(float dt)
     }
 
     // detect obstacles
+	/*
     NxRay worldRay;
     worldRay.orig = wrap( getNPC()->getJumper()->getClump()->getFrame()->getPos() );
     worldRay.dir  = wrap( getNPC()->getJumper()->getClump()->getFrame()->getAt() );
@@ -140,6 +150,7 @@ void NPCFlight::onUpdate(float dt)
             spinalCord->left += ( 1.0f - dist / maxDist ) * factorSteering * _steeringRange;
         }
     }
+	*/
 
     // oscullation reduction (steering mode)
     // works if NPC is precisely oriented on its "cat toy"

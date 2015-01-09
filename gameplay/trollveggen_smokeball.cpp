@@ -100,6 +100,8 @@ void castingCallback_TrollSmokeball_RGB_Tracking(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSmokeball( mission->getPlayer(), smokeballs, 1.5f * mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast script
     new script::TrollSmokeball_RGB_Script( mission->getPlayer() );
@@ -156,6 +158,8 @@ void castingCallback_TrollSmokeball_RGB_Slalom(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSmokeball( mission->getPlayer(), smokeballs, 1.5f * mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast script
     new script::TrollSmokeball_RGB_Script( mission->getPlayer() );

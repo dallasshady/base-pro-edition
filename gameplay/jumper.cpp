@@ -1,4 +1,3 @@
-
 #include "headers.h"
 #include "jumper.h"
 #include "imath.h"
@@ -9,8 +8,580 @@
 #include "windpointer.h"
 #include "../common/istring.h"
 #include "unicode.h"
-#include "version.h"
 #include "mmsystem.h"
+
+float timestamp = 0.0f;
+//// SASHA
+int cnt = 1;
+float it = 4000.0f;
+float it2;
+float it3;
+float itb=0;
+boolean change = false;  
+int buttonState = 0;
+float diff;
+float altg;
+float altc;
+float altagl;
+float pressure;
+float temp;
+float halt;
+float malt;
+float state_data;	// stores state variables
+float state_timer;	// decreases with each iteration of loop() by dt
+float deltaTime;
+float dropzoneAltitude; // calibrated AGL
+
+// vertical velocity
+float Vvert;
+float Vvert_acc;				// change in vertical velocity
+float Vvert_timer;			// timer for calculating vertical velocity every second
+float Vvert_prev_altitude;	// previous altitude required for Vvert calculation
+
+// state minimum/maximum constants
+#define STATE_LIMITS_MINIMUM_CLIMB 3
+#define STATE_LIMITS_MINIMUM_FREEFALL -15.0f
+#define STATE_LIMITS_MINIMUM_CHOP_FREEFALL -30.0f	// minimum for re-entering freefall from canopy flight
+#define STATE_LIMITS_MINIMUM_OPENING_ACC 10 
+#define STATE_LIMITS_MINIMUM_OPENING_VVERT -30
+#define STATE_LIMITS_MINIMUM_CANOPY_ACC 3
+#define STATE_LIMITS_MINIMUM_LANDED_AGL 10
+#define STATE_LIMITS_MINIMUM_LANDED_VVERT -2
+
+// CALIBRATING		- default state. Takes 3 reading every second and calculates the average
+// GROUND			- transitions from CALIBRATING after 3 seconds
+// CLIMB			- transitions from GROUND or JUMPRUN, Vvert reaches at least 3 m/s (~590 ft/min) and stays for 3 seconds
+//						L410 initial rate of climb: 1378 ft/min
+//						AN-2 initial rate of climb: 690 ft/min
+//						Skyvan initial rate of climb: 1640 ft/min
+//						Pilatus Porter initial rate of climb: 941 ft/min
+// JUMPRUN			- transitions from CLIMB, after altitude stays within 50m. in recent three seconds
+// FREEFALL			- transitions from GROUND, CLIMB or JUMPRUN when Vvert reaches -15 m/s
+// CANOPY_OPENING	- transitions from FREEFALL, CLIMB or JUMPRUN after Vver_acc reaches 10 m/s^2 for 1.5 seconds and Vvert is higher then -30 m/s
+// CANOPY_FLIGHT	- transitions from any of the previous when Vvert_acc is no more than 3 m/s^2
+// LANDED			- transitions when altitude 0 +/- 10m and Vver 0 +/- 5 m/s
+enum ALTI_STATES {
+	CALIBRATING,
+	GROUND,
+	CLIMB,
+	JUMPRUN,
+	FREEFALL,
+	CANOPY_OPENING,
+	CANOPY_FLIGHT,
+	LANDED
+};
+
+int flight_state = CALIBRATING;		// flight state
+
+class Adafruit_BMP085 {
+public:
+	float altitude;
+	float pressure;
+	float pressureDelta;
+	float temperature;
+	bool begin() {
+		altitude = 0.0f;
+		pressure = 0.0f;
+		pressureDelta = getCore()->getRandToolkit()->getUniform(-50.0f, 50.0f);
+		temperature = 15.0f;
+		return true;
+	}
+	float readAltitude(float sealevelPressure = 101325) {
+		return altitude;
+	}
+	float readPressure() {
+		return pressure + pressureDelta;
+	}
+	float readTemperature() {
+		return temperature;
+	}
+};
+class LCD5110 {
+public:
+	wchar_t buffer[256];
+
+	LCD5110::LCD5110() {}
+	LCD5110::LCD5110(int a, int b, int c, int d, int e) {}
+	void InitLCD(int a) {
+		clrScr();
+	}
+	void invert(bool a) {}
+	void setFont(unsigned int a) {}
+	void print (wchar_t *a, int b, int c) {
+		wcscat(buffer, a);
+	}
+	void printNumI(int number, int b, int c) {
+		wchar_t a[32];
+		swprintf(a, 256, L"%i", number);
+		wcscat(buffer, a);
+	}
+	void printNumF(float number, int decimals, int b, int c) {
+		wchar_t a[32];
+		swprintf(a, 256, L"%4.2f", number);
+		wcscat(buffer, a);
+	}
+	void clrScr() {
+		for (int i = 0; i < 256; ++i) {
+			buffer[i] = '\0';
+		}
+	};
+};
+class serial {
+public:
+	void begin(int a) {}
+	void write(char *a) {}
+	void print(char *str) {}
+	void println(char *str) {}
+	void println(int str) {}
+	void println(double str) {}
+	void println(bool *str) {}
+} Serial;
+
+// STUBS
+enum STUBS {
+	//INPUT = 0,
+	HIGH,
+	LOW
+};
+void pinMode(int a, int b) {}
+void delay(int a) {}
+int digitalRead(int a) {
+	return LOW;
+}
+float getDeltaTime() {
+	return deltaTime;
+}
+
+Adafruit_BMP085 bmp;
+int alt_read();
+void disp_alt(); 
+
+LCD5110 myGLCD(7,6,5,3,4);
+unsigned int SmallFont = 0;
+unsigned int MediumNumbers = 0;
+unsigned int BigNumbers = 0;
+unsigned int font1 = 0;
+void setup() {
+	//Button input pin  
+	pinMode(8, 0);
+
+	myGLCD.InitLCD(60);
+	myGLCD.invert(false);
+	//contrast 0-127  
+	// myGLCD.setContrast(60);
+
+	//bmp85  
+	Serial.begin(9600);
+	Serial.write("SETUP!!!");
+	if (!bmp.begin()) {
+		Serial.println("Could not find a valid BMP085 sensor, check wiring!");
+		myGLCD.setFont(SmallFont);
+		myGLCD.print(L"Sensor error",12,30);
+
+		//while (1) {}
+	}
+
+	// Vvert calculation
+	Vvert = 0.0f;
+	Vvert_prev_altitude = bmp.readAltitude();
+	Vvert_timer = 1.0f;
+
+	deltaTime = 0.0f;
+	// initial state is calibration. give it one seconds to take the first reading
+	flight_state = CALIBRATING;
+	state_timer = 1.0f;	
+	// reset calibration readings
+	state_data = 0.0f;
+	altg = bmp.readAltitude();    
+
+	//one time alt display                   
+	alt_read();                   
+	disp_alt(); 
+}
+float debug = 0.0f;
+void update_flightstate() {
+	// advance timer
+	if (state_timer > 0) {
+		state_timer -= getDeltaTime();
+	}
+
+	// Calibration state
+	// state_data - stores number of readings taken
+	if (flight_state == CALIBRATING) {
+		if (state_timer <= 0.0f) {
+			dropzoneAltitude += bmp.readAltitude();
+			state_data += 1.0f;
+			// three readings taken?
+			if (state_data == 3.0f) {
+				dropzoneAltitude /= 3.0f;
+				// set data for next state
+				state_data = 0;
+				state_timer = 1.0f;
+				flight_state = GROUND;
+				Vvert = 0.0f;
+			// wait for another reading in one second
+			} else {
+				state_timer = 1.0f;
+			}
+		}
+
+	// ground state (read altitude change every second)
+	// state_data	- store number of readings (seconds) Vvert was higher than minimum for climb
+	} else if (flight_state == GROUND) {
+		// at least a second has passed
+		if (state_timer <= 0.0f) {
+			if (Vvert >= STATE_LIMITS_MINIMUM_CLIMB || Vvert <= STATE_LIMITS_MINIMUM_FREEFALL) {
+				// count reading as possible climb
+				state_data += 1.0f;
+			} else {
+				// reset number of readings if Vvert is too low
+				state_data = 0.0f;
+			}
+			// enought to enter climb?
+			if (state_data >= 2.5f) {	// 2.5f for possible float errors
+				// set data for next state
+				state_data = 0.0f;
+				state_timer = 1.0f;
+				if (Vvert <= STATE_LIMITS_MINIMUM_FREEFALL) {
+					flight_state = FREEFALL;
+				} else {
+					flight_state = CLIMB;
+				}
+			// continue to one more second
+			} else {
+				// reset timer
+				state_timer += 1.0f;
+			}
+		}
+	// climb state (read altitude change every second and wait for JUMPRUN of FREEFALL)
+	// state_data	- store number of readings (seconds) Vvert was lower than minimum for FREEFALL 
+	//				  or low enough for JUMPRUN
+	} else if (flight_state == CLIMB) {
+		// at least a second has passed
+		if (state_timer <= 0.0f) {
+			if (Vvert <= STATE_LIMITS_MINIMUM_FREEFALL || Vvert >= -STATE_LIMITS_MINIMUM_CLIMB && Vvert <= STATE_LIMITS_MINIMUM_CLIMB) {
+				// count reading as possible freefall or jumprun
+				state_data += 1.0f;
+			} else {
+				// reset number of readings if Vvert is too high
+				state_data = 0.0f;
+			}
+
+			// enought to enter freefall?
+			if (state_data >= 1.5f && Vvert <= STATE_LIMITS_MINIMUM_FREEFALL) {	// 1.5f for possible float errors
+				// reset data for next state (state_data will be used for altitude in CLIMB state, so don't touch
+				state_data = 0.0f;
+				state_timer = 0.0f;
+				flight_state = FREEFALL;
+			// enought to enter jumprun?
+			} else if (state_data >= 1.5f) {	// 1.5f for possible float errors
+				state_timer = 0.0f;
+				flight_state = JUMPRUN;
+			// continue to one more second
+			} else {
+				// reset timer
+				state_timer += 1.0f;
+			}
+		}
+	// jumprun state (read altitude change every second and wait for JUMPRUN of FREEFALL)
+	// state_data	- store number of readings (seconds) Vvert was lower than minimum for FREEFALL 
+	//				  or high enough for CLIMB
+	} else if (flight_state == JUMPRUN) {
+		if (Vvert <= STATE_LIMITS_MINIMUM_FREEFALL || Vvert >= STATE_LIMITS_MINIMUM_CLIMB) {
+			// count reading as possible freefall or climb
+			state_data += 1.0f;
+		} else {
+			// reset number of readings if Vvert is not useful
+			state_data = 0.0f;
+		}
+
+		// enought to enter freefall?
+		if (state_data >= 1.5f && Vvert <= STATE_LIMITS_MINIMUM_FREEFALL) {	// 1.5f for possible float errors
+			// reset data for next state (state_data will be used for altitude in CLIMB state, so don't touch
+			state_data = 0.0f;
+			state_timer = 0.0f;
+			flight_state = FREEFALL;
+		// enought to enter climb?
+		} else if (state_data >= 1.5f && Vvert >= STATE_LIMITS_MINIMUM_CLIMB) {	// 1.5f for possible float errors
+			state_timer = 0.0f;
+			flight_state = CLIMB;
+		}
+
+	// freefall state (read vertical velocity change every second and wait for CANOPY OPENING)
+	} else if (flight_state == FREEFALL) {
+		if (Vvert_acc >= STATE_LIMITS_MINIMUM_OPENING_ACC || Vvert >= STATE_LIMITS_MINIMUM_OPENING_VVERT) {
+			// count reading as possible canopy opening
+			state_data += 1.0f;
+		} else {
+			// reset number of readings if Vvert is not useful
+			state_data = 0.0f;
+		}
+
+		// enought to enter canopy opening?
+		if (state_data >= 3.5f) {	// 3.5f for possible float errors
+			// reset data for next state (state_data will be used for altitude in CLIMB state, so don't touch
+			state_data = 0.0f;
+			state_timer = 0.0f;
+			flight_state = CANOPY_OPENING;
+		}
+
+	// canopy opening state (read vertical velocity change every second and wait for CANOPY OPENING)
+	} else if (flight_state == CANOPY_OPENING) {
+		if (Vvert_acc <= STATE_LIMITS_MINIMUM_CANOPY_ACC) {
+			// count reading as possible canopy opening
+			state_data += 1.0f;
+		} else {
+			// reset number of readings if Vvert is not useful
+			state_data = 0.0f;
+		}
+
+		// enought to enter canopy flight?
+		if (state_data >= 1.5f && Vvert_acc <= STATE_LIMITS_MINIMUM_CANOPY_ACC) {	// 1.5f for possible float errors
+			state_data = 0.0f;
+			state_timer = 0.0f;
+			flight_state = CANOPY_FLIGHT;
+		}
+	// canopy opening state (read vertical velocity change every second and wait for LANDED or FREEFALL)
+	} else if (flight_state == CANOPY_FLIGHT) {
+		if (Vvert <= STATE_LIMITS_MINIMUM_CHOP_FREEFALL) {
+			// count reading as possible freefall or climb
+			state_data += 1.0f;
+		} else {
+			// reset number of readings if Vvert is not useful
+			state_data = 0.0f;
+		}
+
+		// enought to enter freefall?
+		if (state_data >= 1.5f) {	// 1.5f for possible float errors
+			// reset data for next state (state_data will be used for altitude in CLIMB state, so don't touch
+			state_data = 0.0f;
+			state_timer = 0.0f;
+			flight_state = FREEFALL;
+		}
+
+		// go for landed
+		if (it3 < STATE_LIMITS_MINIMUM_LANDED_AGL && Vvert >= STATE_LIMITS_MINIMUM_LANDED_VVERT) {
+			state_data = 0.0f;
+			state_timer = 0.0f;
+			flight_state = LANDED;
+		}
+	}
+}
+
+void calculate_Vvert() {
+	//Vvert_acc = Vvert;
+	//Vvert = (bmp.readAltitude() - Vvert_prev_altitude) / getDeltaTime();
+	//Vvert_acc = Vvert - Vvert_acc;
+
+	//Vvert_prev_altitude = bmp.readAltitude();
+
+	// every second
+	Vvert_timer -= getDeltaTime();
+
+	if (Vvert_timer <= 0.0f) {
+		Vvert_acc = Vvert;
+		// calculate new Vvert
+		const float Vvert_new = (bmp.readAltitude() - Vvert_prev_altitude);
+		// de-noise
+		const float Vvert_delta = (Vvert_new - Vvert) * 0.3f;
+		Vvert += Vvert_delta;
+
+		Vvert_prev_altitude = bmp.readAltitude();
+		Vvert_timer += 1.0f;
+		
+		// acceleration
+		Vvert_acc = Vvert - Vvert_acc;
+	}
+}
+//Main data display function
+void disp_alt() {
+	myGLCD.clrScr();
+	myGLCD.setFont(SmallFont);
+	//font1 or SmallFont
+
+	// print flight state
+	if (flight_state == CALIBRATING) {
+		myGLCD.print(L"CALIBRATING ",1,1);
+		myGLCD.printNumF(state_timer,2, 21, 22);
+
+	} else if (flight_state == GROUND) {
+		myGLCD.print(L"GROUND ",1,1);
+		myGLCD.printNumF(Vvert,2, 21, 22);
+		myGLCD.print(L" m/s",1,1);
+
+	} else if (flight_state == CLIMB) {
+		myGLCD.print(L"CLIMB ",1,1);
+		myGLCD.printNumF(Vvert,2, 21, 22);
+		myGLCD.print(L" m/s",1,1);
+
+	} else if (flight_state == JUMPRUN) {
+		myGLCD.print(L"JUMPRUN",1,1);
+
+	} else if (flight_state == FREEFALL) {
+		myGLCD.print(L"FREEFALL ",1,1);
+		myGLCD.printNumF(Vvert, 2, 21, 22);
+		myGLCD.print(L" m/s",1,1);
+
+	} else if (flight_state == CANOPY_OPENING) {
+		myGLCD.print(L"CANOPY OPENING ",1,1);
+		myGLCD.printNumF(Vvert_acc, 2, 21, 22);
+		myGLCD.print(L" m/s^2",1,1);
+
+	} else if (flight_state == CANOPY_FLIGHT) {
+		myGLCD.print(L"CANOPY FLIGHT ",1,1);
+		myGLCD.printNumF(Vvert, 2, 21, 22);
+		myGLCD.print(L" m/s", 1, 1);
+
+	} else if (flight_state == LANDED) {
+		myGLCD.print(L"LANDED", 1, 1);
+	} 
+
+	//dt 
+	myGLCD.print(L"\ndT: ",1,1);
+	myGLCD.printNumF(getDeltaTime(), 2, 21, 22);
+	myGLCD.print(L" s\n",55,1);
+	//agl 
+	myGLCD.print(L"AGL: ",1,1);
+	myGLCD.printNumF(it3, 2, 21, 22);
+	myGLCD.print(L" m\n",55,1);
+	//asl
+	myGLCD.print(L"ASL: ",1,12);
+	myGLCD.printNumF(altc, 2, 21, 22);
+	myGLCD.print(L" m\n",55,12);
+	//barometric pressure
+	myGLCD.print(L"BP:",1,22);
+	myGLCD.printNumF(pressure,2, 21, 22);
+	myGLCD.print(L" hPa\n",66,22);
+	//Temperature
+	myGLCD.print(L"Temp.:",1,29);
+	myGLCD.printNumF(temp,2,40,29);
+	myGLCD.print(L" C\n",72,29);
+	// Serial.println(pressure);
+
+	Serial.println(it3);
+	Serial.println(change); 
+}
+
+//Button pressed function
+int button() {
+   buttonState = digitalRead(8);
+   if(buttonState == HIGH) {
+	   change=true; 
+	   cnt=cnt+1;
+	   myGLCD.clrScr();
+	   myGLCD.setFont(BigNumbers);
+	   myGLCD.printNumF(halt,1,10,15);
+	   Serial.println("Pushed");
+	   Serial.println(halt);
+   } else if (buttonState == LOW) {
+	   cnt=0;
+	   return 0;
+   }
+   return 0;
+}
+
+//Altitude read function
+int alt_read() {
+	altc = (bmp.readAltitude(103000));
+	altagl = altc-altg;
+	if (altagl<0) {
+		altagl=0;
+	}
+	it3 = altagl;
+	Serial.println(it3);
+	pressure = bmp.readPressure();
+	pressure = pressure/100;
+	Serial.println(pressure);
+	temp = bmp.readTemperature();
+	Serial.println(temp);
+	halt = (float)altagl/100.0f;
+	malt = altagl;
+	return 0;
+}
+
+int rounder() {
+	diff = it3 - itb;
+	Serial.println(diff);
+	diff = diff*diff;
+	Serial.println(diff);
+	diff = sqrt(diff);
+	Serial.println(diff);
+	delay(5);
+	return 0;
+}
+
+int cntcyc() {
+	buttonState = digitalRead(8);
+	// if(buttonState == HIGH){
+	// cnt=cnt+1;}
+	if(cnt>3){cnt=1;}
+	delay(20);
+	return 0;
+}
+void big1() {
+	myGLCD.clrScr();
+	myGLCD.setFont(BigNumbers);
+	myGLCD.printNumF(halt, 1, 10, 15);
+}
+void big2() {
+	myGLCD.clrScr();
+	myGLCD.setFont(BigNumbers);
+	myGLCD.printNumF(malt, 2, 21, 22);
+}
+
+
+
+void loop() {
+	alt_read();
+	rounder();
+	cntcyc();
+	if (flight_state != CALIBRATING) {
+		calculate_Vvert();
+	}
+	update_flightstate();
+
+	//need to add return from button press screen update!!! 
+	//set diff>0 to refresh on changes of 1
+	// if(diff>0 || change==true){
+	Serial.print("CNT: ");  
+	Serial.println(cnt);
+	//=================================Count one updates
+	if (cnt==1 && diff>0) {
+		disp_alt();
+		delay(20);
+	}
+	else if(cnt==1 && buttonState == HIGH) {
+		big1();
+		cnt++;
+		Serial.println("CNT1 button +");
+		delay(20);
+	}
+	//====================================Count two updates
+	else if(cnt==2 && diff>0) {
+		big1();   
+		delay(20);
+	} else if(cnt==2 && buttonState == HIGH) {
+		big2();   
+		cnt++;
+		Serial.println("CNT2 button +");
+		delay(20);
+	}
+	//======================================Count three count  
+	else if (cnt==3 && diff>0) {
+		big2();   
+		delay(20);
+
+	} else if (cnt == 3 && buttonState == HIGH) {
+		disp_alt();  
+		cnt++; 
+		Serial.println("CNT3 button +");
+		delay(20);
+	}
+	itb=it3;
+}
+///// END SASHA
+
+
 
 /**
  * transparent list of jumpers (for some code tricks)
@@ -154,6 +725,9 @@ static engine::IAtomic* setJumperUpdateTresholdCB(engine::IAtomic* atomic, void*
 Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues* virtues, SpinalCord* spinalCord, Virtues::Equipment* forcedEquipment) : 
     Character( parent, Gameplay::iGameplay->findClump( "BaseJumper01" )->clone( "Jumper" ) )
 {    
+	_phase = jpCreating;
+	
+	setup();
 
     _name = "Jumper";    
     _clump->forAllAtomics( setJumperUpdateTresholdCB, NULL );
@@ -164,9 +738,15 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
     _jumpTime = 0.0f;
     _jumpPose.set( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
 	_dt = 0.0f;
+	_phJoint = NULL;
 	_altimeter = NULL;
 	_variometer = NULL;
 	_inDropzone = false;
+	_default_pose = 0;
+	
+	// tandem stuff
+	_tandemStudent = NULL;
+	for (int i = 0; i < 4; ++i) _tandemJoint[i] = NULL;
 
     // store enclosure
     _enclosure = enclosure;
@@ -178,8 +758,8 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
 
     // setup burden calculation
     _bcStep    = 0;
-    _bcPrevVel = NxVec3( 0,0,0 );
-    _bcBurden  = NxVec3( 0,-9.8f,0 );
+    _bcPrevVel = PxVec3( 0,0,0 );
+    _bcBurden  = PxVec3( 0,-9.8f,0 );
 
     // setup health status
     _distanceToAbyss = -1.0f;
@@ -225,6 +805,7 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
         _player     = true;
         _virtues    = _scene->getCareer()->getVirtues();
         _spinalCord = new SpinalCord();
+		//getScene()->network->beginSending();
     }
 
 	// debug msg window
@@ -232,7 +813,7 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
 	if (_player) {
 		_debug_window = Gameplay::iGui->createWindow( "Instructor" ); assert( _debug_window );
 		Gameplay::iGui->getDesktop()->insertPanel( _debug_window->getPanel() );
-		_debug_window->align( gui::atCenter, 0, gui::atCenter, 0 );	
+		_debug_window->align( gui::atCenter, 0, gui::atLeft, 0 );
 	}
 
     // use forced equipment?
@@ -249,7 +830,6 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
         _virtues->equipment.helmet.age++;
         _virtues->equipment.suit.age++;
         _virtues->equipment.rig.age++;
-        _virtues->equipment.canopy.age++;
     }
 
     // scale model to obtain desired height
@@ -296,14 +876,17 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
     childM = mc.getTransformation();
     _pilotAnchor = wrap( Vector3f( childM[3][0], childM[3][1], childM[3][2] ) );
 
-    // initialize free fall physics
-    NxBodyDesc nxBodyDesc;
-    nxBodyDesc.massSpaceInertia.set( 0,0,0 ); // tensor will be computed automatically
-    nxBodyDesc.mass = _virtues->appearance.weight;
-    nxBodyDesc.linearDamping = 0.0f;
-    nxBodyDesc.angularDamping = 0.0f;
-    nxBodyDesc.flags = NX_BF_VISUALIZATION;    
-    nxBodyDesc.solverIterationCount = 16;
+    // initialize free fall actor
+	_phFreeFall = PxGetPhysics().createRigidDynamic(PxTransform(PxIDENTITY::PxIdentity));
+	_phFreeFall->userData = this;
+	_phFreeFall->setMass(_virtues->appearance.weight);
+	_phFreeFall->setLinearDamping(0.0f);
+	_phFreeFall->setAngularDamping(2.0f);
+	_phFreeFall->setSolverIterationCounts(16);
+	_phFreeFall->setMassSpaceInertiaTensor(PxVec3(0,0,0));
+	_phFreeFall->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+	getScene()->getPhScene()->addActor(*_phFreeFall);
+
     Vector3f aabbScale(
         Jumper::getCollisionFF( _clump )->getFrame()->getRight().length(),
         Jumper::getCollisionFF( _clump )->getFrame()->getUp().length(),
@@ -316,31 +899,27 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
     aabbDim[1] *= aabbScale[1] * 0.5f,
     aabbDim[2] *= aabbScale[2] * 0.5f;
     
-    NxCapsuleShapeDesc nxFreefallDesc;
-    nxFreefallDesc.setToDefault();
-    nxFreefallDesc.radius = 0.01f * ( aabbDim[0] > aabbDim[1] ? aabbDim[0] : aabbDim[1] );
-    nxFreefallDesc.height = 0.01f * ( 2 * aabbDim[2] );
-    nxFreefallDesc.height -= 2 * nxFreefallDesc.radius;
-    if( nxFreefallDesc.height < 0 ) nxFreefallDesc.height = 0;
-    
-    Matrix4f localPose( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
-    localPose = Gameplay::iEngine->rotateMatrix( localPose, Vector3f( 1,0,0 ), 90.0f );
-    nxFreefallDesc.localPose = wrap( localPose );
-    nxFreefallDesc.materialIndex = _scene->getPhFleshMaterial()->getMaterialIndex();
+	// add shape
+	PxCapsuleGeometry capsule = PxCapsuleGeometry();
+	capsule.radius = 0.01f * ( aabbDim[0] > aabbDim[1] ? aabbDim[0] : aabbDim[1] );
+	capsule.halfHeight = 0.01f * ( 2 * aabbDim[2] ) - 2 * capsule.radius;
+	capsule.halfHeight *= 0.5f;
+	if (capsule.halfHeight < 0.0f) capsule.halfHeight = 0.0f;
 
-    NxActorDesc nxActorDesc;
-    nxActorDesc.userData = this;
-    nxActorDesc.shapes.pushBack( &nxFreefallDesc );
-    nxActorDesc.body = &nxBodyDesc;
-    _phFreeFall = _scene->getPhScene()->createActor( nxActorDesc );
-    assert( _phFreeFall );
+    Matrix4f localPose( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
+    localPose = Gameplay::iEngine->rotateMatrix(localPose, Vector3f( 1,0,0 ), 90.0f);
+	PxShape *shape = _phFreeFall->createShape(capsule, *_scene->getPhFleshMaterial());
+	shape->setLocalPose(PxTransform(wrap(localPose)));
+
+	_phFreeFall->attachShape(*shape);
     _phFreeFall->putToSleep();
-    _phFreeFall->raiseActorFlag( NX_AF_DISABLE_RESPONSE );
-    unsigned int flags = _scene->getPhScene()->getActorPairFlags( *_scene->getPhTerrain(), *_phFreeFall );
-    flags = flags | NX_NOTIFY_ON_START_TOUCH;
-    flags = flags | NX_NOTIFY_ON_TOUCH;
-    flags = flags | NX_NOTIFY_ON_END_TOUCH;
-    _scene->getPhScene()->setActorPairFlags( *_scene->getPhTerrain(), *_phFreeFall, flags );
+	//PHYSX3
+    //_phFreeFall->raiseActorFlag( NX_AF_DISABLE_RESPONSE );
+	//unsigned int flags = _scene->getPhScene()->getActorPairFlags( *_scene->getPhTerrain(), *_phFreeFall );
+    //flags = flags | NX_NOTIFY_ON_START_TOUCH;
+    //flags = flags | NX_NOTIFY_ON_TOUCH;
+    //flags = flags | NX_NOTIFY_ON_END_TOUCH;
+    //_scene->getPhScene()->setActorPairFlags( *_scene->getPhTerrain(), *_phFreeFall, flags );
     
     // initialize free fall PTV transformation
     Matrix4f freeFallLTM = Jumper::getCollisionFF( _clump )->getFrame()->getLTM();
@@ -348,13 +927,16 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
     _mcFreeFall.setup( freeFallLTM, viewLTM );
 
     // initialize flight physics
-    nxBodyDesc.setToDefault();
-    nxBodyDesc.massSpaceInertia.set( 0,0,0 ); // tensor will be computed automatically
-    nxBodyDesc.mass = _virtues->appearance.weight;
-    nxBodyDesc.linearDamping = 0.0f;
-    nxBodyDesc.angularDamping = 0.25f;
-    nxBodyDesc.flags = NX_BF_VISUALIZATION;    
-    nxBodyDesc.solverIterationCount = 32;
+	_phFlight = PxGetPhysics().createRigidDynamic(PxTransform(PxIDENTITY::PxIdentity));
+	_phFlight->userData = this;
+	_phFlight->setMass(_virtues->appearance.weight);
+	_phFlight->setLinearDamping(0.0f);
+	_phFlight->setAngularDamping(0.25f);
+	_phFlight->setSolverIterationCounts(32);
+	_phFlight->setMassSpaceInertiaTensor(PxVec3(0,0,0));
+	_phFlight->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+	getScene()->getPhScene()->addActor(*_phFlight);
+
     aabbScale = Vector3f(
         Jumper::getCollisionFC( _clump )->getFrame()->getRight().length(),
         Jumper::getCollisionFC( _clump )->getFrame()->getUp().length(),
@@ -366,24 +948,25 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
     aabbDim[0] *= aabbScale[0] * 0.5f,
     aabbDim[1] *= aabbScale[1] * 0.5f,
     aabbDim[2] *= aabbScale[2] * 0.5f;
-    NxCapsuleShapeDesc nxCapsuleDesc;
-    nxCapsuleDesc.setToDefault();
-    nxCapsuleDesc.radius = 0.01f * ( aabbDim[0] > aabbDim[2] ? aabbDim[0] : aabbDim[2] );
-    nxCapsuleDesc.height = 0.01f * ( 2 * aabbDim[1] );
-    nxCapsuleDesc.height -= 2 * nxCapsuleDesc.radius;
-    if( nxCapsuleDesc.height < 0 ) nxCapsuleDesc.height = 0;
+    
+	// add shape
+	capsule = PxCapsuleGeometry();
+	capsule.radius = 0.01f * ( aabbDim[0] > aabbDim[2] ? aabbDim[0] : aabbDim[2] );
+	capsule.halfHeight = 0.01f * ( 2 * aabbDim[2] ) - 2 * capsule.radius;
+	capsule.halfHeight *= 0.5f;
+	if (capsule.halfHeight < 0.0f) capsule.halfHeight = 0.5f;
 
-    nxCapsuleDesc.materialIndex = _scene->getPhMovingFleshMaterial()->getMaterialIndex();
-    nxActorDesc.setToDefault();
-    nxActorDesc.userData = this;
-    nxActorDesc.shapes.pushBack( &nxCapsuleDesc );
-    nxActorDesc.body = &nxBodyDesc;
-    _phFlight = _scene->getPhScene()->createActor( nxActorDesc );    
-    assert( _phFlight );
+	shape = _phFreeFall->createShape(capsule, *_scene->getPhMovingFleshMaterial());
+	shape->setLocalPose(PxTransform(PxIDENTITY::PxIdentity));
+	_phFlight->attachShape(*shape);
     _phFlight->putToSleep();
-    flags = _scene->getPhScene()->getActorPairFlags( *_scene->getPhTerrain(), *_phFlight );
-    flags = flags | NX_NOTIFY_ON_TOUCH;
-    _scene->getPhScene()->setActorPairFlags( *_scene->getPhTerrain(), *_phFlight, flags );
+
+    //PHYSX3
+    //flags = _scene->getPhScene()->getActorPairFlags( *_scene->getPhTerrain(), *_phFlight );
+    //flags = flags | NX_NOTIFY_ON_TOUCH;
+    //_scene->getPhScene()->setActorPairFlags( *_scene->getPhTerrain(), *_phFlight, flags );
+
+
 
     // initialize flight PTV transformation
     Matrix4f flightLTM = Jumper::getCollisionFC( _clump )->getFrame()->getLTM();
@@ -423,7 +1006,7 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
         _clump->getFrame()->setPos( pos );
 
         // setup idle action
-        _phase = jpRoaming;
+        //_phase = jpRoaming;
         _action = new Character::Idle( _clump, &idleSequence, 0.2f, 0.5f );
     }
 
@@ -435,7 +1018,7 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
         const char* name = _airplaneExit->getName();
 
         // setup airplane idle action
-        _phase = jpRoaming;
+        //_phase = jpRoaming;
         _action = new AirplaneIdle( this );
     }
 
@@ -536,7 +1119,7 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
     _pilotchuteSimulator = new PilotchuteSimulator( this, canopyInfo, pcInfo );
 
     // create reserve canopy simulator
-	if (_player && _virtues->equipment.reserve.type != gtUnequipped ) {
+	if (_virtues->equipment.reserve.type != gtUnequipped ) {
 		_canopyReserveSimulator = new CanopySimulator( 
 			this, 
 			&_virtues->equipment.reserve,
@@ -546,6 +1129,7 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
 		database::Canopy* reserveInfo = database::Canopy::getReserveRecord( _virtues->equipment.reserve.id );
 		database::Pilotchute* pcRInfo = reserveInfo->pilots;
 		_pilotchuteReserveSimulator = new PilotchuteSimulator( this, reserveInfo, pcRInfo );
+		_pilotchuteReserveSimulator->setFreebag(true);
 	} else {
 		_canopyReserveSimulator = NULL;
 		_pilotchuteReserveSimulator = NULL;
@@ -553,10 +1137,31 @@ Jumper::Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues*
 
     // register in tricklist
     _jumperL.push_back( this );
+
+	// Special options?
+	// PC in hand
+	if (_player && 
+		!database::Canopy::getRecord(_virtues->equipment.canopy.id)->skydiving &&
+		_virtues->equipment.rig.rig_aad == 1) {
+
+		_pilotchuteSimulator->connect(_phFreeFall, Jumper::getLineRigJoint( _clump ), _pilotAnchor);
+		_pilotchuteSimulator->pull( Jumper::getLineHandJoint( _clump ) );
+	}
+	// Unpacked
+	if (_player && 
+		!database::Canopy::getRecord(_virtues->equipment.canopy.id)->skydiving &&
+		_virtues->equipment.rig.rig_aad == 2) {
+	}
+
+	_phase = jpRoaming;
 }
 
 Jumper::~Jumper()
 {
+	if (_player) {
+		getScene()->network->stopSending();
+	}
+
     // finalize ghost saving
     if( _saveGhost ) delete _saveGhost;
 	if (_debug_window) {
@@ -573,10 +1178,18 @@ Jumper::~Jumper()
     {
         (*catToyI)->disconnect();
     }
+	
+	// release tandem joints
+	for (int i = 0; i < 4; ++i) {
+		if ( _tandemJoint[i] ) {
+			_tandemJoint[i]->release();
+			_tandemJoint[i] = NULL;
+		}
+	}
 
     // destroy allocated elements        
-    _scene->getPhScene()->releaseActor( *_phFlight );
-    _scene->getPhScene()->releaseActor( *_phFreeFall );
+	_phFlight->release();
+    _phFreeFall->release();
     _renderCallback.restore( _clump );
     delete _sensor;
 
@@ -598,6 +1211,24 @@ Jumper::~Jumper()
     {
         _virtues->equipment = _layoffEquipment;
     }
+}
+
+Jumper *Jumper::getNextJumper() {
+	JumperI jumperI;
+	// walk through not me
+	for( jumperI = _jumperL.begin(); jumperI != _jumperL.end(); jumperI++ ) {
+		if( (*jumperI) == this ) break;
+	}
+	jumperI++;
+	// next one is next jumper
+	// if next is null, return first
+	if (jumperI == _jumperL.end()) {
+		jumperI = _jumperL.begin();
+		return (*jumperI);
+	}
+
+	// return, even if it's me
+	return (*jumperI);
 }
 
 /**
@@ -645,6 +1276,8 @@ float Jumper::getDistanceToAbyss(void)
 
 void Jumper::lookWhereYouFly(Vector3f direction, float dt)
 {
+
+	 
     // head bone frame
     engine::IFrame* headFrame = getHeadFrame( _clump );
     Matrix4f headLTM = headFrame->getLTM();
@@ -686,13 +1319,35 @@ void Jumper::lookWhereYouFly(Vector3f direction, float dt)
     if( fabs( angleToTurn ) > fabs( angleDifference ) ) angleToTurn = angleDifference;
     _angleUD += angleToTurn;
 
+	if (_player && _phase == jpFreeFalling && _angleUD > -20.0f) {
+		_angleUD = -20.0f;
+	}
+
     // deviate & finalize
     Matrix4f headMatrix = headFrame->getMatrix();
     headMatrix = Gameplay::iEngine->rotateMatrix( headMatrix, Vector3f( 1,0,0 ), _angleLR );
     headMatrix = Gameplay::iEngine->rotateMatrix( headMatrix, Vector3f( 0,0,1 ), _angleUD );
     headFrame->setMatrix( headMatrix );
+
+	if (_phase == jpFreeFalling) {
+		animBodyPart("Head", Vector3f( 1,0,0 ), _angleLR);
+		animBodyPart("Head", Vector3f( 0,0,1 ), _angleUD);
+	}
 }
 
+
+bool Jumper::animBodyPart(const char *frame_title, Vector3f axis, float angle) {
+	engine::IFrame* frame = Gameplay::iEngine->findFrame( _clump->getFrame(), frame_title );
+	if (frame == NULL) return false;	// frame not found
+
+    Matrix4f matrix = frame->getMatrix();
+	//axis = Vector3f( matrix[2][0], matrix[2][1], matrix[2][2] );
+    axis.normalize();
+    matrix = Gameplay::iEngine->rotateMatrix( matrix, axis, angle );
+    frame->setMatrix( matrix );
+
+	return true;
+}
 void Jumper::lookAtPoint(Vector3f point, float dt)
 {
     // head bone frame
@@ -706,19 +1361,67 @@ void Jumper::lookAtPoint(Vector3f point, float dt)
     lookWhereYouFly( direction, dt );
 }
 
+void Jumper::beginFreefall() {
+	if (_phase == jpCreating) {
+		_phase = jpCreating;
+		//return;
+	}
+
+	_phFreeFall->wakeUp();
+	_phFlight->putToSleep();
+
+	_phase = jpFreeFalling;
+	PxTransform pose = _phFreeFall->getGlobalPose();
+
+	delete _action;
+	_action = new Tracking( this, _phFreeFall, &_mcFreeFall);
+	happen( this, EVENT_JUMPER_BEGIN_FREEFALL );
+
+	hideEffectors( _clump );
+	getRisers( _clump )->setFlags( 0 );
+
+    _jumpPose = _clump->getFrame()->getLTM();
+    _jumpPose[3][1] += ::jumperRoamingSphereSize;
+}
 void Jumper::InDropzone(bool dropzone) {
 	_inDropzone = dropzone;
 }
 bool Jumper::InDropzone() {
 	return _inDropzone;
 }
+void Jumper::setDefaultPose(int pose) {
+	this->_default_pose = pose;
+}
+int Jumper::getDefaultPose(void) {
+	return this->_default_pose;
+}
+void Jumper::setTandemStudent(Jumper *student) {
+	this->_tandemStudent = student;
+	this->_tandemStudent->setNoHelmet(this->_tandemStudent->getClump());
+}
+Jumper *Jumper::getTandemStudent(void) {
+	return this->_tandemStudent;
+}
+
 void Jumper::onRoaming(float dt)
 {
+	
+
+	if (_phase == jpCreating) {
+		return;
+	}
+
+	// control tandem student
+	if (_tandemStudent != NULL) {
+		_tandemStudent->getSpinalCord()->phase = _spinalCord->phase;
+		_tandemStudent->getSpinalCord()->trigger_phase = _spinalCord->trigger_phase;
+	}
+
 	if (_debug_window && getAirplane() && _inDropzone) {
 		Matrix4f pose = getPose();
 		Vector2f pos = Vector2f(pose[3][0], pose[3][2]);
 		pos.normalize();
-		NxVec3 wind = getScene()->getWindAtPoint(NxVec3(pose[3][0], pose[3][1], pose[3][2]));
+		PxVec3 wind = getScene()->getWindAtPoint(PxVec3(pose[3][0], pose[3][1], pose[3][2]));
 		wind.normalize();
 		Vector2f wind2(wind.x, wind.z);
 		float wind_angle = 0.0;
@@ -737,6 +1440,10 @@ void Jumper::onRoaming(float dt)
 			panel->getStaticText()->setText( L"" );		
 		}
 	}
+
+
+
+
 	//if (_spinalCord->leftWarp ) {
 	//	idleSequence.startTime -= 0.03f;
 	//	idleSequence.loopStartTime = idleSequence.startTime;
@@ -766,8 +1473,89 @@ void Jumper::onRoaming(float dt)
     // airplane roaming is separate case
     if( _airplane )
     {
-		bool helicopter = strcmp(_airplane->getDesc()->templateClump->getName(), "Helicopter01") == 0 && _spinalCord->leftWarp == 0.0f;
+		//if (_spinalCord->modifier) {
+		//	_airplane->getClump()->getFrame()->translate( Vector3f( 0.0f, 1000.0f * dt, 0.0f ) );
+		//}
+		/*
+		NxActor *plane = _airplane->getPhActor();
+		if (plane && plane->isSleeping() == false) {
+			// pitch
+			if (_spinalCord->up) {
+				plane->addLocalTorque(PxVec3(_spinalCord->up*480000.0f, 0, 0));
+			}
+			if (_spinalCord->down) {
+				plane->addLocalTorque(PxVec3(_spinalCord->down*-480000.0f, 0, 0));
+			}
+			if (_spinalCord->leftRearRiser) {
+				plane->addLocalTorque(PxVec3(0, 0, _spinalCord->leftRearRiser*-480000.0f));
+			}
+			if (_spinalCord->rightRearRiser) {
+				plane->addLocalTorque(PxVec3(0, 0, _spinalCord->rightRearRiser*480000.0f));
+			}
+			if (_spinalCord->left) {
+				plane->addLocalTorque(PxVec3(0, _spinalCord->left*440000.0f, 0));
+			}
+			if (_spinalCord->right) {
+				plane->addLocalTorque(PxVec3(0, _spinalCord->right*-440000.0f, 0));
+			}
+			if (_spinalCord->modifier) {
+				plane->addLocalForce(PxVec3(0,0,4300.0f*_spinalCord->modifier));
+			}
+		}
+		*/
+		//	// output
+		//	// indicated airspeed
+		//	PxVec3 velocity = plane->getLinearVelocity();
+		//	const float ias = velocity.magnitude();
+		//	// altitude
+		//	PxVec3 pos = plane->getGlobalPosition();
+		//	const float alt = pos.y;
+		//	// vertical speed
+		//	const float Vs = velocity.y;
+		//	// AOA
+		//	NxMat34 globalPose = plane->getGlobalPose();
+		//	PxVec3 x = globalPose.M.getColumn(0);
+		//	PxVec3 y = globalPose.M.getColumn(1);
+		//	PxVec3 z = globalPose.M.getColumn(2);
 
+		//	// test
+		//	PxVec3 normal;
+		//	engine::IFrame *prop = _airplane->getPropFrame();
+		//	normal = wrap(prop->getAt());
+		//	normal.normalize();
+
+		//	velocity.normalize();
+		//	//const float AOA = -::calcAngle( z, velocity, x );
+		//	const float AOA = ::calcAngle( normal, velocity );
+
+
+		//	if (this->_debug_window) {
+		//		gui::IGuiPanel* panel = this->_debug_window->getPanel()->find( "Message" );
+		//		assert( panel && panel->getStaticText() );
+		//		panel->getStaticText()->setText( wstrformat(L"normal: %2.2f %2.2f %2.2f\n\nAlt: %2.2f\nIAS: %2.2f\nVs: %2.2f\nAOA: %2.2f", normal.x, normal.y, normal.z, alt, ias, Vs, AOA).c_str() );
+		//	}
+		//}
+
+		bool helicopter = strcmp(_airplane->getDesc()->templateClump->getName(), "Helicopter01") == 0;
+
+		////if (helicopter) {
+		//	//Matrix4f pose = _scene->getCamera()->getPose();
+		//	//_airplane->setPose(pose);
+		//	//getCore()->logMessage("SETPOSE");
+
+		//	/// heli controls
+		//	const float heliP = 20000.0f;
+		//	const float heliT = 100.0f;
+
+		//	const float power = (_spinalCord->hook - _spinalCord->wlo) * heliP * dt;
+		//	const float fwd = (_spinalCord->up - _spinalCord->down) * heliP * dt;
+		//	const float pitch = (_spinalCord->up - _spinalCord->down) * 30.0f * dt;
+		//	const float turn = (_spinalCord->left - _spinalCord->right) * heliT * dt;
+
+		//	_airplane->getClump()->getFrame()->translate( Vector3f( 0.0f, power, fwd ) );
+		//	_airplane->getClump()->getFrame()->rotateRelative(Vector3f(0.0f, 1.0f, 0.0f), turn);
+		//	//_airplane->getClump()->getFrame()->rotateRelative(Vector3f(1.0f, 0.0f, 0.0f), pitch);
+		////}
         // detect phase switch
         if( _spinalCord->phase )
         {                
@@ -794,6 +1582,7 @@ void Jumper::onRoaming(float dt)
             _jumpPose[3][1] += ::jumperRoamingSphereSize;
             // event
             happen( this, EVENT_JUMPER_BEGIN_FREEFALL );
+			++_virtues->statistics.numSkydives;
         }
 
         // no further activity
@@ -906,7 +1695,8 @@ void Jumper::onRoaming(float dt)
         );
         bool isAbyss = false;
         float distanceToAbyss = maxDistance;
-        for( unsigned int i=0; i<_sensor->getNumIntersections(); i++ )
+		unsigned int i;
+        for( i=0; i<_sensor->getNumIntersections(); i++ )
         {
             if( strcmp( _sensor->getIntersection(i)->shader->getName(), "EnclosureAbyss" ) == 0 )
             {
@@ -953,11 +1743,12 @@ void Jumper::onRoaming(float dt)
                     float vel = walkForward->getVelocity();
                     delete _action;
 
-                    //_action = new RunningJump( this, _phFreeFall, &_mcFreeFall, vel );
-					_action = new FlipJump( this, _phFreeFall, &_mcFreeFall, &runningBackFlipSequence, runningBackFlipAnimSpeed, runningBackFlipCriticalPeriod );
+                    _action = new RunningJump( this, _phFreeFall, &_mcFreeFall, vel );
+					//_action = new FlipJump( this, _phFreeFall, &_mcFreeFall, &runningBackFlipSequence, runningBackFlipAnimSpeed, runningBackFlipCriticalPeriod );
                     _jumpPose = _clump->getFrame()->getLTM();
                     _jumpPose[3][1] += ::jumperRoamingSphereSize;
                     // events
+					++_virtues->statistics.numBaseJumps;
                     happen( this, EVENT_JUMPER_BEGIN_FREEFALL );
                     happen( this, EVENT_JUMPER_END_WALKFWD );
                     happen( this, EVENT_JUMPER_END_WALKBCK );
@@ -999,6 +1790,7 @@ void Jumper::onRoaming(float dt)
                 _jumpPose = _clump->getFrame()->getLTM();
                 _jumpPose[3][1] += ::jumperRoamingSphereSize;
                 // event
+				++_virtues->statistics.numBaseJumps;
                 happen( this, EVENT_JUMPER_BEGIN_FREEFALL );
                 happen( this, EVENT_JUMPER_END_WALKFWD );
                 happen( this, EVENT_JUMPER_END_WALKBCK );
@@ -1022,6 +1814,7 @@ void Jumper::onRoaming(float dt)
                 _jumpPose = _clump->getFrame()->getLTM();
                 _jumpPose[3][1] += ::jumperRoamingSphereSize;
                 // event
+				++_virtues->statistics.numBaseJumps;
                 happen( this, EVENT_JUMPER_BEGIN_FREEFALL );
                 happen( this, EVENT_JUMPER_END_WALKFWD );
                 happen( this, EVENT_JUMPER_END_WALKBCK );
@@ -1043,6 +1836,128 @@ void Jumper::onRoaming(float dt)
 
 void Jumper::onFreeFalling(float dt)
 {
+	/*
+	// connect tandem student
+	if (_player && !_phFreeFall->isSleeping() && _tandemJoint[0] == NULL && _tandemStudent && !_tandemStudent->getFreefallActor()->isSleeping()) {
+		//// connect joint
+		const float maxDistance = 0.006f;
+		const float y = 0.3f;
+		NxDistanceJointDesc jointDesc;
+		if (!_phFreeFall->isSleeping()) {
+			jointDesc.actor[0] = _phFreeFall;
+		} else {
+			jointDesc.actor[0] = _phFlight;
+		}
+		jointDesc.actor[1] = _tandemStudent->getFreefallActor();
+		jointDesc.maxDistance = maxDistance;
+		jointDesc.minDistance = 0.0f;
+		jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+		jointDesc.localAnchor[0] = PxVec3(-0.2f,0.0f,0.2f);
+		jointDesc.localAnchor[1] = PxVec3(-0.2f,y,0.2f);
+		jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+		_tandemJoint[0] = _scene->getPhScene()->createJoint( jointDesc ); 
+		//NxDistanceJointDesc jointDesc;
+		if (!_phFreeFall->isSleeping()) {
+			jointDesc.actor[0] = _phFreeFall;
+		} else {
+			jointDesc.actor[0] = _phFlight;
+		}
+		jointDesc.actor[1] = _tandemStudent->getFreefallActor();
+		jointDesc.maxDistance = maxDistance;
+		jointDesc.minDistance = 0.0f;
+		jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+		jointDesc.localAnchor[0] = PxVec3( 0.2f,0.0f,0.2f);
+		jointDesc.localAnchor[1] = PxVec3( 0.2f,y,0.2f);
+		jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+		_tandemJoint[1] = _scene->getPhScene()->createJoint( jointDesc ); 
+		//NxDistanceJointDesc jointDesc;
+		if (!_phFreeFall->isSleeping()) {
+			jointDesc.actor[0] = _phFreeFall;
+		} else {
+			jointDesc.actor[0] = _phFlight;
+		}
+		jointDesc.actor[1] = _tandemStudent->getFreefallActor();
+		jointDesc.maxDistance = maxDistance;
+		jointDesc.minDistance = 0.0f;
+		jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+		jointDesc.localAnchor[0] = PxVec3(-0.2f,0.0f,-0.2f);
+		jointDesc.localAnchor[1] = PxVec3(-0.2f,y-0.05f,-0.2f);
+		jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+		_tandemJoint[2] = _scene->getPhScene()->createJoint( jointDesc ); 
+		//NxDistanceJointDesc jointDesc;
+		if (!_phFreeFall->isSleeping()) {
+			jointDesc.actor[0] = _phFreeFall;
+		} else {
+			jointDesc.actor[0] = _phFlight;
+		}
+		jointDesc.actor[1] = _tandemStudent->getFreefallActor();
+		jointDesc.maxDistance = maxDistance;
+		jointDesc.minDistance = 0.0f;
+		jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+		jointDesc.localAnchor[0] = PxVec3( 0.2f,0.0f,-0.2f);
+		jointDesc.localAnchor[1] = PxVec3( 0.2f,y-0.05f,-0.2f);
+		jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+		_tandemJoint[3] = _scene->getPhScene()->createJoint( jointDesc ); 
+	}
+	*/
+
+	//if (false && _player) {
+	//	_scene->setTimeSpeed( 1.0f );
+	//	float vel = _phFreeFall->getLinearVelocity().magnitude();
+	//	if (vel > 50.0f) {
+	//		float adrenaline = vel / 100.0f;
+	//		if (adrenaline > 1.0f) adrenaline = 1.0f;
+	//		_scene->setTimeSpeed( 1.0f + adrenaline*0.5f );
+	//	}
+	//}
+
+
+
+	// freeze time
+	//if (_player) {
+	//	if (_spinalCord->trigger_modifier) {
+	//		//_scene->setTimeSpeed( 0.01f );
+	//		_scene->setTimeSpeedMultiplier(0.001f);
+	//	} else {
+	//		//_scene->setTimeSpeed( 1.0f );
+	//		_scene->setTimeSpeedMultiplier(1.0f);
+	//	}
+	//}
+
+	 // jumper looks at another jumper nearby
+	//PxVec3 closest_jumper_pos = PxVec3(0,0,0);
+	//float min_distance = -1.0f;
+	//PxVec3 mypos = this->_phFreeFall->getGlobalPosition();
+	//for( JumperI jumperI = _jumperL.begin(); jumperI != _jumperL.end(); jumperI++ ) {
+	//	if( (*jumperI) != this ) {
+	//		if ((*jumperI)->getFreefallActor()->isSleeping()) {
+	//			continue;
+	//		}
+
+	//		// distance to jumper
+	//		PxVec3 vec = mypos - (*jumperI)->getFreefallActor()->getGlobalPosition();
+	//		float dst = vec.magnitude();
+	//		if (min_distance >= dst || min_distance == -1.0f) {
+	//			closest_jumper_pos = (*jumperI)->getFreefallActor()->getGlobalPosition();
+	//			min_distance = dst;
+	//		}
+	//	}
+	//}
+
+	//// look at him
+	//if (min_distance <= 30.0f && min_distance > 0.0f) {
+	//	lookAtPoint(wrap(closest_jumper_pos), dt);
+	//}
+
+	// AAD
+	if (_virtues->equipment.reserve.type != gtUnequipped && _virtues->equipment.rig.rig_aad > 0) {
+		database::AAD *device = database::AAD::getRecord(_virtues->equipment.rig.rig_aad);
+		const float altitude = _phFreeFall->getGlobalPose().p.y;
+		if (!_phFreeFall->isSleeping() && fabs(_phFreeFall->getLinearVelocity().y) >= device->speed && altitude <= device->altitude) {
+			_spinalCord->pullReserve = true;
+		}
+	}
+
 	// logbook time
 	if (_jumpTime > 3.0f) {
 		_virtues->statistics.freeFallTime += dt;
@@ -1062,14 +1977,19 @@ void Jumper::onFreeFalling(float dt)
 
 	// cut main before deployment
 	if (_virtues->equipment.reserve.type != gtUnequipped && _spinalCord->cutAway && _canopySimulator) {
-		_canopySimulator->isCutAway = true;
+		_canopySimulator->cutOnOpening = true;
 	}
-    // dispatch phase change
+    // main pull
 	if( _spinalCord->phase && !_phFreeFall->isSleeping() &&
         !actionIs(RunningJump) && !actionIs(StandingJump) && 
         !actionIs(OutOfControl) && !actionIs(Pull) &&
+		(_pilotchuteSimulator && !_pilotchuteSimulator->isConnected()) &&
 		 (_canopySimulator && !_canopySimulator->isOpened() ) )
     {
+		if (_phJoint ) {
+			_phJoint->release();
+			_phJoint = NULL;
+		}
 
         delete _action;
         _action = new Pull( this, _phFreeFall, &_mcFreeFall, _pilotchuteSimulator, _pilotAnchor );
@@ -1077,9 +1997,9 @@ void Jumper::onFreeFalling(float dt)
         // event
         happen( this, EVENT_DELAY_STOP );
     }
+
     // dispatch reserve pull
-	if( _player &&
-		_pilotchuteReserveSimulator &&
+	if( _pilotchuteReserveSimulator &&
 		!_pilotchuteReserveSimulator->isConnected() &&
 		_spinalCord->pullReserve && 
         !actionIs(RunningJump) && !actionIs(StandingJump) && 
@@ -1087,7 +2007,13 @@ void Jumper::onFreeFalling(float dt)
          )
     {
 		//this->fireReserveCanopy();
+			if (_phJoint ) {
+				_phJoint->release();
+				_phJoint = NULL;
+			}
+
             delete _action;
+			_pilotchuteReserveSimulator->setFreebag(true);
             _action = new PullReserve( this, _phFreeFall, &_mcFreeFall, _pilotchuteReserveSimulator, _pilotAnchor );
             _phase = jpFlight;
             // event
@@ -1101,6 +2027,11 @@ void Jumper::onFreeFalling(float dt)
 		// distatch
 		if( _pilotchuteSimulator && _pilotchuteSimulator->isPulled() && !actionIs(Pull) )
         {
+			if (_phJoint ) {
+				_phJoint->release();
+				_phJoint = NULL;
+			}
+
             delete _action;
             _action = new Pull( this, _phFreeFall, &_mcFreeFall, _pilotchuteSimulator, _pilotAnchor );
             _phase = jpFlight;
@@ -1117,11 +2048,12 @@ void Jumper::onFreeFalling(float dt)
 
 			} else if ( actionIs ( SideStepJump ) ) {
 				delete _action;
-				_action = new Jumper::SitFlying( this, _phFreeFall, &_mcFreeFall );
+				_action = new Jumper::Tracking( this, _phFreeFall, &_mcFreeFall );
 			}
             else
             {
                 delete _action;
+				PxTransform pose = _phFreeFall->getGlobalPose();
                 _action = new Jumper::Tracking( this, _phFreeFall, &_mcFreeFall );
             }
             // event
@@ -1140,22 +2072,24 @@ void Jumper::onFreeFalling(float dt)
         // dispatch tracking-to-flip and flip-to-tracking
         if( /*!isWearWingsuit &&*/ actionIs( Tracking ) && !_spinalCord->modifier )
         {
-            // base jumper basis
-            NxMat34 freeFallPose = _phFreeFall->getGlobalPose();
-            NxVec3 x = freeFallPose.M.getColumn(0);
+    //        // base jumper basis
+    //        NxMat34 freeFallPose = _phFreeFall->getGlobalPose();
+    //        PxVec3 x = freeFallPose.M.getColumn(0);
 
-            // switch to flip by x-component of angular velocity        
-            if( fabs( x.dot( _phFreeFall->getAngularVelocity() ) ) > ttfTreshold )
-            {
-                delete _action;
-                _action = new Jumper::Flip( this, _phFreeFall, &_mcFreeFall, 0.5f );
-            }
+    //        // switch to flip by x-component of angular velocity        
+    //        if( fabs( x.dot( _phFreeFall->getAngularVelocity() ) ) > ttfTreshold &&
+				//!_spinalCord->leftWarp && !_spinalCord->rightWarp && ( _spinalCord->up || _spinalCord->down)
+				//)
+    //        {
+    //            delete _action;
+    //            _action = new Jumper::Flip( this, _phFreeFall, &_mcFreeFall, 0.5f );
+    //        }
         }
         else if( actionIs( Flip ) && ( _action->getActionTime() > 0 ) )
         {
             // base jumper basis
-            NxMat34 freeFallPose = _phFreeFall->getGlobalPose();
-            NxVec3 x = freeFallPose.M.getColumn(0);
+            PxTransform freeFallPose = _phFreeFall->getGlobalPose();
+			PxVec3 x = freeFallPose.q.getBasisVector0();
 
             // switch to tracking by x-component of angular velocity        
             if( fabs( x.dot( _phFreeFall->getAngularVelocity() ) ) < fttTreshold ||
@@ -1165,43 +2099,11 @@ void Jumper::onFreeFalling(float dt)
                 _action = new Jumper::Tracking( this, _phFreeFall, &_mcFreeFall );
             }
         }
-
-        // determine facial inclination angle
-        Vector3f charAt = _clump->getFrame()->getAt(); charAt.normalize();
-        Vector3f charRight = _clump->getFrame()->getRight(); charRight.normalize();
-        float fiAngle = ::calcAngle( charAt, Vector3f(0,1,0), charRight );
-
-        // determine angular velocity
-        float avel = _phFreeFall->getAngularVelocity().magnitude();
-
-        // action tresholds
-        float fiAngleTreshold = 45.0f;
-        float avelTreshold = 3.1415926f / 2;
-
-        if( fiAngle < 0 ) fiAngle = fiAngleTreshold;
-
-        // dispatch tracking-to-sitflying and sitflying-to-tracking
-        if( !isWearWingsuit && actionIs( Tracking ) && !_spinalCord->modifier )
-        {
-            if( fiAngle < fiAngleTreshold && avel < avelTreshold )
-            {
-                delete _action;
-                _action = new Jumper::SitFlying( this, _phFreeFall, &_mcFreeFall );
-            }
-        }
-        else if( actionIs( SitFlying ) )
-        {
-            if( fiAngle > fiAngleTreshold )
-            {
-                delete _action;
-                _action = new Jumper::Tracking( this, _phFreeFall, &_mcFreeFall );
-            }
-        }
     }
 }
 
 void Jumper::cutAwayMainCanopy() {
-	if (_virtues->equipment.reserve.type == gtUnequipped) return;
+	if (_virtues->equipment.reserve.type == gtUnequipped || _canopySimulator == NULL) return;
 
 	// cut away in flight, let's start falling again (or just stay with reserve)
 	if (_phFreeFall->isSleeping()) {
@@ -1211,8 +2113,8 @@ void Jumper::cutAwayMainCanopy() {
 
 			_phase = jpFreeFalling;
 
-			NxMat34 pose = _phFlight->getGlobalPose();
-			NxVec3 linvel = _phFlight->getLinearVelocity(), angvel = _phFlight->getAngularVelocity();
+			PxTransform pose = _phFlight->getGlobalPose();
+			PxVec3 linvel = _phFlight->getLinearVelocity(), angvel = _phFlight->getAngularVelocity();
 
 			_phFreeFall->setGlobalPose(pose);
 			_phFreeFall->setLinearVelocity(linvel);
@@ -1227,7 +2129,7 @@ void Jumper::cutAwayMainCanopy() {
 		}
 	} else {
 		_phFreeFall->wakeUp();
-		_phFlight->putToSleep();
+		//_phFlight->putToSleep();
 
 		_phase = jpFreeFalling;
 
@@ -1239,20 +2141,11 @@ void Jumper::cutAwayMainCanopy() {
 	// destroy canopy simulator
 	_canopySimulator->setLinetwists(0.0f);
 
-	_canopySimulator->disconnect(
-		_phFlight, 
-		_frontLeftAnchor,
-		_frontRightAnchor,
-		_rearLeftAnchor,
-		_rearRightAnchor,
-		Jumper::getFrontLeftRiser( _clump ),
-		Jumper::getFrontRightRiser( _clump ),
-		Jumper::getRearLeftRiser( _clump ),
-		Jumper::getRearRightRiser( _clump )
-	);
-	delete _canopySimulator;
+	_canopySimulator->disconnect();
+
+	//delete _canopySimulator;
 	_canopySimulator = NULL;
-	delete _pilotchuteSimulator;
+	//delete _pilotchuteSimulator;
 	_pilotchuteSimulator = NULL;
 }
 
@@ -1268,7 +2161,7 @@ void Jumper::fireReserveCanopy() {
 		pp += py * 100.0f;
 
 		// connect pilot chute
-		this->getPilotchuteReserveSimulator()->connect( 
+		_pilotchuteReserveSimulator->connect( 
 			_phFreeFall, 
 			Jumper::getBackBone( this->getClump() ), 
 			_pilotAnchor 
@@ -1284,8 +2177,8 @@ void Jumper::fireReserveCanopy() {
 		_pilotchuteReserveSimulator->updateActivity( 0.0f );
 
 		// and drop
-		_pilotchuteReserveSimulator->drop( NxVec3( 0,0,0 ) );
-		_pilotchuteReserveSimulator->setInflation( 0.7f );
+		_pilotchuteReserveSimulator->drop( PxVec3( 0,0,0 ) );
+		_pilotchuteReserveSimulator->setInflation( 0.3f );
 		return;
 	}
 
@@ -1297,8 +2190,8 @@ void Jumper::fireReserveCanopy() {
 
 		_phase = jpFlight;
 
-		NxMat34 pose = _phFreeFall->getGlobalPose();
-		NxVec3 linvel = _phFreeFall->getLinearVelocity(), angvel = _phFreeFall->getAngularVelocity();
+		PxTransform pose = _phFreeFall->getGlobalPose();
+		PxVec3 linvel = _phFreeFall->getLinearVelocity(), angvel = _phFreeFall->getAngularVelocity();
 
 		_phFlight->setGlobalPose(pose);
 		_phFlight->setLinearVelocity(linvel);
@@ -1339,7 +2232,6 @@ void Jumper::fireReserveCanopy() {
 	sampleLTM[3][2] = sampleP[2];
 
 	// connect & open canopy
-	++_virtues->equipment.reserve.age;
 	_canopyReserveSimulator->connect(
 		_phFlight, 
 		_frontLeftAnchor,
@@ -1352,10 +2244,10 @@ void Jumper::fireReserveCanopy() {
 		Jumper::getRearRightRiser( _clump )
 	);
 
-	_canopyReserveSimulator->open( wrap( sampleLTM ), wrap(Vector3f(0, 10.0f, 0) )/*_phFlight->getLinearVelocity()*-2*/, 0, 0, 0 );
+	_canopyReserveSimulator->open( PxTransform(wrap( sampleLTM )), wrap(Vector3f(0, 10.0f, 0) )/*_phFlight->getLinearVelocity()*-2*/, 0, 0, 0 );
 
 	_pilotchuteReserveSimulator->connect( 
-		_canopyReserveSimulator->getNxActor(), 
+		_canopyReserveSimulator->getActor(), 
 		CanopySimulator::getPilotCordJoint( _canopyReserveSimulator->getClump() ),
 		_canopyReserveSimulator->getPilotAnchor()
 	);
@@ -1363,12 +2255,17 @@ void Jumper::fireReserveCanopy() {
 }
 
 CanopySimulator *Jumper::getDominantCanopy() {
-	if ( !_player || !_canopyReserveSimulator ) return _canopySimulator;
+	if ( !_canopyReserveSimulator ) return _canopySimulator;
 
 	if ( _canopySimulator && !_canopySimulator->isCutAway && _canopySimulator->isOpened()) {// main open
 		assert(_canopySimulator);
 		return _canopySimulator;
-	} else if ( _pilotchuteSimulator && !_canopySimulator->isCutAway && _pilotchuteSimulator->isConnected() ) {	//opening
+
+	} else if ( _canopyReserveSimulator->isOpened()) {  // reserve open
+		assert( _canopyReserveSimulator );
+		return _canopyReserveSimulator;
+
+	} else if ( _pilotchuteSimulator && _canopySimulator && !_canopySimulator->isCutAway && _pilotchuteSimulator->isConnected() ) {	//opening
 		assert(_canopySimulator);
 		return _canopySimulator;
 
@@ -1379,61 +2276,99 @@ CanopySimulator *Jumper::getDominantCanopy() {
 }
 
 PilotchuteSimulator *Jumper::getDominantPilotChute() {
-	if ( !_player || !_pilotchuteReserveSimulator ) return _pilotchuteSimulator;
-
-	if ( _pilotchuteSimulator && _pilotchuteSimulator->isConnected() && !_canopySimulator->isCutAway) {
-		assert(_pilotchuteSimulator);
+	if (getDominantCanopy() == _canopySimulator) {
 		return _pilotchuteSimulator;
-	} else {		// make sure not to delete _pilotchuteReserveSimulator before this method may be called
-		assert( _pilotchuteReserveSimulator );
+	} else {
 		return _pilotchuteReserveSimulator;
 	}
 }
 
 void Jumper::onFlight(float dt)
 {
-	if (false && _debug_window && _canopyReserveSimulator && _canopyReserveSimulator->isOpened()) {
-		NxMat34 pose = _canopyReserveSimulator->getActor()->getGlobalPose();
-		NxVec3 cx = pose.M.getColumn(0);
-		NxVec3 cy = pose.M.getColumn(1);
-		NxVec3 cz = pose.M.getColumn(2);
-		// 3dmax conversion
-		NxVec3 z = -cy;
-		NxVec3 y = cz;
-		NxVec3 x = cx;
+	/*
+	// disconnect tandem
+	if (_player && !_phFlight->isSleeping() && _tandemStudent != NULL) {
+		for (int i = 0; i < 4; ++i) {
+			if ( _tandemJoint[i] ) {
+				_tandemJoint[i]->release();
+			}
+		}
+		// reconnect tandem
+		//// connect joint
+		const float maxDistance = 0.006f;
+		const float y = 0.3f;
+		NxDistanceJointDesc jointDesc;
+		jointDesc.actor[0] = _phFlight;
+		jointDesc.actor[1] = _tandemStudent->getFreefallActor();
+		jointDesc.maxDistance = maxDistance;
+		jointDesc.minDistance = 0.0f;
+		jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+		jointDesc.localAnchor[0] = PxVec3(-0.2f,0.0f,0.2f);
+		jointDesc.localAnchor[1] = PxVec3(-0.2f,y,0.2f);
+		jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+		_tandemJoint[0] = _scene->getPhScene()->createJoint( jointDesc ); 
+		//NxDistanceJointDesc jointDesc;
+		jointDesc.actor[0] = _phFlight;
+		jointDesc.actor[1] = _tandemStudent->getFreefallActor();
+		jointDesc.maxDistance = maxDistance;
+		jointDesc.minDistance = 0.0f;
+		jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+		jointDesc.localAnchor[0] = PxVec3( 0.2f,0.0f,0.2f);
+		jointDesc.localAnchor[1] = PxVec3( 0.2f,y,0.2f);
+		jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+		_tandemJoint[1] = _scene->getPhScene()->createJoint( jointDesc ); 
+		//NxDistanceJointDesc jointDesc;
+		jointDesc.actor[0] = _phFlight;
+		jointDesc.actor[1] = _tandemStudent->getFreefallActor();
+		jointDesc.maxDistance = maxDistance;
+		jointDesc.minDistance = 0.0f;
+		jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+		jointDesc.localAnchor[0] = PxVec3(-0.2f,0.0f,-0.2f);
+		jointDesc.localAnchor[1] = PxVec3(-0.2f,y-0.05f,-0.2f);
+		jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+		_tandemJoint[2] = _scene->getPhScene()->createJoint( jointDesc ); 
+		//NxDistanceJointDesc jointDesc;
+		jointDesc.actor[0] = _phFlight;
+		jointDesc.actor[1] = _tandemStudent->getFreefallActor();
+		jointDesc.maxDistance = maxDistance;
+		jointDesc.minDistance = 0.0f;
+		jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+		jointDesc.localAnchor[0] = PxVec3( 0.2f,0.0f,-0.2f);
+		jointDesc.localAnchor[1] = PxVec3( 0.2f,y-0.05f,-0.2f);
+		jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+		_tandemJoint[3] = _scene->getPhScene()->createJoint( jointDesc ); 
+		_tandemStudent->getFreefallActor()->putToSleep();
+		_tandemStudent = NULL;
 
-		// velocity of canopy
-		NxVec3 velocity = _canopyReserveSimulator->getActor()->getLinearVelocity();       
 
-		// wind velocity
-		NxVec3 wind = _scene->getWindAtPoint( _canopyReserveSimulator->getActor()->getGlobalPose().t );
-		// final canopy velocity
-		velocity += wind * 0.5f;
+	}*/
 
-		// normalized velocity
-		NxVec3 velocityN = velocity; velocityN.normalize();
+	// AAD
+	/*
+	if (_virtues->equipment.reserve.type != gtUnequipped && _virtues->equipment.rig.rig_aad > 0) {
+		database::AAD *device = database::AAD::getRecord(_virtues->equipment.rig.rig_aad);
+		const float altitude = _phFreeFall->getGlobalPose().p.y;
+		if (!_phFreeFall->isSleeping() && fabs(_phFreeFall->getLinearVelocity().y) >= device->speed && altitude <= device->altitude) {
+			//_spinalCord->pullReserve = true;
+		}
+	}*/
 
-		float attackAngle = -calcAngle( z, velocityN, x );
-		
-		gui::IGuiPanel* panel = _debug_window->getPanel()->find( "Message" ); assert( panel && panel->getStaticText() );
-		panel->getStaticText()->setText( wstrformat(L"AA: %2.5f", attackAngle).c_str() );
+	// calculate canopy time
+	if (actionIs(Jumper::Flight)) {
+		_virtues->statistics.canopyTime += dt;
 	}
 
-	_virtues->statistics.canopyTime += dt;
-
-	// cut away action
-	if (_virtues->equipment.reserve.type != gtUnequipped &&	// reserve equipped
-		_spinalCord->cutAway &&								// cutaway pressed
-		//_phase != jpFreeFalling &&							// not have a canopy to cutaway (ie not freefalling)
-		isPlayer() &&										// player  (npcs too stupid for reserves)
-		_canopySimulator									// main still with the jumper (in container or deployed)
-		
+	// cut away main action
+	if (_virtues->equipment.reserve.type != gtUnequipped &&			// reserve equipped
+		_canopySimulator &&											// main still with the jumper (in container or deployed)
+		(_spinalCord->cutAway || _canopySimulator->cutOnOpening)	// cutaway pressed
+		//_phase != jpFreeFalling									// not have a canopy to cutaway (ie not freefalling)
 		) {
 
 		_spinalCord->cutAway = false;
 		// if canopy still in container, cut it away, but it will get destroyed only when deployed
 		if (!_canopySimulator->isOpened()) {
-			_canopySimulator->isCutAway = true;
+			_canopySimulator->cutOnOpening = true;
 		// if canopy is out of the container, destroy it right now
 		} else {
 			this->cutAwayMainCanopy();
@@ -1443,8 +2378,7 @@ void Jumper::onFlight(float dt)
 
 
     // dispatch reserve pull (WHILE UNDER MAIN) (because, look at method name)
-	if( _player &&
-		_spinalCord->pullReserve && 
+	if( _spinalCord->pullReserve && 
 		_pilotchuteReserveSimulator &&
 		!_pilotchuteReserveSimulator->isConnected() &&
 		this->getDominantCanopy() == _canopySimulator &&	// flying under main?
@@ -1486,11 +2420,6 @@ void Jumper::onFlight(float dt)
     {
 		if( actionIs(Pull) || actionIs(PullReserve) )
         {
-			// look for cut away
-			if (_virtues->equipment.reserve.type != gtUnequipped && _canopySimulator && _canopySimulator->isCutAway) {
-				this->cutAwayMainCanopy();
-			}
-
             // start opening action
 			canopy = this->getDominantCanopy();
 			pc = this->getDominantPilotChute();
@@ -1510,21 +2439,39 @@ void Jumper::onFlight(float dt)
         }
     }
 
+	canopy = this->getDominantCanopy();
+	if (canopy && canopy->getRDSLevel() == 1.0f) {
+		// remove slider
+		// _sliderUp to 0
+		// canopy reconnect
+
+		// disconnect PC
+		pc = this->getDominantPilotChute();
+		if (pc) {
+			pc->disconnect();
+			if (pc == _pilotchuteSimulator) _pilotchuteSimulator = NULL;
+			if (pc == _pilotchuteReserveSimulator) _pilotchuteReserveSimulator = NULL;
+			delete pc;
+			pc = NULL;
+		}
+	}
+
     // while landing check ground under feets
     if( actionIs(Landing) )
     {
         // check the ground under feets of jumper
         float maxDist = 0.5f;
-        NxRay worldRay;
-        worldRay.dir = wrap( _clump->getFrame()->getUp() );
-        worldRay.dir.normalize();
-        worldRay.orig = wrap( _clump->getFrame()->getPos() );
-        worldRay.orig += worldRay.dir * 0.1f;
-        worldRay.dir.set( 0, -1, 0 );
+        PxVec3 worldRayDir = wrap(_clump->getFrame()->getUp());
+		worldRayDir.normalize();
+        PxVec3 worldRayOrig = wrap(_clump->getFrame()->getPos());
+		worldRayOrig += worldRayDir * 0.1f;
+		worldRayOrig.normalize();
+		worldRayDir = PxVec3(0, -1, 0);
         
-        NxRaycastHit raycastHit;
-        if( !_scene->getPhTerrainShape()->raycast( worldRay, maxDist, NX_RAYCAST_DISTANCE | NX_RAYCAST_NORMAL, raycastHit, true ) )
-        {
+        
+        PxRaycastBuffer raycastHit;
+		PxHitFlags flags = PxHitFlag::eDEFAULT | PxHitFlag::eDISTANCE | PxHitFlag::eNORMAL;
+		if (_scene->getPhScene()->raycast(worldRayOrig, worldRayDir, maxDist, raycastHit, flags)) {
             delete _action;
             _action = new BadLanding( this, _phFlight, &_mcFlight );
             happen( this, EVENT_EASY_CRY );
@@ -1596,7 +2543,7 @@ void Jumper::onFreeFallingProcAnim(float dt)
     {
         Vector3f direction = wrap( _phFreeFall->getLinearVelocity() );
         direction.normalize();
-        lookWhereYouFly( direction, dt );
+        //lookWhereYouFly( direction, dt );
     }
 }
 
@@ -1648,7 +2595,7 @@ void Jumper::onEvent(Actor* initiator, unsigned int eventId, void* eventData)
     else if( eventId == EVENT_JUMPER_THIRDPERSON && reinterpret_cast<Actor*>( eventData ) == this )
     {
         unsigned int flags = engine::afCollision | engine::afRender;
-        if( isPlayer() ) 
+        if( true || isPlayer() ) 
         {
             int shadows = atoi( Gameplay::iGameplay->getConfigElement( "video" )->Attribute( "shadows" ) );
             if( shadows ) flags = flags | engine::afCastShadow;
@@ -1675,8 +2622,8 @@ void Jumper::onEvent(Actor* initiator, unsigned int eventId, void* eventData)
         onCameraIsActual();
     }
 }
-
-void Jumper::onContact(NxContactPair &pair, NxU32 events)
+/*
+void Jumper::onContact(NxContactPair &pair, PxU32 events)
 {
     // freefall actor?
     if( pair.actors[0] == _phFreeFall || pair.actors[1] == _phFreeFall )
@@ -1690,7 +2637,7 @@ void Jumper::onContact(NxContactPair &pair, NxU32 events)
             {
                 while( iter.goNextPatch() )
                 {
-                    const NxVec3& penaltyN = iter.getPatchNormal();
+                    const PxVec3& penaltyN = iter.getPatchNormal();
                     float penalty = -penaltyN.dot( _phFreeFall->getLinearVelocity() );
                     _phFreeFall->addForce( penaltyN * penalty, NX_VELOCITY_CHANGE );
                 }
@@ -1738,7 +2685,7 @@ void Jumper::onContact(NxContactPair &pair, NxU32 events)
             {
                 // check surface inclination
                 float maxInclination = 0.47f;
-                float inclination = raycastHit.worldNormal.dot( NxVec3(0,1,0) );
+                float inclination = raycastHit.worldNormal.dot( PxVec3(0,1,0) );
 
                 if( inclination < maxInclination )
                 {
@@ -1781,46 +2728,61 @@ void Jumper::onContact(NxContactPair &pair, NxU32 events)
         }
     }
 }
+*/
 
+float Alt_prev = -1000.0f;
 void Jumper::onUpdateActivity(float dt)
 {
+	if (_phase == jpCreating) {
+		return;
+	}
+
+
+	// DEBUG stuff
+	if (_debug_window) {
+		/*
+		Matrix4f pose = getPose();
+
+		float altitude = pose[3][1] / 100.0f;
+		if (Alt_prev <= -999.0f) Alt_prev = altitude;
+		const float real_Vvert = (altitude - Alt_prev)/dt;
+		Alt_prev = altitude;
+
+		deltaTime = dt;
+		bmp.pressure = altitude <= 10000.0f ? (1.196f - 0.0000826f * altitude) : (0.27f);
+		bmp.pressure = (bmp.pressure / 1.2041f) * 101.325f;
+		bmp.temperature = 15.0f;
+		bmp.altitude = altitude + getCore()->getRandToolkit()->getUniform(-5.0f, 5.0f);
+		
+		const bool Vvert_log = (Vvert_timer <= deltaTime);
+		loop();
+		
+		if (Vvert_log) {
+			getCore()->logMessage("%2.4f\t%2.4f", real_Vvert, Vvert);
+		}
+
+		gui::IGuiPanel* panel = this->_debug_window->getPanel()->find( "Message" );
+		panel->getStaticText()->setText( myGLCD.buffer );
+		*/
+
+		// network debug
+		//Matrix4f pose = getPose();
+
+		gui::IGuiPanel* panel = this->_debug_window->getPanel()->find( "Message" );
+		PxTransform pose = _phFreeFall->getGlobalPose();
+		panel->getStaticText()->setText( wstrformat(L"FPS: %2.5f\nX: %2.5f;\nY: %2.5f;\nZ: %2.5f;\n\nrX: %2.5f;\nrY: %2.5f;\nrZ: %2.5f;\nrW: %2.5f;", 1/dt, pose.p.x, pose.p.y, pose.p.z, pose.q.x, pose.q.y, pose.q.z, pose.q.w).c_str());
+
+		//panel->getStaticText()->setText( wstrformat(L"%2.1f %2.1f %2.1f %2.1f\n%2.1f %2.1f %2.1f %2.1f\n%2.1f %2.1f %2.1f %2.1f\n%2.1f %2.1f %2.1f %2.1f\n", pose[0][0], pose[0][1], pose[0][2], pose[0][3], pose[1][0], pose[1][1], pose[1][2], pose[1][3], pose[2][0], pose[2][1], pose[2][2], pose[2][3], pose[3][0], pose[3][1], pose[3][2], pose[3][3]).c_str());
+		//panel->getStaticText()->setText( wstrformat(L"timestamp: %3.5f\nNet id: %d", timestamp, network_id).c_str() );
+	}
+
 	_dt = dt;
-    #ifdef GAMEPLAY_DEVELOPER_EDITION
-    if( _player )
-    {
-        if( Gameplay::iGameplay->getMouseState()->buttonState[2] & 0x80 )
-        {
-            Matrix4f pose = getPose();
-            Vector3f pos( pose[3][0], pose[3][1], pose[3][2] );
-            getCore()->logMessage( "%2.1f, %2.1f, %2.1f", pos[0], pos[1], pos[2] );
-        }
-    }
-    #endif
 
     if( _player ) 
     {
         _spinalCord->mapActionChannels();
         if( !_phaseIsEnabled ) _spinalCord->phase = false;
     }
-
-	// AAD
-	if (_player && _virtues->equipment.reserve.type != gtUnequipped && _virtues->equipment.rig.rig_aad > 0) {
-		database::AAD *device = database::AAD::getRecord(_virtues->equipment.rig.rig_aad);
-		NxActor *actor = NULL;
-		if (!_phFlight->isSleeping()) {
-			actor = _phFlight;
-		} else if (!_phFreeFall->isSleeping()) {
-			actor = _phFreeFall;
-		}
-		
-		if (actor) {
-			float speed = fabs(actor->getLinearVelocity().y);
-			float alt = actor->getGlobalPosition().y;
-			if (speed >= device->speed && alt <= device->altitude) {
-				_spinalCord->pullReserve = true;
-			}
-		}
-	}
 
     switch( _phase )
     {
@@ -1867,7 +2829,6 @@ void Jumper::onUpdateActivity(float dt)
         {
             Tracking* tracking = dynamic_cast<Tracking*>( _action );
             freefallMod += 0.5f * fabs( tracking->getTrackingModifier() );
-            freefallMod += 0.5f * fabs( tracking->getSteeringModifier() );
         }
     }
     else if( _phase == ::jpFlight )
@@ -1885,10 +2846,11 @@ void Jumper::onUpdateActivity(float dt)
     happen( this, EVENT_JUMPER_FREEFALL_MODIFIER, &freefallMod );
 
     // afterproc.
-    if( !_isContacted && _phFreeFall->readActorFlag( NX_AF_DISABLE_RESPONSE ) )
+	// PHYSX3
+    /*if( !_isContacted && _phFreeFall->readActorFlag( NX_AF_DISABLE_RESPONSE ) )
     {
         _phFreeFall->clearActorFlag( NX_AF_DISABLE_RESPONSE );
-    }
+    }*/
 
     // procedural animation
     switch( _phase )
@@ -1923,17 +2885,358 @@ void Jumper::onUpdateActivity(float dt)
             }
         }
     }
+
+
+	/// NETWORK
+
+	// request a network id
+	if (_phase == jpFreeFalling &&
+		this->network_id == -1 &&
+		_player &&
+		!this->_phFreeFall->isSleeping()) {
+			NetworkData *packet = new NetworkData;
+			packet->timestamp = -Gameplay::iGameplay->getGlobalTime();
+			packet->receiver_type = NET_REC_MISSION;
+			packet->receiver_id = this->network_id;
+			packet->data_type = 1;	// request for a network ID and send Virtues
+
+			packet->data = new Virtues;
+			packet->data_length = sizeof Virtues;
+			memcpy(packet->data, _virtues, sizeof Virtues);
+
+			if (!getScene()->network->arePacketsSendingLocked()) {
+				getScene()->network->addPacketToBuffer(packet);
+				getScene()->network->switchBuffers();
+				this->network_id = -2;	// set to waiting
+			}
+			return;
+	}
+
+	// send information as player
+	if (!this->_phFreeFall->isSleeping() && _player && this->network_id > 0) {
+		const float timestamp = -Gameplay::iGameplay->getGlobalTime();
+		PxTransform globalpose = _phFreeFall->getGlobalPose();
+		PxVec3 linearvel = _phFreeFall->getLinearVelocity();
+		PxVec3 angularvel = _phFreeFall->getAngularVelocity();
+
+		NetworkData *packet;
+
+		// send matrix
+		//packet = new NetworkData;
+		//packet->timestamp = timestamp;
+		//packet->receiver_type = NET_REC_JUMPER;
+		//packet->receiver_id = this->network_id;
+		//packet->data_type = 2;	// global pose
+		//packet->data = new NxMat34;
+		//packet->data_length = sizeof globalpose;
+		//memcpy(packet->data, &globalpose, sizeof globalpose);
+		//getScene()->network->addPacketToBuffer(packet);
+
+		// send linear velocity
+		packet = new NetworkData;
+		packet->timestamp = timestamp;
+		packet->receiver_type = NET_REC_JUMPER;
+		packet->receiver_id = this->network_id;
+		packet->data_type = 4;	// linear velocity
+		packet->data = new PxVec3;
+		packet->data_length = sizeof linearvel;
+		memcpy(packet->data, &linearvel, sizeof linearvel);
+		getScene()->network->addPacketToBuffer(packet);
+
+		// send angular velocity
+		packet = new NetworkData;
+		packet->timestamp = timestamp;
+		packet->receiver_type = NET_REC_JUMPER;
+		packet->receiver_id = this->network_id;
+		packet->data_type = 5;	// angular velocity
+		packet->data = new PxVec3;
+		packet->data_length = sizeof angularvel;
+		memcpy(packet->data, &angularvel, sizeof angularvel);
+		getScene()->network->addPacketToBuffer(packet);
+
+		// send position
+		PxVec3 pos = _phFreeFall->getGlobalPose().p;
+		packet = new NetworkData;
+		packet->timestamp = timestamp;
+		packet->receiver_type = NET_REC_JUMPER;
+		packet->receiver_id = this->network_id;
+		packet->data_type = 1;	// global position
+		packet->data = new PxVec3;
+		packet->data_length = sizeof pos;
+		memcpy(packet->data, &pos, sizeof pos);
+		getScene()->network->addPacketToBuffer(packet);
+
+		// send spine
+		float controls[4] = {_spinalCord->left, _spinalCord->right, _spinalCord->up, _spinalCord->down};
+		packet = new NetworkData;
+		packet->timestamp = timestamp;
+		packet->receiver_type = NET_REC_JUMPER;
+		packet->receiver_id = this->network_id;
+		packet->data_type = 3;	// spinal cord
+		packet->data = new float[4];
+		packet->data_length = sizeof(float) * 4;
+		memcpy(packet->data, &controls, sizeof(float) * 4);
+		getScene()->network->addPacketToBuffer(packet);
+
+		// send controls
+		//packet->timestamp = timestamp;
+		//packet->receiver_type = NET_REC_JUMPER;
+		//packet->receiver_id = 1;
+		//packet->data_type = 3;	// spinal cord
+		//packet->data = new SpinalCord;
+		//packet->data_length = sizeof SpinalCord;
+		//memcpy(packet->data, _spinalCord, sizeof SpinalCord);
+		//getScene()->network->sendPacketAsync(packet);
+
+		getScene()->network->switchBuffers();
+	}
+
+	/// receive packets as NPC
+	if (!_player) {
+		int net_id = network_id;
+		if (net_id < 0) {
+			net_id = -net_id;
+		}
+		//NetworkData *packet = getScene()->network->consumePacketByReceiver(NET_REC_JUMPER, net_id);
+		//int limit = 3;
+		while (true) {
+			Scene *scene = getScene();
+			Network *network = scene->network;
+
+			NetworkData *packet = network->consumePacketByReceiver(NET_REC_JUMPER, net_id);
+			if (packet == NULL) break;
+			getCore()->logMessage("JUMPER PACKET");
+			consumePacket(packet);
+		}
+	}
+}
+
+void Jumper::consumePacket(NetworkData *packet) {
+	//if (packet->data_type == 1) {
+	//	PxVec3 pos;
+	//	memcpy(&pos, packet->data, sizeof PxVec3);
+	//	getCore()->logMessage("Got position: %2.5f %2.5f %2.5f", pos.x, pos.y, pos.z);
+	//}
+	//if (packet->data_type == 601) {
+	//	PxVec3 pos;
+	//	pos.x = 0;
+	//	pos.z = 0;
+	//	memcpy(&pos.y, packet->data, sizeof pos.y);
+	//	if (pos.y < -1000000000000000000000.0f || pos.y > 1000000000000000000000.0f ) {
+	//		getCore()->logMessage("Got Y CRAP: %2.5f", pos.y);
+	//	} else {
+	//		getCore()->logMessage("Got Y: %2.5f", pos.y);
+	//	}
+	//}
+	//if (packet->data_type != 601) return;
+
+	/// RECEIVE NETWORK PACKETS AS NPC
+	if (/*!this->_phFreeFall->isSleeping() &&*/ !_player) {
+		
+		// position vector PxVec3
+		if (packet->data_type == 1) {
+			PxVec3 pos;
+			memcpy(&pos, packet->data, sizeof PxVec3);
+			if (pos.x > -1000000000000000000000.0f && pos.x < 1000000000000000000000.0f &&
+				pos.y > -1000000000000000000000.0f && pos.y < 1000000000000000000000.0f &&
+				pos.z > -1000000000000000000000.0f && pos.z < 1000000000000000000000.0f) {
+
+
+				// damping
+				PxTransform gpos = _phFreeFall->getGlobalPose();
+					//getCore()->logMessage("Now position: %2.4f %2.4f %2.4f", gpos.x, gpos.y, gpos.z);
+					//getCore()->logMessage("Got position: %2.4f %2.4f %2.4f", pos.x, pos.y, pos.z);
+				PxVec3 dPos = (pos - gpos.p) * 0.3f;
+				gpos.p += dPos;
+
+					//getCore()->logMessage("Gave position: %2.4f %2.4f %2.4f", gpos.x, gpos.y, gpos.z);
+				_phFreeFall->setGlobalPose(gpos);
+				timestamp = packet->timestamp;
+			} else return;
+		// global pose matrix
+		} else if (packet->data_type == 2) {
+			PxTransform pose;
+			memcpy(&pose, packet->data, sizeof PxTransform);
+			PxVec3 check;
+			for (int i = 0; i < 3; ++i) {
+				check = pose.q.getBasisVector0();
+				if (check.x < -1000000000000000000000.0f || check.x > 1000000000000000000000.0f &&
+					check.y < -1000000000000000000000.0f || check.y > 1000000000000000000000.0f &&
+					check.z < -1000000000000000000000.0f || check.z > 1000000000000000000000.0f) {
+						return;
+				}
+			}
+			check = pose.p;
+			if (check.x < -1000000000000000000000.0f || check.x > 1000000000000000000000.0f &&
+					check.y < -1000000000000000000000.0f || check.y > 1000000000000000000000.0f &&
+					check.z < -1000000000000000000000.0f || check.z > 1000000000000000000000.0f) {
+						return;
+				}
+			
+			_phFreeFall->setGlobalPose(pose);
+
+		// controls
+		} else if (packet->data_type == 3) {
+			float controls[4];
+
+			memcpy(controls, packet->data, sizeof(float)*4);
+			_spinalCord->left = controls[0];
+			_spinalCord->right = controls[1];
+			_spinalCord->up = controls[2];
+			_spinalCord->down = controls[3];
+
+		// linear velocity
+		} else if (packet->data_type == 4) {
+			PxVec3 vel;
+			memcpy(&vel, packet->data, sizeof PxVec3);
+			if (vel.x > -1000000000000000000000.0f && vel.x < 1000000000000000000000.0f &&
+				vel.y > -1000000000000000000000.0f && vel.y < 1000000000000000000000.0f &&
+				vel.z > -1000000000000000000000.0f && vel.z < 1000000000000000000000.0f) {
+				_phFreeFall->setLinearVelocity(vel);
+			} else return;
+		// angular velocity
+		} else if (packet->data_type == 5) {
+			return;
+			//PxVec3 vel;
+			//memcpy(&vel, packet->data, sizeof PxVec3);
+			//_phFreeFall->setAngularVelocity(vel);
+		// jumper pose
+		} else if (packet->data_type == 6) {
+			return;
+			//int position;
+			//memcpy(&position, packet->data, sizeof position);
+			//if (actionIs(Jumper::Tracking)) {
+			//	Jumper::Tracking *tracking = dynamic_cast<Jumper::Tracking*>( _action );
+			//	tracking->changePose(position, 1.0f/0.5f, true);
+			//} else {
+			//	_default_pose = position;
+			//}
+
+		// experimental
+		} else if (packet->data_type == 601) {
+			/*PxVec3 pos = _phFreeFall->getGlobalPosition();
+			pos.x = 0;
+			pos.z = 0;
+			memcpy(&pos.y, packet->data, sizeof pos.y);
+			if (pos.y > -1000000000000000000000.0f && pos.y < 1000000000000000000000.0f ) {
+				_phFreeFall->setGlobalPosition(pos);
+			}*/
+		}
+
+		// was waiting but got something, so we can begin
+		if (_phFreeFall->isSleeping()) {
+			//_phFreeFall->setGlobalPosition(PxVec3(0.0f, 4000.0f, 0.0f));
+			//_phFreeFall->setLinearVelocity(PxVec3(0.0f, 0.0f, 0.0f));
+			beginFreefall();
+		}
+	}
 }
 
 void Jumper::onUpdatePhysics(void)
 {
+	if (_tandemStudent != NULL && _tandemJoint[0] == NULL) {
+		_tandemStudent->getSpinalCord()->phase = _spinalCord->phase;
+		_tandemStudent->getSpinalCord()->trigger_phase = _spinalCord->trigger_phase;
+	}
+
+	if (_phase == jpCreating) {
+		return;
+	}
+
+	// tandem test
+//	if (_spinalCord->leftReserve) {
+//		for( JumperI jumperI = _jumperL.begin(); jumperI != _jumperL.end(); jumperI++ ) {
+//			if( (*jumperI) != this ) {
+//				if ((*jumperI)->getFreefallActor()->isSleeping()) {
+//					continue;
+//				}
+//
+//				if (_phJoint) {
+//					_scene->getPhScene()->releaseJoint( *_phJoint );
+//				}
+//				NxDistanceJointDesc jointDesc;
+//				if (!_phFreeFall->isSleeping()) {
+//					jointDesc.actor[0] = _phFreeFall;
+//				} else {
+//					jointDesc.actor[0] = _phFlight;
+//				}
+//const float maxDistance = 0.006f;
+//const float y = 0.3f;
+//
+//				jointDesc.actor[1] = (*jumperI)->getFreefallActor();
+//				jointDesc.maxDistance = maxDistance;
+//				jointDesc.minDistance = 0.0f;
+//				jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+//				jointDesc.localAnchor[0] = PxVec3(-0.2f,0.0f,0.2f);
+//				jointDesc.localAnchor[1] = PxVec3(-0.2f,y,0.2f);
+//				jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+//				_phJoint = _scene->getPhScene()->createJoint( jointDesc ); 
+//				
+//
+//				//NxDistanceJointDesc jointDesc;
+//				if (!_phFreeFall->isSleeping()) {
+//					jointDesc.actor[0] = _phFreeFall;
+//				} else {
+//					jointDesc.actor[0] = _phFlight;
+//				}
+//
+//				jointDesc.actor[1] = (*jumperI)->getFreefallActor();
+//				jointDesc.maxDistance = maxDistance;
+//				jointDesc.minDistance = 0.0f;
+//				jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+//				jointDesc.localAnchor[0] = PxVec3( 0.2f,0.0f,0.2f);
+//				jointDesc.localAnchor[1] = PxVec3( 0.2f,y,0.2f);
+//				jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+//				_phJoint = _scene->getPhScene()->createJoint( jointDesc ); 
+//
+//				//NxDistanceJointDesc jointDesc;
+//				if (!_phFreeFall->isSleeping()) {
+//					jointDesc.actor[0] = _phFreeFall;
+//				} else {
+//					jointDesc.actor[0] = _phFlight;
+//				}
+//
+//				jointDesc.actor[1] = (*jumperI)->getFreefallActor();
+//				jointDesc.maxDistance = maxDistance;
+//				jointDesc.minDistance = 0.0f;
+//				jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+//				jointDesc.localAnchor[0] = PxVec3( 0.2f,0.0f,-0.2f);
+//				jointDesc.localAnchor[1] = PxVec3( 0.2f,y-0.05f,-0.2f);
+//				jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+//				_phJoint = _scene->getPhScene()->createJoint( jointDesc ); 
+//
+//				//NxDistanceJointDesc jointDesc;
+//				if (!_phFreeFall->isSleeping()) {
+//					jointDesc.actor[0] = _phFreeFall;
+//				} else {
+//					jointDesc.actor[0] = _phFlight;
+//				}
+//
+//				jointDesc.actor[1] = (*jumperI)->getFreefallActor();
+//				jointDesc.maxDistance = maxDistance;
+//				jointDesc.minDistance = 0.0f;
+//				jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED | NX_DJF_MIN_DISTANCE_ENABLED;      
+//				jointDesc.localAnchor[0] = PxVec3(-0.2f,0.0f,-0.2f);
+//				jointDesc.localAnchor[1] = PxVec3(-0.2f,y-0.05f,-0.2f);
+//				jointDesc.jointFlags = NX_JF_VISUALIZATION | NX_JF_COLLISION_ENABLED;
+//				_phJoint = _scene->getPhScene()->createJoint( jointDesc ); 
+//				break;
+//			}
+//		}
+//		_spinalCord->leftReserve = false;
+//	}
+
+
+
+
+
     // save ghost state
     if( _saveGhost ) _saveGhost->update( ::simulationStepTime );
 
     // bugfix
     if( _phase == ::jpFreeFalling || _phase == ::jpFlight )
     {
-        NxActor* phActor = NULL;
+        PxRigidDynamic* phActor = NULL;
         
         if( !_phFreeFall->isSleeping() ) 
         {
@@ -1944,39 +3247,42 @@ void Jumper::onUpdatePhysics(void)
             phActor = _phFlight;
         }
         
-        if( phActor && !phActor->isSleeping() )
+        if( _player && phActor && !phActor->isSleeping() )
         {
-            float maxDist = phActor->getLinearVelocity().magnitude() * ::simulationStepTime;
+			const float maxDist = phActor->getLinearVelocity().magnitude() * ::simulationStepTime;
+			PxVec3 worldRayOrig = phActor->getGlobalPose().p;
+			PxVec3 worldRayDir = phActor->getLinearVelocity();
+			worldRayDir.normalize();
+            worldRayOrig = worldRayOrig - worldRayDir * maxDist;
+			
+			
+            //PxShape** terrainShapes;
+			//_scene->getPhTerrain()->getShapes(terrainShapes, _scene->getPhTerrain()->getNbShapes());
 
-            NxRay worldRay;         
-            worldRay.orig = phActor->getGlobalPosition();
-            worldRay.dir  = phActor->getLinearVelocity();
-            worldRay.dir.normalize();
-            worldRay.orig = worldRay.orig - worldRay.dir * maxDist;
+			PxRaycastBuffer raycastHit;
+			PxHitFlags flags = PxHitFlag::eDEFAULT | PxHitFlag::eDISTANCE | PxHitFlag::eNORMAL;
+			if ( _tandemJoint[0] == NULL &&  _scene->getPhScene()->raycast(worldRayOrig, worldRayDir, maxDist, raycastHit, flags)) {
+				int c = raycastHit.nbTouches;
+				for (int i = 0; i < c; ++i) {
+					PxRaycastHit hit = raycastHit.getTouch(i);
+					PxVec3 penaltyDir = hit.normal; penaltyDir.normalize();
+					const float  penaltyValue = -penaltyDir.dot( _phFreeFall->getLinearVelocity() );
 
-            NxShape** terrainShapes = _scene->getPhTerrain()->getShapes();
-            NxTriangleMeshShape* triMeshShape = terrainShapes[0]->isTriangleMesh();
-            assert( triMeshShape );
+					PxTransform pose = phActor->getGlobalPose();
+					pose.p = pose.p - worldRayDir * maxDist;
+					phActor->setGlobalPose(pose);
 
-            NxRaycastHit raycastHit;
-            if( triMeshShape->raycast( worldRay, maxDist, NX_RAYCAST_DISTANCE | NX_RAYCAST_NORMAL, raycastHit, true ) )
-            {
-                NxVec3 penaltyDir = raycastHit.worldNormal; penaltyDir.normalize();
-                float  penaltyValue = -penaltyDir.dot( _phFreeFall->getLinearVelocity() );
-                phActor->setGlobalPosition( phActor->getGlobalPosition() - worldRay.dir * maxDist );
-                phActor->addForce( penaltyDir * penaltyValue, NX_VELOCITY_CHANGE );
-                phActor->addForce( penaltyDir * 10.0f, NX_VELOCITY_CHANGE );
+					phActor->addForce( penaltyDir * penaltyValue, PxForceMode::eVELOCITY_CHANGE );
+					phActor->addForce( penaltyDir * 10.0f, PxForceMode::eVELOCITY_CHANGE );
 
-                // damage jumper
-                float force = _virtues->appearance.weight * phActor->getLinearVelocity().magnitude() / ::simulationStepTime;
-            
-                getCore()->logMessage( "penetration force: %3.2f", force );
-
-                onDamage( 
-                    force, 
-                    0.0f, 
-                    phActor->getLinearVelocity().magnitude() 
-                );
+					// damage jumper
+					const float force = _virtues->appearance.weight * phActor->getLinearVelocity().magnitude() / ::simulationStepTime;
+					onDamage( 
+						force, 
+						0.0f, 
+						phActor->getLinearVelocity().magnitude() 
+					);
+				}
             }
         }
     }
@@ -1990,7 +3296,7 @@ void Jumper::onUpdatePhysics(void)
         _bcStep++;
         if( _bcStep >= bcStepout )
         {
-            NxVec3 measureVel( 0,0,0 );
+            PxVec3 measureVel( 0,0,0 );
             if( !_phFreeFall->isSleeping() )
             {
                 measureVel = _phFreeFall->getLinearVelocity();
@@ -1999,7 +3305,7 @@ void Jumper::onUpdatePhysics(void)
             {
                 measureVel = _phFlight->getLinearVelocity();
             }
-            _bcBurden.set( 0, -9.8f, 0 );
+            _bcBurden = PxVec3( 0, -9.81f, 0 );
             _bcBurden -= ( measureVel - _bcPrevVel ) / ( float( _bcStep ) * ::simulationStepTime );
             _bcPrevVel = measureVel;
             _bcStep = 0;
@@ -2008,7 +3314,7 @@ void Jumper::onUpdatePhysics(void)
         // overburden is damage equipped rig
         if( _phase == jpFlight )
         {
-            _virtues->onJumperOverburden( ( _bcBurden.magnitude() / 9.8f ), ::simulationStepTime );
+            _virtues->onJumperOverburden( ( _bcBurden.magnitude() / 9.81f ), ::simulationStepTime );
         }
     }
 
@@ -2016,7 +3322,7 @@ void Jumper::onUpdatePhysics(void)
     onUpdateSkills();
 
     // trajectory influence
-    NxActor* phActor = NULL;
+	PxRigidDynamic* phActor = NULL;
     switch( _phase )
     {
     case jpFreeFalling:
@@ -2117,11 +3423,12 @@ void Jumper::onUpdateHealthStatus(void)
     // detect "flying-near-wall" condition (hazard state)
     if( _phase == ::jpFreeFalling )
     {
-        NxSphere worldSphere;
-        worldSphere.center = _phFreeFall->getGlobalPosition();
-        worldSphere.radius = 0.5f * _phFreeFall->getLinearVelocity().magnitude();
-        if( _scene->getPhTerrainShape()->checkOverlapSphere( worldSphere ) )
-        {
+
+		PxSphereGeometry sphere;
+		sphere.radius = 0.5f * _phFreeFall->getLinearVelocity().magnitude();
+
+		PxOverlapBuffer hit;
+        if(_scene->getPhScene()->overlap(sphere, _phFreeFall->getGlobalPose(), hit)) {
             _hazardState = true;
         }    
     }
@@ -2170,8 +3477,17 @@ void Jumper::onUpdateHealthStatus(void)
         float factor  = ( _adrenaline - minRush ) / ( maxRush - minRush );        
         float cons    = minCons * ( 1 - factor ) + maxCons * factor;
 
+		if (_player) {
+			float vel = _phFreeFall->getLinearVelocity().magnitude();
+			//if (vel > 50.0f) {
+			//	float adrenaline = vel / 100.0f;
+			//	if (vel > 1.0f) adrenaline = 1.0f;
+			//	_scene->setTimeSpeed( _virtues->getTimeShift( 1.0f + adrenaline ) );
+			//}
+		}
         // time shift
-        if( _player ) _scene->setTimeSpeed( _virtues->getTimeShift( _adrenaline ) );
+        //if( _player ) _scene->setTimeSpeed( _virtues->getTimeShift( _adrenaline ) );
+
 
         // consume adrenaline
         _adrenaline -= cons * ::simulationStepTime;
@@ -2393,7 +3709,13 @@ void Jumper::onCameraIsActual(void)
     else
     {
         NPC* npc = dynamic_cast<NPC*>( _parent );
-        if( npc ) panel->getStaticText()->setText( npc->getNPCName() );
+		if( npc ) {
+			if (network_id == -1 || network_id == -2) {
+				panel->getStaticText()->setText( npc->getNPCName() );
+			} else {
+				panel->getStaticText()->setText( wstrformat(L"Network player #%d", network_id).c_str() );
+			}
+		}
     }
 
     // distance to jumper
@@ -2435,7 +3757,7 @@ void Jumper::onCameraIsActual(void)
 
     // piliotchute info
     panel = _signature->getPanel()->find( "PC" ); assert( panel && panel->getStaticText() );
-    if( _canopySimulator && _signatureType == stFull && !_pilotchuteSimulator->isPulled() )
+    if( _canopySimulator && _signatureType == stFull && _pilotchuteSimulator && !_pilotchuteSimulator->isPulled() )
     {
         database::Canopy* canopyInfo = database::Canopy::getRecord( _virtues->equipment.canopy.id );
         database::Pilotchute* pcInfo = canopyInfo->pilots + _virtues->equipment.pilotchute;
@@ -2532,25 +3854,19 @@ bool Jumper::getDistanceToImpact(float& inOutDistance)
 {
     if( _phase != ::jpFreeFalling ) return false;
 
-    NxRay worldRay;
-    worldRay.orig = _phFreeFall->getGlobalPosition();
-    worldRay.dir  = _phFreeFall->getLinearVelocity();
-    worldRay.dir.normalize();
 
-    float maxDist = inOutDistance;
+    PxVec3 worldRayOrig = _phFreeFall->getGlobalPose().p;
+    PxVec3 worldRayDir  = _phFreeFall->getLinearVelocity();
+    worldRayDir.normalize();
 
-    NxShape** terrainShapes = _scene->getPhTerrain()->getShapes();
-    NxTriangleMeshShape* triMeshShape = terrainShapes[0]->isTriangleMesh();
-    assert( triMeshShape );
+    const float maxDist = inOutDistance;
 
-    NxRaycastHit raycastHit;
-    if( triMeshShape->raycast( worldRay, maxDist, NX_RAYCAST_DISTANCE, raycastHit, true ) )
-    {
-        inOutDistance = raycastHit.distance;
+	PxRaycastBuffer raycastHit;
+	PxHitFlags flags = PxHitFlag::eDEFAULT | PxHitFlag::eDISTANCE;
+	if( _scene->getPhScene()->raycast(worldRayOrig, worldRayDir, maxDist, raycastHit, flags)) {
+        inOutDistance = raycastHit.getTouch(0).distance;
         return true;
-    }
-    else
-    {
+    } else {
         return false;
     }
 }
@@ -2559,25 +3875,18 @@ bool Jumper::getDistanceToSurface(float& inOutDistance)
 {
     if( _phase != ::jpFlight ) return false;
 
-    NxRay worldRay;
-    worldRay.orig = _phFlight->getGlobalPosition();
-    worldRay.dir  = NxVec3( 0,-1,0 );
-    worldRay.dir.normalize();
+    PxVec3 worldRayOrig = _phFlight->getGlobalPose().p;
+    PxVec3 worldRayDir  = PxVec3( 0,-1,0 );
+    worldRayDir.normalize();
 
-    float maxDist = inOutDistance;
+    const float maxDist = inOutDistance;
 
-    NxShape** terrainShapes = _scene->getPhTerrain()->getShapes();
-    NxTriangleMeshShape* triMeshShape = terrainShapes[0]->isTriangleMesh();
-    assert( triMeshShape );
-
-    NxRaycastHit raycastHit;
-    if( triMeshShape->raycast( worldRay, maxDist, NX_RAYCAST_DISTANCE, raycastHit, true ) )
-    {
-        inOutDistance = raycastHit.distance;
+	PxRaycastBuffer raycastHit;
+	PxHitFlags flags = PxHitFlag::eDEFAULT | PxHitFlag::eDISTANCE;
+	if( _scene->getPhScene()->raycast(worldRayOrig, worldRayDir, maxDist, raycastHit, flags)) {
+        inOutDistance = raycastHit.getTouch(0).distance;
         return true;
-    }
-    else
-    {
+    } else {
         return false;
     }
 }
@@ -2608,11 +3917,11 @@ void Jumper::setLicensedCharacterAppearance(void)
  * overburden calculation
  */
 
-void Jumper::initOverburdenCalculator(NxVec3& velocity)
+void Jumper::initOverburdenCalculator(PxVec3& velocity)
 {
     _bcStep    = 0;
     _bcPrevVel = velocity;
-    _bcBurden  = NxVec3( 0, -9.8f, 0 );
+    _bcBurden  = PxVec3( 0, -9.8f, 0 );
 }
 
 /**

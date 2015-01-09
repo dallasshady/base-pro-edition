@@ -13,6 +13,18 @@ engine::IAtomic* CanopyRenderCallback::onRenderCanopy(engine::IAtomic* atomic, v
     for( int i=0; i<atomic->getGeometry()->getNumShaders(); i++ )
     {
         assert( atomic->getGeometry()->getShader(i)->getNumLayers() == 1 );
+
+		// Crash Test Diver
+        // enable anisotropy
+        //atomic->getGeometry()->getShader(i)->getLayerTexture( 0 )->setMinFilter( engine::ftAnisotropic );
+        //atomic->getGeometry()->getShader(i)->getLayerTexture( 0 )->setMagFilter( engine::ftLinear );
+        //atomic->getGeometry()->getShader(i)->getLayerTexture( 0 )->setMaxAnisotropy( 8 );
+        //// enable alpha blending
+        //atomic->getGeometry()->getShader(i)->setFlags(
+        //    atomic->getGeometry()->getShader(i)->getFlags() | engine::sfAlphaBlending 
+        //);
+
+
         atomic->getGeometry()->getShader(i)->setLayerTexture( 
             0, 
             reinterpret_cast<CanopyRenderCallback*>(data)->canopyTexture

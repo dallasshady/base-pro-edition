@@ -16,7 +16,7 @@ engine::AnimSequence* Jumper::Flip::getFlipSequence(void)
     return &flipSequence;
 }
 
-Jumper::Flip::Flip(Jumper* jumper, NxActor* phActor, MatrixConversion* mc, float blendTime) :
+Jumper::Flip::Flip(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc, float blendTime) :
     Jumper::JumperAction( jumper )
 {
     // set action properties
@@ -67,10 +67,10 @@ static float getAirResistancePower(float i)
 void Jumper::Flip::updatePhysics(void)
 {
     // velocity of base jumper's body
-    NxVec3 velocity = _phActor->getLinearVelocity();
+    PxVec3 velocity = _phActor->getLinearVelocity();
 
     // vectical velocity of base jumper's body
-    NxVec3 velocityV( 0, velocity.y, 0 );
+    PxVec3 velocityV( 0, velocity.y, 0 );
 
     // air resistance coefficient
     float AR = _jumper->getVirtues()->getTrackingAirResistance();
@@ -80,15 +80,16 @@ void Jumper::Flip::updatePhysics(void)
     float It = velocityV.magnitude() / Vt;
 
     // air resistance force
-    NxVec3 Far = NxVec3(0,1,0) * getAirResistancePower( velocityV.magnitude() / Vt ) * _phActor->getMass() * 9.8f;
+    PxVec3 Far = PxVec3(0,1,0) * getAirResistancePower( velocityV.magnitude() / Vt ) * _phActor->getMass() * 9.8f;
 
     // control torque
-    NxVec3 Tctrl( 0,0,0 );
-    Tctrl += NxVec3(1,0,0) * -_jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->down;
-    Tctrl += NxVec3(1,0,0) * _jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->up;
+    PxVec3 Tctrl( 0,0,0 );
+    Tctrl += PxVec3(1,0,0) * -_jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->down * 10.0f;
+    Tctrl += PxVec3(1,0,0) * _jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->up * 10.0f;
     Tctrl *= It;
 
+	//getCore()->logMessage("torq: %2.5f\n%2.5f", _jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->up, _jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->down);
     // finalize motion equation    
     _phActor->addForce( Far );
-    _phActor->addLocalTorque( Tctrl );
+    _phActor->addTorque( Tctrl );
 }

@@ -22,7 +22,8 @@ static void equipBestBASERig(Career* career)
 
     // build list of BASE rigs
     std::vector<unsigned int> rigs;
-    for( unsigned int i=0; i<career->getNumGears(); i++ )
+	unsigned int i;
+    for( i=0; i<career->getNumGears(); i++ )
     {
         if( career->getGear( i ).type == gtRig ) 
         {
@@ -63,7 +64,8 @@ static void equipBestSkydivingRig(Career* career)
 
     // build list of skydiving rigs
     std::vector<unsigned int> rigs;
-    for( unsigned int i=0; i<career->getNumGears(); i++ )
+	unsigned int i;
+    for( i=0; i<career->getNumGears(); i++ )
     {
         if( career->getGear( i ).type == gtRig )
         {
@@ -110,7 +112,8 @@ static void equipBestBASECanopy(Career* career, float windAmbient, float windBla
 
     // build list of canopies
     std::vector<unsigned int> canopies;
-    for( unsigned int i=0; i<career->getNumGears(); i++ )
+	unsigned int i;
+    for( i=0; i<career->getNumGears(); i++ )
     {
         if( career->getGear( i ).type == gtCanopy )
         {
@@ -180,7 +183,8 @@ static void equipBestSkydivingCanopy(Career* career, float windAmbient, float wi
 
     // build list of canopies
     std::vector<unsigned int> canopies;
-    for( unsigned int i=0; i<career->getNumGears(); i++ )
+	unsigned int i;
+    for( i=0; i<career->getNumGears(); i++ )
     {
         if( career->getGear( i ).type == gtCanopy )
         {
@@ -414,7 +418,8 @@ bool equipBestSuit(Career* career, float windAmbient, float windBlast)
 
     // build list of suits
     std::vector<unsigned int> suits;
-    for( unsigned int i=0; i<career->getNumGears(); i++ )
+	unsigned int i;
+    for( i=0; i<career->getNumGears(); i++ )
     {
         if( career->getGear( i ).type == gtSuit )
         {
@@ -471,7 +476,8 @@ bool equipBestWingsuit(Career* career, float windAmbient, float windBlast)
 
     // build list of wing suits
     std::vector<unsigned int> wingsuits;
-    for( unsigned int i=0; i<career->getNumGears(); i++ )
+	unsigned int i;
+    for( i=0; i<career->getNumGears(); i++ )
     {
         if( career->getGear( i ).type == gtSuit )
         {

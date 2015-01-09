@@ -1,4 +1,3 @@
-
 #ifndef GAMEPLAY_IMPLEMENTATION_INCLUDED
 #define GAMEPLAY_IMPLEMENTATION_INCLUDED
 
@@ -19,6 +18,11 @@
 
 using namespace ccor;
 
+
+
+
+
+
 /**
  * gameplay implementation
  */
@@ -29,19 +33,21 @@ private:
     typedef std::vector<TiXmlDocument*> TiXmlDocuments;    
     typedef std::vector<std::string*> StringPointers;
     typedef std::vector<database::MissionInfo*> Missions;
+
 private:
-    MemoryAllocator       _allocator;       // NX memory allocator
-    OutputStream          _outputStream;    // NX output stream
-    std::stack<Activity*> _activities;      // callstack of activities
-    std::vector<Career*>  _careers;         // container of careers
-    RenderTarget*         _renderTarget;    // current render target
-    ActionChannelM        _actionChannels;  // input action mapping
-    input::IInputDevice*  _inputDevice;     // current input device
-    input::KeyboardState  _keyboardState;   // internal keyboard buffer
-    input::MouseState     _mouseState;      // internal mouse buffer
-	input::JoyState       _joystickState;   // internal mouse buffer
-    Activity*             _preloaded;       // preloaded activity
-    NxPhysicsSDK*         _physicsSDK;
+    PxDefaultAllocator		_allocator;       // PX memory allocator
+    PxDefaultErrorCallback	_outputStream;    // PX output stream
+    std::stack<Activity*>	_activities;      // callstack of activities
+    std::vector<Career*>	_careers;         // container of careers
+    RenderTarget*			_renderTarget;    // current render target
+    ActionChannelM			_actionChannels;  // input action mapping
+    input::IInputDevice*	_inputDevice;     // current input device
+    input::KeyboardState	_keyboardState;   // internal keyboard buffer
+    input::MouseState		_mouseState;      // internal mouse buffer
+	input::JoyState			_joystickState;   // internal mouse buffer
+    Activity*				_preloaded;       // preloaded activity
+    //PHYSX3
+	//NxPhysicsSDK*         _physicsSDK; // made static
     TiXmlDocument*        _config;
     audio::ISound*        _soundTrack;
     audio::ISound*        _fadedSoundTrack;
@@ -59,6 +65,7 @@ public:
 	bool                  _freeModeIsEnabled; // allow all events at all locations
 	bool                  _cheatsEnabled; // jumping in all weathers is enabled
 	bool                  _feetModeIsEnabled; // allow all events at all locations
+
 private:
     void createActionMap(void);
     void destroyActionMap(void);
@@ -104,6 +111,7 @@ public:
     void resetActionChannels();
     void resetActionChannels(InputAction exceptForAction);
     TiXmlElement* getConfigElement(const char* name);
+
 public:
     // module local : gameplay inlines
     inline RenderTarget* getRenderTarget(void) { return _renderTarget; }
@@ -118,6 +126,8 @@ public:
     inline void setfreeModeIsEnabled(bool freeModeIsEnabled) { _freeModeIsEnabled = freeModeIsEnabled; }
     inline bool getfeetModeIsEnabled(void) { return _feetModeIsEnabled; }
     inline void setfeetModeIsEnabled(bool feetModeIsEnabled) { _feetModeIsEnabled = feetModeIsEnabled; }
+
+	inline float getGlobalTime(void) { return _globalTimeIT; }
 public:
     static Gameplay*            iGameplay;
     static engine::IEngine*     iEngine;
@@ -125,6 +135,7 @@ public:
     static language::ILanguage* iLanguage;
     static input::IInput*       iInput;
     static audio::IAudio*       iAudio;
+	static PxCooking*			pxCooking;
 };
 
 #endif

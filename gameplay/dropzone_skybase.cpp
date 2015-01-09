@@ -83,6 +83,9 @@ void castSkybaseJump(Actor* parent, float altitude, CatToy* ghost)
     new GoalStateOfHealth( mission->getPlayer() );
     new GoalStateOfGear( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_action.ogg" );

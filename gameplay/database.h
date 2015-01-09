@@ -84,6 +84,7 @@ public:
 #define CLID_VIOLET       168
 #define CLID_DARK_GREEN   169
 #define CLID_BLACK        230
+#define CLID_CTD		  911
 
 /**
  * manufacturer constatns (language resources)
@@ -489,6 +490,7 @@ public:
         float reverbMixDB;
         float reverbTime;
         float hfTimeRatio;
+		float maxAltitude;		// [m]
     }
     *reverberation;
 public:

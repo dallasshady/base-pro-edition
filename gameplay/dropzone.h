@@ -45,13 +45,18 @@ void castingCallback_BASEVFF_Lineovers(Actor* parent);
  */
 
 void castSkydivers(Mission* mission, Airplane* airplane, unsigned int numSkydivers);
-void castFreejump(Actor* parent, float altitude);
+void castFreejump(Actor* parent, float altitude, int pose);
 
 void castingCallback_Freejump_800(Actor* parent);
 void castingCallback_Freejump_1500(Actor* parent);
 void castingCallback_Freejump_3000(Actor* parent);
 void castingCallback_Freejump_4000(Actor* parent);
-void castingCallback_Freejump_7000(Actor* parent);
+void castingCallback_Freejump_8000(Actor* parent);
+void castingCallback_Freejump_4000_Mass(Actor *parent);
+void castingCallback_Freejump_Multi(Actor* parent);
+void castingCallback_Freejump_Headdown(Actor* parent);
+void castingCallback_Freejump_Sitfly(Actor* parent);
+void castingCallback_Freejump_Backfly(Actor* parent);
 
 bool equipCallback_Freejump(Career* career, float windAmbient, float windBlast, database::MissionInfo* missionInfo);
 bool equipCallback_FreejumpCommonSuit(Career* career, float windAmbient, float windBlast, database::MissionInfo* missionInfo);

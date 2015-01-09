@@ -20,7 +20,7 @@ gui::IGui*           Gameplay::iGui = NULL;
 language::ILanguage* Gameplay::iLanguage = NULL;
 input::IInput*       Gameplay::iInput = NULL;
 audio::IAudio*       Gameplay::iAudio = NULL;
-
+PxCooking*			 Gameplay::pxCooking = NULL;
 /**
  * class implementation
  */
@@ -40,7 +40,9 @@ Gameplay::Gameplay()
     _pitchShiftIsEnabled = false;
 
 	_renderTarget = NULL;
-    // zhulikotester
+	pxCooking = NULL;
+   
+	// zhulikotester
     //checkKey( "7LGQ-3F9H-C7LT-Q3W4-FR9F-CX9H", "WD-WMAJ94914315" );
 }
 
@@ -88,7 +90,9 @@ Gameplay::~Gameplay()
         if (_renderTarget) delete _renderTarget;
     
         // delete sdks
-        _physicsSDK->release();
+		PxGetPhysics().release();
+		pxCooking->release();
+		foundation->release();
     
         // cleanup action mapping
         destroyActionMap();
@@ -145,163 +149,170 @@ void Gameplay::createActionMap(void)
     // read configuration...
     ButtonChannel* buttonChannel;
 
+	float ascLvl = 2.0f;
+	float descLvl = 5.0f;
     // create left channel
-    buttonChannel = new ButtonChannel( iaLeft, 1, 4 );
+    buttonChannel = new ButtonChannel( iaLeft, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaLeft" ) );
     _actionChannels.insert( ActionChannelT( iaLeft, buttonChannel ) );
 
     // create right channel
-    buttonChannel = new ButtonChannel( iaRight, 1, 4 );
+    buttonChannel = new ButtonChannel( iaRight, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaRight" ) );
     _actionChannels.insert( ActionChannelT( iaRight, buttonChannel ) );
 
     // create forward channel
-    buttonChannel = new ButtonChannel( iaForward, 1, 4 );
+    buttonChannel = new ButtonChannel( iaForward, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaForward" ) );
     _actionChannels.insert( ActionChannelT( iaForward, buttonChannel ) );
 
     // create backward channel
-    buttonChannel = new ButtonChannel( iaBackward, 1, 4 );
+    buttonChannel = new ButtonChannel( iaBackward, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaBackward" ) );
     _actionChannels.insert( ActionChannelT( iaBackward, buttonChannel ) );
     
     // create left-warp channel
-    buttonChannel = new ButtonChannel( iaLeftWarp, 1, 4 );
+    buttonChannel = new ButtonChannel( iaLeftWarp, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaLeftWarp" ) );
     _actionChannels.insert( ActionChannelT( iaLeftWarp, buttonChannel ) );
 
     // create right-warp channel
-    buttonChannel = new ButtonChannel( iaRightWarp, 1, 4 );
+    buttonChannel = new ButtonChannel( iaRightWarp, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaRightWarp" ) );
     _actionChannels.insert( ActionChannelT( iaRightWarp, buttonChannel ) );
 
     // create left-rear riser channel
-    buttonChannel = new ButtonChannel( iaLeftRearRiser, 1, 4 );
+    buttonChannel = new ButtonChannel( iaLeftRearRiser, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaLeftRearRiser" ) );
     _actionChannels.insert( ActionChannelT( iaLeftRearRiser, buttonChannel ) );
 
     // create right-rear riser channel
-    buttonChannel = new ButtonChannel( iaRightRearRiser, 1, 4 );
+    buttonChannel = new ButtonChannel( iaRightRearRiser, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaRightRearRiser" ) );
     _actionChannels.insert( ActionChannelT( iaRightRearRiser, buttonChannel ) );
 
     // create phase channel
-    buttonChannel = new ButtonChannel( iaPhase, 1, 4 );
+    buttonChannel = new ButtonChannel( iaPhase, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaPhase" ) );
     _actionChannels.insert( ActionChannelT( iaPhase, buttonChannel ) );
 
     // create modifier channel
-    buttonChannel = new ButtonChannel( iaModifier, 1, 4 );
+    buttonChannel = new ButtonChannel( iaModifier, ascLvl*0.7f, descLvl*0.7f );
     buttonChannel->setup( 0, getActionCode( _config, "iaModifier" ) );
     _actionChannels.insert( ActionChannelT( iaModifier, buttonChannel ) );
     
     // create camera mode 0 channel
-    buttonChannel = new ButtonChannel( iaCameraMode0, 1, 4 );
+    buttonChannel = new ButtonChannel( iaCameraMode0, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaCameraMode0" ) );
     _actionChannels.insert( ActionChannelT( iaCameraMode0, buttonChannel ) );
 
     // create camera mode 1 channel
-    buttonChannel = new ButtonChannel( iaCameraMode1, 1, 4 );
+    buttonChannel = new ButtonChannel( iaCameraMode1, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaCameraMode1" ) );
     _actionChannels.insert( ActionChannelT( iaCameraMode1, buttonChannel ) );
 
     // create camera mode 2 channel
-    buttonChannel = new ButtonChannel( iaCameraMode2, 1, 4 );
+    buttonChannel = new ButtonChannel( iaCameraMode2, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaCameraMode2" ) );
     _actionChannels.insert( ActionChannelT( iaCameraMode2, buttonChannel ) );
 
     // create WLO channel
-    buttonChannel = new ButtonChannel( iaWLO, 1, 4 );
+    buttonChannel = new ButtonChannel( iaWLO, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaWLO" ) );
     _actionChannels.insert( ActionChannelT( iaWLO, buttonChannel ) );
 
     // create hook knife channel
-    buttonChannel = new ButtonChannel( iaHook, 1, 4 );
+    buttonChannel = new ButtonChannel( iaHook, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaHook" ) );
     _actionChannels.insert( ActionChannelT( iaHook, buttonChannel ) );
 
     // create flight time (+) channel
-    buttonChannel = new ButtonChannel( iaAccelerateFlightTime, 1, 4 );
+    buttonChannel = new ButtonChannel( iaAccelerateFlightTime, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaAccelerateFlightTime" ) );
     _actionChannels.insert( ActionChannelT( iaAccelerateFlightTime, buttonChannel ) );
 
     // create flight time (-) channel
-    buttonChannel = new ButtonChannel( iaDecelerateFlightTime, 1, 4 );
+    buttonChannel = new ButtonChannel( iaDecelerateFlightTime, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaDecelerateFlightTime" ) );
     _actionChannels.insert( ActionChannelT( iaDecelerateFlightTime, buttonChannel ) );
 
     // create altimeter mode channel
-    buttonChannel = new ButtonChannel( iaAltimeterMode, 1, 4 );
+    buttonChannel = new ButtonChannel( iaAltimeterMode, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaAltimeterMode" ) );
     _actionChannels.insert( ActionChannelT( iaAltimeterMode, buttonChannel ) );
 
     // create warn. alt. (+) channel
-    buttonChannel = new ButtonChannel( iaIncreaseWarningAltitude, 1, 4 );
+    buttonChannel = new ButtonChannel( iaIncreaseWarningAltitude, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaIncreaseWarningAltitude" ) );
     _actionChannels.insert( ActionChannelT( iaIncreaseWarningAltitude, buttonChannel ) );
 
     // create warn. alt. (-) channel
-    buttonChannel = new ButtonChannel( iaDecreaseWarningAltitude, 1, 4 );
+    buttonChannel = new ButtonChannel( iaDecreaseWarningAltitude, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaDecreaseWarningAltitude" ) );
     _actionChannels.insert( ActionChannelT( iaDecreaseWarningAltitude, buttonChannel ) );
 
     // create HUD mode channel
-    buttonChannel = new ButtonChannel( iaSwitchHUDMode, 1, 4 );
+    buttonChannel = new ButtonChannel( iaSwitchHUDMode, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaSwitchHUDMode" ) );
     _actionChannels.insert( ActionChannelT( iaSwitchHUDMode, buttonChannel ) );
 
     // create music volume (+) channel
-    buttonChannel = new ButtonChannel( iaIncreaseMusicVolume, 1, 4 );
+    buttonChannel = new ButtonChannel( iaIncreaseMusicVolume, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaIncreaseMusicVolume" ) );
     _actionChannels.insert( ActionChannelT( iaIncreaseMusicVolume, buttonChannel ) );
 
     // create music volume (-) channel
-    buttonChannel = new ButtonChannel( iaDecreaseMusicVolume, 1, 4 );
+    buttonChannel = new ButtonChannel( iaDecreaseMusicVolume, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaDecreaseMusicVolume" ) );
     _actionChannels.insert( ActionChannelT( iaDecreaseMusicVolume, buttonChannel ) );
 
     // cutaway
-    buttonChannel = new ButtonChannel( iaCutAway, 1, 4 );
+    buttonChannel = new ButtonChannel( iaCutAway, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaCutAway" ) );
     _actionChannels.insert( ActionChannelT( iaCutAway, buttonChannel ) );
 	
     // pull reserve
-    buttonChannel = new ButtonChannel( iaPullReserve, 1, 4 );
+    buttonChannel = new ButtonChannel( iaPullReserve, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaPullReserve" ) );
     _actionChannels.insert( ActionChannelT( iaPullReserve, buttonChannel ) );
 
     // create left reserve channel
-    buttonChannel = new ButtonChannel( iaReserveLeft, 1, 4 );
+    buttonChannel = new ButtonChannel( iaReserveLeft, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaReserveLeft" ) );
     _actionChannels.insert( ActionChannelT( iaReserveLeft, buttonChannel ) );
 
     // create right reserve channel
-    buttonChannel = new ButtonChannel( iaReserveRight, 1, 4 );
+    buttonChannel = new ButtonChannel( iaReserveRight, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaReserveRight" ) );
     _actionChannels.insert( ActionChannelT( iaReserveRight, buttonChannel ) );
 
     // create left-warp reserve channel
-    buttonChannel = new ButtonChannel( iaReserveLeftWarp, 1, 4 );
+    buttonChannel = new ButtonChannel( iaReserveLeftWarp, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaReserveLeftWarp" ) );
     _actionChannels.insert( ActionChannelT( iaReserveLeftWarp, buttonChannel ) );
 
     // create right-warp reserve channel
-	buttonChannel = new ButtonChannel( iaReserveRightWarp, 1, 4 );
+	buttonChannel = new ButtonChannel( iaReserveRightWarp, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaReserveRightWarp" ) );
     _actionChannels.insert( ActionChannelT( iaReserveRightWarp, buttonChannel ) );
 
     // create left rear riser reserve channel
-    buttonChannel = new ButtonChannel( iaReserveLeftRearRiser, 1, 4 );
+    buttonChannel = new ButtonChannel( iaReserveLeftRearRiser, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaReserveLeftRearRiser" ) );
     _actionChannels.insert( ActionChannelT( iaReserveLeftRearRiser, buttonChannel ) );
 
     // create right rear riser reserve channel
-	buttonChannel = new ButtonChannel( iaReserveRightRearRiser, 1, 4 );
+	buttonChannel = new ButtonChannel( iaReserveRightRearRiser, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaReserveRightRearRiser" ) );
     _actionChannels.insert( ActionChannelT( iaReserveRightRearRiser, buttonChannel ) );
 
+    // create rear break channel
+    buttonChannel = new ButtonChannel( iaRearBrake, ascLvl, descLvl );
+    buttonChannel->setup( 0, getActionCode( _config, "iaRearBrake" ) );
+    _actionChannels.insert( ActionChannelT( iaRearBrake, buttonChannel ) );
+
     // create right channel
-    buttonChannel = new ButtonChannel( iaRight, 1, 4 );
+    buttonChannel = new ButtonChannel( iaRight, ascLvl, descLvl );
     buttonChannel->setup( 0, getActionCode( _config, "iaRight" ) );
     _actionChannels.insert( ActionChannelT( iaRight, buttonChannel ) );
 
@@ -427,20 +438,24 @@ void Gameplay::entityInit(Object * p)
         iLanguage->reset();
     }
 
-	getCore()->logMessage("Version: %ls", ::version.getVersionString());
+	getCore()->logMessage("Version: %ls (Clean)", ::version.getVersionString());
 
     // create input device
     _inputDevice = iInput->createInputDevice();
     createActionMap();
 
     // create physics resources
-    _physicsSDK = NxCreatePhysicsSDK( NX_PHYSICS_SDK_VERSION, &_allocator, &_outputStream );
-    NxInitCooking();
-    NxGetPhysicsSDK()->setParameter( NX_VISUALIZATION_SCALE, 100.0f );
-    NxGetPhysicsSDK()->setParameter( NX_VISUALIZE_ACTOR_AXES, 1 );
-    NxGetPhysicsSDK()->setParameter( NX_VISUALIZE_COLLISION_SHAPES, 1 );
-    NxGetPhysicsSDK()->setParameter( NX_VISUALIZE_COLLISION_STATIC, 1 );
-    NxGetPhysicsSDK()->setParameter( NX_VISUALIZE_COLLISION_DYNAMIC,1 );
+	foundation = PxCreateFoundation(PX_PHYSICS_VERSION, gDefaultAllocatorCallback, gDefaultErrorCallback);
+    gPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale() );
+	pxCooking = PxCreateCooking(PX_PHYSICS_VERSION, *foundation, PxCookingParams(PxTolerancesScale()));
+	PxInitExtensions(*gPhysicsSDK);
+
+	//PHYSX3
+    //NxGetPhysicsSDK()->setParameter( NX_VISUALIZATION_SCALE, 100.0f );
+    //NxGetPhysicsSDK()->setParameter( NX_VISUALIZE_ACTOR_AXES, 1 );
+    //NxGetPhysicsSDK()->setParameter( NX_VISUALIZE_COLLISION_SHAPES, 1 );
+    //NxGetPhysicsSDK()->setParameter( NX_VISUALIZE_COLLISION_STATIC, 1 );
+    //NxGetPhysicsSDK()->setParameter( NX_VISUALIZE_COLLISION_DYNAMIC,1 );
 
     // generate user community events from XML documents
     generateUserCommunityEvents();
@@ -525,12 +540,6 @@ void Gameplay::entityInit(Object * p)
 
 void Gameplay::entityAct(float dt)
 {
-    // pro-tection
-    if( _isAegisActive ) 
-    {
-        Sleep( unsigned int( getCore()->getRandToolkit()->getUniform( 250, 500 ) ) );
-    }
-
     _globalTimeIT -= dt;
     dt *= _globalTimeSpeed;
 
@@ -714,7 +723,7 @@ void Gameplay::deleteCareer(Career* career)
         if( _careers[i] == career )
         {
             delete _careers[i];
-            _careers.erase( &_careers[i] );
+			_careers.erase( _careers.begin() + i );
         }
     }
 }

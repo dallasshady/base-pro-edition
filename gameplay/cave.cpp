@@ -120,6 +120,9 @@ void castingCallback_CaveBase_IntervalJumping(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 0.85f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_human_seed.ogg" );
@@ -197,6 +200,9 @@ void castingCallback_CaveBase_2way(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 1.125f );
+	new GoalOpening( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_human_seed.ogg" );
@@ -266,6 +272,9 @@ void castingCallback_CaveBase_3way(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 1.25f );
+	new GoalOpening( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_human_seed.ogg" );
@@ -294,6 +303,9 @@ void castingCallback_CaveBase_Freejumping(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btUnderground, 1.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalOpening( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_human_seed.ogg" );

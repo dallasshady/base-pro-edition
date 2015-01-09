@@ -4,11 +4,11 @@
 
 void CanopySimulator::CollapseArea::reset(void)
 {
-    center.set( 0,0,0 );
+    center = PxVec3( 0,0,0 );
     radius = 0;
 }
 
-void CanopySimulator::CollapseArea::setup(NxVec3 areaCenter, float areaRadius)
+void CanopySimulator::CollapseArea::setup(PxVec3 areaCenter, float areaRadius)
 {
     center = areaCenter;
     radius = areaRadius;
@@ -19,7 +19,7 @@ void CanopySimulator::CollapseArea::unite(CollapseArea* anotherArea, database::C
     unite( anotherArea->center, anotherArea->radius, gear );
 }
 
-void CanopySimulator::CollapseArea::unite(NxVec3 anotherAreaCenter, float anotherAreaRadius, database::Canopy* gear)
+void CanopySimulator::CollapseArea::unite(PxVec3 anotherAreaCenter, float anotherAreaRadius, database::Canopy* gear)
 {
     // center offset interpolation
     float i1 = radius / ( radius + anotherAreaRadius );
@@ -34,14 +34,14 @@ bool CanopySimulator::CollapseArea::canUnite(CollapseArea* anotherArea, database
     return canUnite( anotherArea->center, anotherArea->radius, gear );
 }
 
-bool CanopySimulator::CollapseArea::canUnite(NxVec3 anotherAreaCenter, float anotherAreaRadius, database::Canopy* gear)
+bool CanopySimulator::CollapseArea::canUnite(PxVec3 anotherAreaCenter, float anotherAreaRadius, database::Canopy* gear)
 {
     // first rule : areas should intersects
-    NxVec3 distance;
+    PxVec3 distance;
     distance = center - anotherAreaCenter;
     if( distance.magnitude() > radius + anotherAreaRadius ) return false;
     // second rule: united sphere should be in gear limits
-    NxVec3 unitedCenter = ( center + anotherAreaCenter ) * 0.5f;
+    PxVec3 unitedCenter = ( center + anotherAreaCenter ) * 0.5f;
     float unitedRadius1 = ( unitedCenter - center ).magnitude();
     float unitedRadius2 = ( unitedCenter - anotherAreaCenter ).magnitude();
     float unitedRadius  = unitedRadius1 > unitedRadius2 ? unitedRadius1 : unitedRadius2;

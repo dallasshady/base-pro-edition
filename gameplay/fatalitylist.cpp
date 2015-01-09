@@ -291,6 +291,6 @@ void FatalityList::sortByScore(void)
             }
         }
         _sortedIndices.push_back( unsorted[bestId] );
-        unsorted.erase( &unsorted[bestId] );
+		unsorted.erase( unsorted.begin() + bestId );
     }
 }

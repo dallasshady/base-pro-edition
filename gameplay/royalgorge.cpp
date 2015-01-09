@@ -122,6 +122,8 @@ void castingCallback_GoFall_IntervalJumping(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 0.75f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_retry.ogg" );
@@ -279,6 +281,8 @@ void castingCallback_GoFall_BridgeProxy(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // search for triggers
     engine::IClump* triggers = mission->getScene()->getExtras( "Triggers" ); assert( triggers );
@@ -369,6 +373,8 @@ void castingCallback_GoFall_Leader4way(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast delay accuracy goal
     GoalDelayAccuracyDescriptor desc;
@@ -460,6 +466,8 @@ void castingCallback_GoFall_LastOne4way(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast delay accuracy goal
     GoalDelayAccuracyDescriptor desc;
@@ -608,6 +616,8 @@ void castingCallback_GoFall_Opening(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBridgeLanding( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_retry.ogg" );
@@ -650,6 +660,8 @@ void castingCallback_GoFall_ExtremeTracking(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, getCore()->getRandToolkit()->getUniform( 0.75f, 1.0f ) );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_retry.ogg" );
@@ -677,6 +689,8 @@ void castingCallback_GoFall_FlipCompetition(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast flip count goal
     new GoalFlipCount( mission->getPlayer(), mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
@@ -708,6 +722,8 @@ void castingCallback_RoyalGorgeUnderground(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btUnderground, 1.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_delinquent.ogg" );

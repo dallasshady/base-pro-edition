@@ -116,7 +116,7 @@ void JoystickChannel::update(float dt, input::MouseState* mouseState, input::Key
 		_amplitude = fabs(joystickState->axis[_axis]);
 	}
 		
-	getCore()->logMessage("y axis: %2.4f", joystickState->axis[yAxisJoy]);
+
 
     if( _amplitude > 1.0f ) _amplitude = 1.0f;
 	return;
@@ -134,6 +134,7 @@ void JoystickChannel::update(float dt, input::MouseState* mouseState, input::Key
         if( samesgn( joystickState->axis[yAxisJoy], (float)_direction ) ) 
         {
             _amplitude = joystickState->axis[yAxisJoy];
+				
         }
         break;
     case zAxisJoy:
@@ -143,6 +144,7 @@ void JoystickChannel::update(float dt, input::MouseState* mouseState, input::Key
         }
         break;
     }
+
     if( _amplitude > 1.0f ) _amplitude = 1.0f;
 }
 

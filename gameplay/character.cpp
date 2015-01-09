@@ -8,6 +8,8 @@
 
 void Character::Action::updateAnimation(float dt)
 {
+	if (_actionTime != _actionTime) _actionTime = 0.0f;	// break NAN
+
     // blend phase?
     if( _actionTime < _blendTime )
     {

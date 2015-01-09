@@ -1,8 +1,7 @@
-
 #ifndef BASE_JUMPER_INCLUDED
 #define BASE_JUMPER_INCLUDED
 
-#include "headers.h"
+//#include "headers.h"
 #include "scene.h"
 #include "callback.h"
 #include "sensor.h"
@@ -13,9 +12,9 @@
 #include "canopy.h"
 #include "airplane.h"
 #include "hud.h"
+#include "pose.h"
 
 class Jumper;
-
 /**
  * base jumper rendering: contains textures & callback methods
  */
@@ -64,6 +63,7 @@ public:
 
 enum JumperPhase
 {
+	jpCreating,		// jumper is still getting created, so leave it alone
     jpRoaming,     // jumper is roam the exit point enclosure
     jpFreeFalling, // jumper is fall
     jpFlight       // jumper is flight
@@ -120,12 +120,13 @@ public:
     float rightWarp; // right warp channel
     float leftRearRiser;  // left rear riser channel
     float rightRearRiser; // right rear riser channel
+	float rearBrake; // rear brake channel
     bool  phase;     // phase channel (jump/pull)
-    bool  modifier;  // context modifier channel (run/track)
-    bool  wlo;       // wlo toggles channel
-    bool  hook;      // hook knife channel
-	bool cutAway;	 // cut away channel
-	bool pullReserve; // pull reserve channel
+    float  modifier;  // context modifier channel (run/track)
+    float  wlo;       // wlo toggles channel
+    float  hook;      // hook knife channel
+	bool  cutAway;	 // cut away channel
+	bool  pullReserve; // pull reserve channel
 
 	// reserve control channels
 	float leftReserve; 
@@ -134,10 +135,41 @@ public:
 	float rightReserveWarp;
 	float leftReserveRearRiser;
 	float rightReserveRearRiser;
+
+	// TRIGGERS (bool values that are true when button is pressed, false otherwise)
+    bool trigger_left;      // context left channel
+    bool trigger_right;     // context right channel
+    bool trigger_up;        // fwd/up channel
+    bool trigger_down;      // back/down channel
+    bool trigger_leftWarp;  // left warp channel
+    bool trigger_rightWarp; // right warp channel
+    bool trigger_leftRearRiser;  // left rear riser channel
+    bool trigger_rightRearRiser; // right rear riser channel
+	bool trigger_rearBrake; // rear brake channel
+    bool  trigger_phase;     // phase channel (jump/pull)
+    bool  trigger_modifier;  // context modifier channel (run/track)
+    bool  trigger_wlo;       // wlo toggles channel
+    bool  trigger_hook;      // hook knife channel
+	bool  trigger_cutAway;	 // cut away channel
+	bool  trigger_pullReserve; // pull reserve channel
+
+	// reserve control channels
+	bool trigger_leftReserve; 
+	bool trigger_rightReserve;
+	bool trigger_leftReserveWarp;
+	bool trigger_rightReserveWarp;
+	bool trigger_leftReserveRearRiser;
+	bool trigger_rightReserveRearRiser;
+
 public:
     SpinalCord() : left(0), right(0), up(0), down(0), leftWarp(0), rightWarp(0), leftRearRiser(0), rightRearRiser(0),
                    phase(0), modifier(0), wlo(0), hook(0), cutAway(0), pullReserve(0),
-				   leftReserve(), rightReserve(0), leftReserveWarp(0), rightReserveWarp(0), leftReserveRearRiser(0), rightReserveRearRiser(0) {}
+				   leftReserve(0), rightReserve(0), leftReserveWarp(0), rightReserveWarp(0), leftReserveRearRiser(0), rightReserveRearRiser(0), rearBrake(0),
+					
+				   trigger_left(false), trigger_right(false), trigger_up(false), trigger_down(false), trigger_leftWarp(false), trigger_rightWarp(false), trigger_leftRearRiser(false), trigger_rightRearRiser(false),
+                   trigger_phase(false), trigger_modifier(false), trigger_wlo(false), trigger_hook(false), trigger_cutAway(false), trigger_pullReserve(false),
+				   trigger_leftReserve(false), trigger_rightReserve(false), trigger_leftReserveWarp(false), trigger_rightReserveWarp(false), trigger_leftReserveRearRiser(false), trigger_rightReserveRearRiser(false), trigger_rearBrake(false)
+	{}
 public:
     void mapActionChannels(void);
     void reset(void);
@@ -156,11 +188,17 @@ private:
     friend class WalkForward;
     friend class WalkBackward;
 	float _dt;
-	Altimeter *_altimeter;
-	Variometer *_variometer;
+	PxDistanceJoint		*_phJoint;			// joint with other Jumpers
+	Jumper				*_tandemStudent;	// pointer to the student in a tandem ride
+	PxDistanceJoint		*_tandemJoint[4];	// joint with tandem students
+	Altimeter			*_altimeter;
+	Variometer			*_variometer;
 	bool _inDropzone;
-
+	// pose id
+	int _default_pose;
+	
 public:
+	void consumePacket(NetworkData *packet);
     typedef std::list<Jumper*> JumperL;
     typedef JumperL::iterator JumperI;
     typedef std::list<CatToy*> CatToyL;
@@ -196,10 +234,10 @@ private:
     {
     private:
         MatrixConversion* _matrixConversion;
-        NxActor*          _phActor;
+		PxRigidDynamic*          _phActor;
     public:
         // class implementation
-        AirplaneJump(Jumper* jumper, NxActor* actor, MatrixConversion* mc);
+        AirplaneJump(Jumper* jumper, PxRigidDynamic* actor, MatrixConversion* mc);
         virtual ~AirplaneJump();
         // Action
         virtual void update(float dt);
@@ -258,10 +296,10 @@ private:
     {
     private:
         MatrixConversion* _matrixConversion;
-        NxActor*          _phActor;
+        PxRigidDynamic*          _phActor;
     public:
         // class implementation
-        StandingJump(Jumper* jumper, NxActor* actor, MatrixConversion* mc);
+        StandingJump(Jumper* jumper, PxRigidDynamic* actor, MatrixConversion* mc);
         // Action
         virtual void update(float dt);
         virtual void updatePhysics(void) {}
@@ -270,14 +308,14 @@ private:
     {
     private:
         MatrixConversion* _matrixConversion;
-        NxActor*          _phActor;
+        PxRigidDynamic*          _phActor;
         float             _vel;
         Vector3f             _prevPelvisPos; // position tracker
         Vector3f             _prevPelvisUp;  // angle tracker
         Vector3f             _prevPelvisAt;  // axis tracker
     public:
         // class implementation
-        RunningJump(Jumper* jumper, NxActor* actor, MatrixConversion* mc, float vel);
+        RunningJump(Jumper* jumper, PxRigidDynamic* actor, MatrixConversion* mc, float vel);
 		~RunningJump();
         // Action
         virtual void update(float dt);
@@ -287,11 +325,11 @@ private:
     {
     private:
         MatrixConversion* _matrixConversion;
-        NxActor*          _phActor;
+        PxRigidDynamic*          _phActor;
         float             _time;
     public:
         // class implementation
-        OutOfControl(Jumper* jumper, NxActor* actor, MatrixConversion* mc, float time);
+        OutOfControl(Jumper* jumper, PxRigidDynamic* actor, MatrixConversion* mc, float time);
         // Action
         virtual void update(float dt);
         virtual void updatePhysics(void);
@@ -299,31 +337,66 @@ private:
     class Tracking : public JumperAction
     {
     protected:
-        NxActor*          _phActor;
+        PxRigidDynamic*          _phActor;
         MatrixConversion* _matrixConversion;        
-        float             _steering;   
+        float             _wing_area;   
         float             _tracking;
-        float             _legPitch;
+        float             _leg_pitch;
+		float             _carving_forward;
+		float             _carving_sideways;
+		float			  _leveling;	// flight levels (fall rate)
+		float			  _leveling_higher;	// flight levels (fall rate) slower
+		float			  _leveling_lower;	// flight levels (fall rate) faster
+
+	// poses
+	public:
+		Pose currentPose;
+		// regular poses
+		Pose ArchPose, HeaddownPose, BackflyPose, SitflyPose;
+		// transfer poses
+		Pose FrontFlipPose, BackFlipPose, LeftRollPose, RightRollPose;
+		bool _transfer_pose;
+		int _default_pose;
+		int _current_pose;
+		
+
+		bool useWingsuit;
+		int _machine_state;	// current machine state
+		int _machine_state_previous;
+		int _machine_state_pre_previous;
+		bool _fresh_state;	// true if it's state's first frame
+
+		void changePose(int pose, float rate, bool force = false);
     protected:
         void updateBlending(float dt);
         void updateProceduralAnimation(float dt);
+		void initPoses();
+		void initPosesWings();
+		void machine();
+		void machineActions(bool actions[], SpinalCord *spine);
+
     public:
+		void machine_state(int state);
+		int machine_state();
+		int machine_previuos_state();
+		int machine_pre_previuos_state();
+
         // class implementation        
-        Tracking(Jumper* jumper, NxActor* phActor, MatrixConversion* mc);
+        Tracking(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc);
         // Action
         virtual void update(float dt);
         virtual void updatePhysics(void);
     public:
         inline float getTrackingModifier(void) { return _tracking; }
-        inline float getSteeringModifier(void) { return _steering; }
     };
     class Pull : public Tracking
     {
     private:
         PilotchuteSimulator* _pilotchute;
+		bool				 _pcInHand;
     public:
         // class implementation
-        Pull(Jumper* jumper, NxActor* phActor, MatrixConversion* mc,  PilotchuteSimulator* pc, NxVec3 localAnchor);
+        Pull(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc,  PilotchuteSimulator* pc, PxVec3 localAnchor);
         // Action
         virtual void update(float dt);
     };
@@ -333,7 +406,7 @@ private:
         PilotchuteSimulator* _pilotchute;
     public:
         // class implementation
-        PullReserve(Jumper* jumper, NxActor* phActor, MatrixConversion* mc,  PilotchuteSimulator* pc, NxVec3 localAnchor);
+        PullReserve(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc,  PilotchuteSimulator* pc, PxVec3 localAnchor);
         // Action
         virtual void update(float dt);
     };
@@ -344,17 +417,17 @@ private:
     {
     private:
         MatrixConversion*    _matrixConversion;
-        NxActor*             _phActor;
+        PxRigidDynamic*      _phActor;
         PilotchuteSimulator* _pilotchute;
         CanopySimulator*     _canopy;
-        NxVec3               _frontLeftAnchor;
-        NxVec3               _frontRightAnchor;
-        NxVec3               _rearLeftAnchor;
-        NxVec3               _rearRightAnchor;
+        PxVec3               _frontLeftAnchor;
+        PxVec3               _frontRightAnchor;
+        PxVec3               _rearLeftAnchor;
+        PxVec3               _rearRightAnchor;
         float                _initialLD;
     public:
         // class implementation
-        CanopyOpening(Jumper* jumper, NxActor* phFreeFall, NxActor* phFlight, MatrixConversion* mcFlight, PilotchuteSimulator* pc, CanopySimulator* c, NxVec3 fla, NxVec3 fra, NxVec3 rla, NxVec3 rra);
+        CanopyOpening(Jumper* jumper, PxRigidDynamic* phFreeFall, PxRigidDynamic* phFlight, MatrixConversion* mcFlight, PilotchuteSimulator* pc, CanopySimulator* c, PxVec3 fla, PxVec3 fra, PxVec3 rla, PxVec3 rra);
         virtual ~CanopyOpening();
         // Action
         virtual void update(float dt);
@@ -367,10 +440,10 @@ private:
     {
     private:
         MatrixConversion* _matrixConversion;
-        NxActor*          _phActor;
+        PxRigidDynamic*   _phActor;
     public:
         // class implementation
-        Linetwists(Jumper* jumper, NxActor* phFlight, MatrixConversion* mcFlight);
+        Linetwists(Jumper* jumper, PxRigidDynamic* phFlight, MatrixConversion* mcFlight);
         // Action
         virtual void update(float dt);
         virtual void updatePhysics(void);
@@ -379,13 +452,13 @@ private:
     {
     private:
         MatrixConversion*     _matrixConversion;
-        NxActor*              _phActor;
+        PxRigidDynamic*       _phActor;
         engine::AnimSequence* _targetSequence;
     private:
         void setAnimation(engine::AnimSequence* sequence);
     public:
         // class implementation
-        Flight(Jumper* jumper, NxActor* phFlight, MatrixConversion* mcFlight);
+        Flight(Jumper* jumper, PxRigidDynamic* phFlight, MatrixConversion* mcFlight);
         // Action
         virtual void update(float dt);
         virtual void updatePhysics(void);
@@ -394,13 +467,13 @@ private:
     {
     private:
         MatrixConversion* _matrixConversion;
-        NxActor*          _phActor;
+        PxRigidDynamic*   _phActor;
         float             _Kfr;
     private:
         void startCanopySuppression(void);
     public:
         // class implementation
-        Landing(Jumper* jumper, NxActor* phFlight, MatrixConversion* mcFlight);
+        Landing(Jumper* jumper, PxRigidDynamic* phFlight, MatrixConversion* mcFlight);
         // Action
         virtual void update(float dt);
         virtual void updatePhysics(void);
@@ -410,11 +483,11 @@ private:
     {
     private:
         MatrixConversion*  _matrixConversion;
-        NxActor*           _phActor;        
+        PxRigidDynamic*           _phActor;        
         float              _Kfr;
     public:
         // class implementation
-        BadLanding(Jumper* jumper, NxActor* phFlight, MatrixConversion* mcFlight);
+        BadLanding(Jumper* jumper, PxRigidDynamic* phFlight, MatrixConversion* mcFlight);
         // Action
         virtual void update(float dt);
         virtual void updatePhysics(void);
@@ -425,11 +498,11 @@ private:
     class Flip : public JumperAction
     {
     private:        
-        NxActor*          _phActor;
+        PxRigidDynamic*          _phActor;
         MatrixConversion* _matrixConversion;
     public:
         // class implementation
-        Flip(Jumper* jumper, NxActor* phActor, MatrixConversion* mc, float blendTime);
+        Flip(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc, float blendTime);
         // Action
         virtual void update(float dt);
         virtual void updatePhysics(void);
@@ -439,7 +512,7 @@ private:
     class FlipJump : public JumperAction
     {
     private:        
-        NxActor*             _phActor;
+        PxRigidDynamic*             _phActor;
         MatrixConversion*    _matrixConversion;
         float                _criticalPeriod;
         Vector3f             _prevPelvisPos; // position tracker
@@ -448,7 +521,7 @@ private:
 		bool				 _allowModifier; // becomes true when modifier is released after the jump
     public:
         // class implementation
-        FlipJump(Jumper* jumper, NxActor* phActor, MatrixConversion* mc, engine::AnimSequence* sequence, float animSpeed, float criticalPeriod);
+        FlipJump(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc, engine::AnimSequence* sequence, float animSpeed, float criticalPeriod);
         virtual ~FlipJump();
         // Action
         virtual void update(float dt);
@@ -457,7 +530,7 @@ private:
     class SideStepJump : public JumperAction
     {
     private:        
-        NxActor*             _phActor;
+        PxRigidDynamic*             _phActor;
         MatrixConversion*    _matrixConversion;
         float                _criticalPeriod;
         Vector3f             _prevPelvisPos; // position tracker
@@ -465,26 +538,8 @@ private:
         Vector3f             _prevPelvisAt;  // axis tracker
     public:
         // class implementation
-        SideStepJump(Jumper* jumper, NxActor* phActor, MatrixConversion* mc, engine::AnimSequence* sequence, float animSpeed, float criticalPeriod);
+        SideStepJump(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc, engine::AnimSequence* sequence, float animSpeed, float criticalPeriod);
         virtual ~SideStepJump();
-        // Action
-        virtual void update(float dt);
-        virtual void updatePhysics(void);
-    };
-
-
-    /**
-     * freefly
-     */
-    class SitFlying : public JumperAction
-    {
-    private:        
-        NxActor*          _phActor;
-        MatrixConversion* _matrixConversion;
-    public:
-        // class implementation
-        SitFlying(Jumper* jumper, NxActor* phActor, MatrixConversion* mc);
-        virtual ~SitFlying();
         // Action
         virtual void update(float dt);
         virtual void updatePhysics(void);
@@ -501,17 +556,17 @@ private:
     float                _angleLR;         // procanim: curr. head turn angle in LR plane
     float                _angleUD;         // procanim: curr. head turn angle in UD plane
     MatrixConversion     _mcFreeFall;      // free fall matrix conversion
-    NxActor*             _phFreeFall;      // free fall physics simulator
+    PxRigidDynamic*             _phFreeFall;      // free fall physics simulator
     MatrixConversion     _mcFlight;        // flight matrix conversion
-    NxActor*             _phFlight;        // flight physics simulator
+    PxRigidDynamic*             _phFlight;        // flight physics simulator
     MatrixConversion     _mcPelvisToClump; // pelvis-to-clump matrix conversion
     MatrixConversion     _mcChestToClump;  // chest-to-clump matrix conversion
     bool                 _isContacted;
-    NxVec3               _frontLeftAnchor;
-    NxVec3               _frontRightAnchor;
-    NxVec3               _rearLeftAnchor;
-    NxVec3               _rearRightAnchor;
-    NxVec3               _pilotAnchor;
+    PxVec3               _frontLeftAnchor;
+    PxVec3               _frontRightAnchor;
+    PxVec3               _rearLeftAnchor;
+    PxVec3               _rearRightAnchor;
+    PxVec3               _pilotAnchor;
     bool                 _player;
     SpinalCord*          _spinalCord;
     PilotchuteSimulator* _pilotchuteSimulator;
@@ -519,8 +574,8 @@ private:
     PilotchuteSimulator* _pilotchuteReserveSimulator;
     CanopySimulator*     _canopyReserveSimulator;
     unsigned int         _bcStep;     // burden calculator: counter
-    NxVec3               _bcPrevVel;  // burden calculator: previous velocity
-    NxVec3               _bcBurden;   // burden calculator: overburden in mts/sq.sec.
+    PxVec3               _bcPrevVel;  // burden calculator: previous velocity
+    PxVec3               _bcBurden;   // burden calculator: overburden in mts/sq.sec.
     float                _distanceToAbyss; // roaming register
     float                _jerkLimit;       // limit of adrenaline rush by jerking on EP
     float                _fallLimit;       // limit of adrenaline rush by fall
@@ -538,8 +593,8 @@ private:
     bool                 _expFlag;         // previous value of experience flag 
     SignatureType        _signatureType;   // signature is full, brief or disabled
     bool                 _phaseIsEnabled;  // jump/pull is enabled (player only!)
-	
-		gui::IGuiWindow* _debug_window;
+public:
+	gui::IGuiWindow*	_debug_window;
 private:
     bool               _useForcedEquipment;
     Virtues::Equipment _layoffEquipment;
@@ -568,21 +623,25 @@ private:
 public:
     // actor abstracts
     virtual void onEvent(Actor* initiator, unsigned int eventId, void* eventData);
-    virtual void onContact(NxContactPair &pair, NxU32 events);
+    //PHYSX3
+	//virtual void onContact(NxContactPair &pair, PxU32 events);
     virtual void onUpdateActivity(float dt);
     virtual void onUpdatePhysics(void);
     virtual Matrix4f getPose(void) { return _clump->getFrame()->getLTM(); }
     virtual Vector3f getVel(void);
+
+	virtual bool animBodyPart(const char *frame_title, Vector3f axis, float angle);
 public:
     // class implementation
     Jumper(Actor* parent, Airplane* airplane, Enclosure* enclosure, Virtues* virtues, SpinalCord* spinalCord, Virtues::Equipment* forcedEquipment);
     virtual ~Jumper();
     // class behaviour
+	Jumper *getNextJumper(void);
     float getDistanceToAbyss(void);
     bool getDistanceToImpact(float& inOutDistance);
     bool getDistanceToSurface(float& inOutDistance);
     void setLicensedCharacterAppearance(void);
-    void initOverburdenCalculator(NxVec3& velocity);
+    void initOverburdenCalculator(PxVec3& velocity);
     void damage(float normalForce, float frictionForce, float velocity);
     // cat toy support
     void registerCatToy(CatToy* catToy);
@@ -590,6 +649,13 @@ public:
 public:
 	void InDropzone(bool dropzone);
 	bool InDropzone();
+	void setTandemStudent(Jumper *student);
+	Jumper *getTandemStudent(void);
+
+	void beginFreefall(void);
+
+	void setDefaultPose(int pose);
+	int getDefaultPose(void);
 
     inline JumperPhase getPhase(void) { return _phase; }
     inline Airplane* getAirplane(void) { return _airplane; }
@@ -603,9 +669,9 @@ public:
 	PilotchuteSimulator *getDominantPilotChute(void);
 	inline PilotchuteSimulator* getPilotchuteReserveSimulator(void) { return _pilotchuteReserveSimulator; }
     inline CanopySimulator* getCanopyReserveSimulator(void) { return _canopyReserveSimulator; }
-    inline NxVec3 getOverburden(void) { return _bcBurden; }
-    inline NxActor* getFreefallActor(void) { return _phFreeFall; }
-    inline NxActor* getFlightActor(void) { return _phFlight; }
+    inline PxVec3 getOverburden(void) { return _bcBurden; }
+    inline PxRigidDynamic* getFreefallActor(void) { return _phFreeFall; }
+    inline PxRigidDynamic* getFlightActor(void) { return _phFlight; }
     inline MatrixConversion* getPelvisToClumpConversion(void) { return &_mcPelvisToClump; }
     inline MatrixConversion* getChestToClumpConversion(void) { return &_mcChestToClump; }
     inline float getAdrenaline(void) { return _adrenaline; }
@@ -618,7 +684,7 @@ public:
     inline bool isLanding(void) { if( _phase == jpFlight ) return actionIs(Landing); else return false; }
     inline bool isBadLanding(void) { if( _phase == jpFlight ) return actionIs(BadLanding); else return false; }
     inline const Matrix4f& getJumpPose(void) { return _jumpPose; }
-    inline NxVec3 getLocalPilotAnchor(void) { return _pilotAnchor; }
+    inline PxVec3 getLocalPilotAnchor(void) { return _pilotAnchor; }
     inline SignatureType getSignatureType(void) { return _signatureType; }
     inline void setSignatureType(SignatureType value) { _signatureType = value; }
     inline bool phaseIsEnabled(void) { return _phaseIsEnabled; }

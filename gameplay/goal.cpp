@@ -44,6 +44,8 @@ void Goal::onUpdateActivity(float dt)
         // show score
         goalScoreShadow->setVisible( true );
         goalScorePanel->setVisible( true );
+		//goalScorePanel->slideIn();
+
         // build text
         std::wstring text = ( score < 0 ) ? L"" : L"+";
         text += wstrformat( L"%1.0f", score );

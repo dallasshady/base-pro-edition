@@ -33,7 +33,7 @@ static engine::AnimSequence putHandsOverHeadSequence =
  * class implementation
  */
 
-Jumper::PullReserve::PullReserve(Jumper* jumper, NxActor* phActor, MatrixConversion* mc,  PilotchuteSimulator* pc, NxVec3 localAnchor) :
+Jumper::PullReserve::PullReserve(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc,  PilotchuteSimulator* pc, PxVec3 localAnchor) :
     Tracking( jumper, phActor, mc )
 {
     // set action properties
@@ -41,11 +41,11 @@ Jumper::PullReserve::PullReserve(Jumper* jumper, NxActor* phActor, MatrixConvers
     _blendTime = 0.2f;
     _endOfAction = false;
     _pilotchute = pc;
-    _steering = 0.0f;
+    _wing_area = 0.0f;
     _tracking = 0.0f;
-    _legPitch = 0.0f;
+    _leg_pitch = 0.0f;
+	_carving_forward = _carving_sideways = 0.0f;
 
-	++jumper->getVirtues()->equipment.reserve.age;
     // connect pilot chute
     if( !_pilotchute->isPulled() )
     {
@@ -83,10 +83,10 @@ Jumper::PullReserve::PullReserve(Jumper* jumper, NxActor* phActor, MatrixConvers
 	_pilotchute->pull( Jumper::getLineHandJoint( _clump ) );
 	_pilotchute->updateActivity(0.0f);
 
-    NxMat34 pose = _phActor->getGlobalPose();
-    NxVec3 x = pose.M.getColumn(0);
-    NxVec3 y = pose.M.getColumn(1);
-    NxVec3 z = pose.M.getColumn(2);
+	PxTransform pose = _phActor->getGlobalPose();
+	PxVec3 x = pose.q.getBasisVector0();
+    PxVec3 y = pose.q.getBasisVector1();
+    PxVec3 z = pose.q.getBasisVector2();
     _pilotchute->drop( z * 10.0f - x * 5.0f );
 	_pilotchute->setInflation(0.6f);
 }

@@ -93,7 +93,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="..\Includes\Novodex\Cooking\include;..\Includes\Novodex\Physics\include;..\Includes\Novodex\Foundation\include;..\Includes\DirectX\Include;..\Includes\TinyXML\include"
+				AdditionalIncludeDirectories="D:\Games\BASEsrc\input;..\Includes\Novodex\Cooking\include;..\Includes\Novodex\Physics\include;..\Includes\Novodex\Foundation\include;..\Includes\DirectX\Include;..\Includes\TinyXML\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -117,7 +117,7 @@
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="..\Libraries"
 				GenerateDebugInformation="TRUE"
-				AssemblyDebug="1"
+				AssemblyDebug="0"
 				ProgramDatabaseFile=".\Debug/gameplay-d.pdb"
 				SubSystem="2"
 				ImportLibrary=".\Debug/gameplay-d.lib"
@@ -252,6 +252,12 @@
 			</File>
 			<File
 				RelativePath=".\affinstructor.h">
+			</File>
+			<File
+				RelativePath=".\airfoil.cpp">
+			</File>
+			<File
+				RelativePath=".\airfoil.h">
 			</File>
 			<File
 				RelativePath=".\airplane.cpp">
@@ -615,6 +621,9 @@
 				RelativePath=".\goal_bonus.cpp">
 			</File>
 			<File
+				RelativePath=".\goal_canopytime.cpp">
+			</File>
+			<File
 				RelativePath=".\goal_delayaccuracy.cpp">
 			</File>
 			<File
@@ -630,10 +639,19 @@
 				RelativePath=".\goal_footage.cpp">
 			</File>
 			<File
+				RelativePath=".\goal_freefalltime.cpp">
+			</File>
+			<File
 				RelativePath=".\goal_gear.cpp">
 			</File>
 			<File
+				RelativePath=".\goal_jumps.cpp">
+			</File>
+			<File
 				RelativePath=".\goal_landing.cpp">
+			</File>
+			<File
+				RelativePath=".\goal_opening.cpp">
 			</File>
 			<File
 				RelativePath=".\goal_proximity.cpp">
@@ -652,6 +670,9 @@
 			</File>
 			<File
 				RelativePath=".\goal_trackingperf.cpp">
+			</File>
+			<File
+				RelativePath=".\goal_wingsuittime.cpp">
 			</File>
 			<File
 				RelativePath=".\hardlanding.cpp">
@@ -735,10 +756,19 @@
 				RelativePath=".\jumper_linetwists.cpp">
 			</File>
 			<File
+				RelativePath=".\jumper_machine.h">
+			</File>
+			<File
 				RelativePath=".\jumper_modelman.cpp">
 			</File>
 			<File
 				RelativePath=".\jumper_outofcontrol.cpp">
+			</File>
+			<File
+				RelativePath=".\jumper_poses_init.h">
+			</File>
+			<File
+				RelativePath=".\jumper_poses_init_wings.h">
 			</File>
 			<File
 				RelativePath=".\jumper_pull.cpp">
@@ -918,10 +948,19 @@
 				RelativePath=".\pilotchute.h">
 			</File>
 			<File
+				RelativePath=".\pose.cpp">
+			</File>
+			<File
+				RelativePath=".\pose.h">
+			</File>
+			<File
 				RelativePath=".\preloaded.cpp">
 			</File>
 			<File
 				RelativePath=".\preloaded.h">
+			</File>
+			<File
+				RelativePath=".\rds.cpp">
 			</File>
 			<File
 				RelativePath=".\render.cpp">
@@ -1024,6 +1063,9 @@
 			</File>
 			<File
 				RelativePath="..\Includes\TinyXML\include\tinyxmlparser.cpp">
+			</File>
+			<File
+				RelativePath=".\TODO.txt">
 			</File>
 			<File
 				RelativePath=".\tournamentsource.cpp">

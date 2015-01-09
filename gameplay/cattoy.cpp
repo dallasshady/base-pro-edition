@@ -52,7 +52,7 @@ public:
         if( _jumper )
         {
             _phase       = _jumper->getPhase();
-            _modifier    = _jumper->getSpinalCord()->modifier;
+            _modifier    = _jumper->getSpinalCord()->modifier > 0.0f;
             _currentPose = _jumper->getPose();
             if( _phase == ::jpRoaming ) _currentPose[3][1] += ::jumperRoamingSphereSize;
             _jumpPose    = ( _phase == ::jpRoaming ) ? _currentPose : _jumper->getJumpPose();
@@ -134,6 +134,7 @@ public:
         fwrite( &_ghostHeader, sizeof( GhostHeader ), 1, _file );
         // close file
         fclose( _file );
+
         // break jumper connection
         if( _ghost ) _ghost->unregisterCatToy( this );
     }
@@ -169,7 +170,7 @@ public:
             // update cat toy states
             _ghostState.time        = _ghostTime;
             _ghostState.phase       = _ghost->getPhase();
-            _ghostState.modifier    = _ghost->getSpinalCord()->modifier;
+            _ghostState.modifier    = _ghost->getSpinalCord()->modifier > 0.0f;
             _ghostState.currentPose = _ghost->getPose();
             if( _ghostState.phase == ::jpRoaming ) 
             {
@@ -217,9 +218,16 @@ public:
         // open file for reading
         FILE* file = fopen( filename, "rb" ); assert( file );
 
+		// reset file
+		fseek (file , 0 , SEEK_SET);
+
 		/// Try reading new ghost header
         // load ghost header
-        fread( &_ghostHeader, sizeof( GhostHeader ), 1, file );
+        int readsize = fread( &_ghostHeader, sizeof( GhostHeader ), 1, file );
+		if (ferror(file)) {
+			getCore()->logMessage("read error");
+			return;
+		}
         // load ghost states
         _ghostStates = new GhostState[_ghostHeader.numFrames];
         unsigned int fileResult = fread( _ghostStates, sizeof( GhostState ), _ghostHeader.numFrames, file );

@@ -40,6 +40,8 @@ void Mission::ThirdPersonCamera::onUpdateActivity(float dt)
 {
     assert( _scene );
 
+	dt /= _scene->getTimeSpeed();
+
     _positionModeTimeout -= dt;
     _positionModeTimeout = _positionModeTimeout < 0 ? 0 : _positionModeTimeout;
 
@@ -52,18 +54,21 @@ void Mission::ThirdPersonCamera::onUpdateActivity(float dt)
     ActionChannel* zoomOut   = Gameplay::iGameplay->getActionChannel( iaZoomOut );    
     ActionChannel* changeTarget   = Gameplay::iGameplay->getActionChannel( iaWLO );  
 
-	if (false && changeTarget->getTrigger()) {
-        if( dynamic_cast<Jumper*>( _target ) )
-        {
-            Jumper* j = dynamic_cast<Jumper*>( _target );
 
-			if (j->getAirplane()) {
-				_target = j->getAirplane();
-			} else if (j->getParent()) {
-				_target = j->getParent();
-			}
-		}
-	}
+
+	// aircraft camera
+	//if (false && changeTarget->getTrigger()) {
+ //       if( dynamic_cast<Jumper*>( _target ) )
+ //       {
+ //           Jumper* j = dynamic_cast<Jumper*>( _target );
+
+	//		if (j->getAirplane()) {
+	//			_target = j->getAirplane();
+	//		} else if (j->getParent()) {
+	//			_target = j->getParent();
+	//		}
+	//	}
+	//}
 
     if( _positionMode )
     {
@@ -209,9 +214,10 @@ Mission::FirstPersonCamera::FirstPersonCamera(Scene* scene, engine::IFrame* head
 {
     _name           = "FirstPersonCamera";
     _headFrame      = headFrame;
+	_canopyMode		= false;
     _cameraTilt     = 0;
     _cameraTurn     = 0;
-    _cameraFOV      = 60 * CAMERA_FOV_MULTIPLIER;
+    _cameraFOV      = 80.0f * CAMERA_FOV_MULTIPLIER;
     _cameraMatrix   = Matrix4f( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
 }
 
@@ -224,9 +230,46 @@ void Mission::FirstPersonCamera::onEvent(Actor* initiator, unsigned int eventId,
 {
 }
 
+void Mission::FirstPersonCamera::switchMode(Jumper *jumper)
+{
+	if( _positionModeTimeout > 0 ) return;
+
+	// switch to next jumper
+	//if (Gameplay::iGameplay->getActionChannel(iaModifier)->getTrigger() ) {
+	//	jumper = jumper->getNextJumper();
+	// change mode
+	//} else {
+	//	_canopyMode = !_canopyMode;
+	//}
+
+
+	_canopyMode = !_canopyMode;
+
+	if ( _canopyMode && !jumper->getDominantCanopy()->isOpened() ) _canopyMode = false;
+    if( _canopyMode )
+    {
+		_headFrame = jumper->getDominantCanopy()->getClump()->getFrame();
+		jumper->happen( this, EVENT_JUMPER_THIRDPERSON, jumper );
+    }
+    else
+    {
+		_headFrame = jumper->getFirstPersonFrame( jumper->getClump() );
+		jumper->happen( this, EVENT_JUMPER_FIRSTPERSON, jumper );
+    }
+	_positionModeTimeout = 0.225f;
+}
+void Mission::FirstPersonCamera::resetSwitchTimer(void)
+{
+    _positionModeTimeout = 0.225f;
+}
 void Mission::FirstPersonCamera::onUpdateActivity(float dt)
 {
     assert( _scene );
+
+	dt /= _scene->getTimeSpeed();
+
+    _positionModeTimeout -= dt;
+    _positionModeTimeout = _positionModeTimeout < 0 ? 0 : _positionModeTimeout;
 
     // retrieve action channels
     ActionChannel* headLeft  = Gameplay::iGameplay->getActionChannel( iaHeadLeft );
@@ -239,8 +282,13 @@ void Mission::FirstPersonCamera::onUpdateActivity(float dt)
     _cameraTurn -= 180 * dt * headRight->getAmplitude();
     _cameraTilt += 180 * dt * headUp->getAmplitude();
     _cameraTilt -= 180 * dt * headDown->getAmplitude();
-    if( _cameraTilt < -89 ) _cameraTilt = -89;
-    if( _cameraTilt > 89 ) _cameraTilt = 89;
+	if (_canopyMode) {
+		_cameraTilt = 180.0f;
+		_cameraTurn = 0.0f;
+	} else {
+		if( _cameraTilt < -89 ) _cameraTilt = -89;
+		if( _cameraTilt > 89 ) _cameraTilt = 89;
+	}
 
     // put constraint on turn
     if( _cameraTurn < -120 ) _cameraTurn = -120;
@@ -254,15 +302,17 @@ void Mission::FirstPersonCamera::onUpdateActivity(float dt)
     float factor = ( fabs( _cameraTurn ) - minTurn ) / ( maxTurn - minTurn );
     factor = factor < 0 ? 0 : ( factor > 1 ? 1 : factor );
     float tiltLimit = minTilt * ( 1 - factor ) + maxTilt * factor;
-    if( _cameraTilt < tiltLimit ) _cameraTilt = tiltLimit;    
+    if( !_canopyMode && _cameraTilt < tiltLimit ) _cameraTilt = tiltLimit;    
 
     // calculate camera matrix
     Matrix4f ltm = _headFrame->getLTM();
     ::orthoNormalize( ltm );
-    _cameraMatrix.set( -1,0,0,0,
+		_cameraMatrix.set( -1,0,0,0,
                        0,1,0,0,
                        0,0,-1,0,
                        0,0,0,1 );
+
+
     _cameraMatrix = Gameplay::iEngine->rotateMatrix( _cameraMatrix, Vector3f( 1,0,0 ), -_cameraTilt );
     _cameraMatrix = Gameplay::iEngine->rotateMatrix( _cameraMatrix, Vector3f( 0,1,0 ), _cameraTurn );
     _cameraMatrix = Gameplay::iEngine->transformMatrix( _cameraMatrix, ltm );
@@ -289,6 +339,7 @@ void Mission::FirstPersonCamera::onUpdateActivity(float dt)
 
 Mission::Mission(Scene* scene, database::MissionInfo* missionInfo, unsigned int wttid, unsigned int wtmid) : Mode(scene)
 {
+	_name = "Mission";    
     _missionInfo         = missionInfo;
     _wttid               = wttid;
     _wtmid               = wtmid;
@@ -335,14 +386,14 @@ Mission::Mission(Scene* scene, database::MissionInfo* missionInfo, unsigned int 
     assert( _player );
 
     // statistics
-	if( missionInfo->exitPointId == AIRPLANE_EXIT || _player->getAirplane() != NULL )
-    {
-        _player->getVirtues()->statistics.numSkydives++;
-    }
-    else
-    {
-        _player->getVirtues()->statistics.numBaseJumps++;
-    }
+	//if( missionInfo->exitPointId == AIRPLANE_EXIT || _player->getAirplane() != NULL )
+    //{
+    //    _player->getVirtues()->statistics.numSkydives++;
+    //}
+    //else
+    //{
+    //    _player->getVirtues()->statistics.numBaseJumps++;
+    //}
 
     // create camera actors
     _tpcamera = new ThirdPersonCamera( scene, _player );
@@ -408,13 +459,14 @@ void Mission::onUpdateActivity(float dt)
             _fadValue += fadSpeed * dt;
             if( _fadValue > _fadTargetValue ) _fadValue = _fadTargetValue;
         }
-        _scene->setTimeSpeedMultiplier( _fadValue );
+        //_scene->setTimeSpeedMultiplier( _fadValue );
     }
 
     // action: first person mode
     if( Gameplay::iGameplay->getActionChannel( iaCameraMode0 )->getTrigger() )
     {
         setFirstPersonCamera();
+		Gameplay::iGameplay->getActionChannel( iaCameraMode0 )->reset();
     }
     // action: third person mode
     if( Gameplay::iGameplay->getActionChannel( iaCameraMode1 )->getTrigger() )
@@ -468,8 +520,9 @@ void Mission::onUpdateActivity(float dt)
     {
         // begin to simulate physics
         _scene->getPhScene()->simulate( simulationStepTime );
-        _scene->getPhScene()->flushStream();
-        _scene->getPhScene()->fetchResults( NX_RIGID_BODY_FINISHED, true );
+        // PHYSX3
+		_scene->getPhScene()->flushSimulation();
+        _scene->getPhScene()->fetchResults(true);
         updatePhysics();
         _phTimeLeft -= simulationStepTime;
 
@@ -479,7 +532,9 @@ void Mission::onUpdateActivity(float dt)
             forests[forestId]->simulateInteraction( _player );
         }
     }
-    _scene->getPhScene()->visualize();
+    
+	//PHYSX3
+	//_scene->getPhScene()->visualize();
 
     // player is over its activity?
     if( !_endOfPlayerActivity && _player->isOverActivity() )
@@ -506,6 +561,47 @@ void Mission::onUpdateActivity(float dt)
             showGoals( false );
         }
     }
+	
+	/// NETWORK
+	NetworkData *packet = getScene()->network->consumePacketByReceiver(NET_REC_MISSION);
+	while (packet != NULL) {
+		consumePacket(packet);
+		//delete packet;
+
+		packet = getScene()->network->consumePacketByReceiver(NET_REC_MISSION);
+	}
+
+	// receive packets for jumpers
+	//for (unsigned int i = 0; i < _children.size(); ++i) {
+	//	if (strcmp(_children[i]->getName(), "Jumper") != 0) continue;
+
+	//	NetworkData *packet = getScene()->network->consumePacketByReceiver(NET_REC_JUMPER, _children[i]->network_id);
+	//	while (packet != NULL) {
+	//		_children[i]->consumePacket(packet);
+	//		packet = getScene()->network->consumePacketByReceiver(NET_REC_JUMPER, _children[i]->network_id);
+	//	}
+	//}
+}
+
+void Mission::consumePacket(NetworkData *packet) {
+	getCore()->logMessage("Revceived packet with data_type: %d", packet->data_type);
+
+	// network id [int]
+	if (packet->data_type == 1) {
+		memcpy(&this->getPlayer()->network_id, packet->data, sizeof this->network_id);
+		this->network_id = this->getPlayer()->network_id;
+		
+	// add jumper
+	} else if (packet->data_type == 2) {
+		getCore()->logMessage("Create jumper with net id: %d", packet->receiver_id);
+		NPC* npc = new NPC( this, 1, getPlayer()->getAirplane(), getPlayer()->getEnclosure(), CatToy::wrap( getPlayer() ), getPlayer(), true );
+		npc->getJumper()->network_id = packet->receiver_id;
+		npc->getJumper()->getFreefallActor()->setMass(getPlayer()->getVirtues()->appearance.weight);
+		npc->getJumper()->getFreefallActor()->setGlobalPose(getPlayer()->getFreefallActor()->getGlobalPose());
+		npc->getJumper()->getFreefallActor()->setLinearVelocity(getPlayer()->getFreefallActor()->getLinearVelocity());
+		npc->getJumper()->beginFreefall();	// begins in Jumper
+		delete packet;
+	}
 }
 
 void Mission::showGoals(bool flag)
@@ -604,8 +700,19 @@ bool Mission::endOfMode(void)
 
 void Mission::setFirstPersonCamera(void)
 {
-    _player->happen( this, EVENT_JUMPER_FIRSTPERSON, _player );
-    _scene->setCamera( _fpcamera );
+	Actor* currentCamera = _scene->getCamera();
+	FirstPersonCamera* currentFPCamera = dynamic_cast<FirstPersonCamera*>( currentCamera );
+
+	if (currentFPCamera) {
+		/// change player
+		//if (Gameplay::iGameplay->getActionChannel(iaModifier)->getTrigger() ) {
+		//	_player = _player->getNextJumper();
+		//}
+		currentFPCamera->switchMode(_player);
+	} else {
+		_scene->setCamera( _fpcamera );
+		_player->happen( this, EVENT_JUMPER_FIRSTPERSON, _player );
+	}
 }
 
 void Mission::setThirdPersonCamera(void)

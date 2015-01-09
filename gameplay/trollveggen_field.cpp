@@ -148,7 +148,9 @@ void castingCallback_TrollField_JumpFromRun(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
-    
+    new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
+
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_action.ogg" );
 }

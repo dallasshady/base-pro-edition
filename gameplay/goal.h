@@ -12,7 +12,6 @@
 /**
  * abstract goal
  */
-
 class Goal : public Actor
 {
 protected:
@@ -432,6 +431,129 @@ public:
     // class implementation
     GoalFlipCount(Jumper* player, float score);
     virtual ~GoalFlipCount();
+};
+
+
+/**
+ * freefall time goal
+ */
+
+class GoalFreeFallTime : public Goal
+{
+private:
+    bool         _isAcquired;
+    float        _prevFFTime;
+	float        _newFFTime;
+    std::wstring _goalValue;
+protected:
+    // Goal abstracts
+    virtual const wchar_t* getGoalName(void);
+    virtual const wchar_t* getGoalValue(void);
+    virtual float getGoalScore(void);
+public:
+    // Actor abstracts
+    virtual void onUpdateActivity(float dt);
+public:
+    // class implementation
+    GoalFreeFallTime(Jumper* player);
+    virtual ~GoalFreeFallTime();
+};
+
+/**
+ * canopy time goal
+ */
+class GoalCanopyTime : public Goal
+{
+private:
+    bool         _isAcquired;
+    float        _prevTime;
+	float        _newTime;
+    std::wstring _goalValue;
+protected:
+    // Goal abstracts
+    virtual const wchar_t* getGoalName(void);
+    virtual const wchar_t* getGoalValue(void);
+    virtual float getGoalScore(void);
+public:
+    // Actor abstracts
+    virtual void onUpdateActivity(float dt);
+public:
+    // class implementation
+    GoalCanopyTime(Jumper* player);
+    virtual ~GoalCanopyTime();
+};
+
+/**
+ * wingsuit time goal
+ */
+class GoalWingsuitTime : public Goal
+{
+private:
+    bool         _isAcquired;
+    float        _prevTime;
+	float        _newTime;
+    std::wstring _goalValue;
+protected:
+    // Goal abstracts
+    virtual const wchar_t* getGoalName(void);
+    virtual const wchar_t* getGoalValue(void);
+    virtual float getGoalScore(void);
+public:
+    // Actor abstracts
+    virtual void onUpdateActivity(float dt);
+public:
+    // class implementation
+    GoalWingsuitTime(Jumper* player);
+    virtual ~GoalWingsuitTime();
+};
+
+/**
+ * wingsuit time goal
+ */
+class GoalJumps : public Goal
+{
+private:
+    bool         _isAcquired;
+    int        _prevTime;
+	int        _newTime;
+    std::wstring _goalValue;
+protected:
+    // Goal abstracts
+    virtual const wchar_t* getGoalName(void);
+    virtual const wchar_t* getGoalValue(void);
+    virtual float getGoalScore(void);
+public:
+    // Actor abstracts
+    virtual void onUpdateActivity(float dt);
+public:
+    // class implementation
+    GoalJumps(Jumper* player);
+    virtual ~GoalJumps();
+};
+
+/**
+ * opening goal : opening shock
+ */
+
+class GoalOpening : public Goal
+{
+private:
+    bool         _isAcquired;
+    float        _maxDecelaration;
+	float        _prevSpeed;
+    std::wstring _goalValue;
+protected:
+    // Goal abstracts
+    virtual const wchar_t* getGoalName(void);
+    virtual const wchar_t* getGoalValue(void);
+	virtual float getGoalScore(void);
+public:
+    // Actor abstracts
+    virtual void onUpdateActivity(float dt);
+public:
+    // class implementation
+    GoalOpening(Jumper* player);
+	virtual ~GoalOpening();
 };
 
 /**

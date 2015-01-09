@@ -197,6 +197,8 @@ void castingCallback_GoFallField_Frontflip(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_action.ogg" );
@@ -369,6 +371,8 @@ void castingCallback_GoFallField_Backflip(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_action.ogg" );
@@ -541,6 +545,8 @@ void castingCallback_GoFallField_BackflipBackforward(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/dirty_moleculas_action.ogg" );

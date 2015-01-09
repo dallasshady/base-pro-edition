@@ -22,6 +22,7 @@ enum InputAction
     iaRightWarp,
     iaLeftRearRiser,
     iaRightRearRiser,
+	iaRearBrake,
     iaHeadLeft,
     iaHeadRight,
     iaHeadUp,

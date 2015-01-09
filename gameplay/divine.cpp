@@ -132,7 +132,8 @@ void Divine::castBoogieEvent(void)
         // enumerate locations able for boogie
         unsigned int numLocations = database::LocationInfo::getNumRecords();
         std::vector<unsigned int> locations;
-        for( unsigned int i=0; i<numLocations; i++ )
+		unsigned int i;
+        for( i=0; i<numLocations; i++ )
         {
             if( database::LocationInfo::getRecord(i)->accessible && 
                 database::LocationInfo::getRecord(i)->boogieId )
@@ -199,7 +200,8 @@ void Divine::castFestivalEvent(void)
         // enumerate locations able for festivals
         unsigned int numLocations = database::LocationInfo::getNumRecords();
         std::vector<unsigned int> locations;
-        for( unsigned int i=0; i<numLocations; i++ )
+		unsigned int i;
+        for( i=0; i<numLocations; i++ )
         {
             if( database::LocationInfo::getRecord(i)->accessible && 
                 database::LocationInfo::getRecord(i)->festivalId )
@@ -266,7 +268,8 @@ void Divine::castClimbingEvent(void)
         // enumerate locations able for climbings
         unsigned int numLocations = database::LocationInfo::getNumRecords();
         std::vector<unsigned int> locations;
-        for( unsigned int i=0; i<numLocations; i++ )
+		unsigned int i;
+        for( i=0; i<numLocations; i++ )
         {
             if( database::LocationInfo::getRecord(i)->accessible && 
                 database::LocationInfo::getRecord(i)->climbingId )
@@ -333,7 +336,8 @@ void Divine::castSmokeballEvent(void)
         // enumerate locations able for smokeball
         unsigned int numLocations = database::LocationInfo::getNumRecords();
         std::vector<unsigned int> locations;
-        for( unsigned int i=0; i<numLocations; i++ )
+		unsigned int i;
+        for( i=0; i<numLocations; i++ )
         {
             if( database::LocationInfo::getRecord(i)->accessible && 
                 database::LocationInfo::getRecord(i)->smokeballId )

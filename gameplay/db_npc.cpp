@@ -94,7 +94,7 @@ unsigned int database::NPCInfo::getRandomNonLicensedCharacter(float level, float
     assert( selection.size() );
 
     // return random id
-    return selection[ getCore()->getRandToolkit()->getUniformInt() % selection.size() ];
+    return selection[ ccor::getCore()->getRandToolkit()->getUniformInt() % selection.size() ];
 }
 
 void database::NPCInfo::addRecord(database::NPCInfo* npc)

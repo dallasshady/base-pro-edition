@@ -164,6 +164,7 @@ float Virtues::getPerceptionSkill(void)
 
 float Virtues::getEnduranceSkill(void)
 {
+	return 1.0f;
     return 1 - 1 / ( 1 + Kendurance * skills.endurance );
 }
 

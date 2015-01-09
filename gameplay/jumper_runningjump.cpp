@@ -25,7 +25,7 @@ static engine::AnimSequence runningJumpSequenceWings =
  * class implementation
  */
 
-Jumper::RunningJump::RunningJump(Jumper* jumper, NxActor* actor, MatrixConversion* mc, float vel) :
+Jumper::RunningJump::RunningJump(Jumper* jumper, PxRigidDynamic* actor, MatrixConversion* mc, float vel) :
     JumperAction( jumper )
 {
     // set action properties
@@ -106,12 +106,12 @@ void Jumper::RunningJump::update(float dt)
     {
         // setup physics
         Matrix4f sampleLTM = Jumper::getCollisionFF( _clump )->getFrame()->getLTM();
-        _phActor->setGlobalPose( wrap( sampleLTM ) );
+        _phActor->setGlobalPose(PxTransform(wrap( sampleLTM )));
         _phActor->wakeUp();
-        NxVec3 velH = wrap( _clump->getFrame()->getAt() );
+        PxVec3 velH = wrap( _clump->getFrame()->getAt() );
         velH.normalize();
         velH *= _vel * 0.01f;
-        NxVec3 velV = wrap( _clump->getFrame()->getUp() );
+        PxVec3 velV = wrap( _clump->getFrame()->getUp() );
         velV.normalize();
         velV *= 1.5f;
         _phActor->setLinearVelocity( velH + velV + wrap(_clump->getFrame()->getAt() * 600.0f * dt)) ;

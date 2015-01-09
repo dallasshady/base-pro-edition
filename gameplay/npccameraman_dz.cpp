@@ -23,19 +23,26 @@ NPCCameraman_DZ::~NPCCameraman_DZ()
 
 void NPCCameraman_DZ::onUpdate(float dt)
 {
+
+	//getCore()->logMessage("NPCCameraman_DZ::onUpdate");
+
     // follow cat toy untile it is roaming
     if( false && getNPC()->getJumper()->getPhase() == ::jpRoaming )
     {
+		getCore()->logMessage("call NPCFollow");
         call( new NPCFollow( getNPC(), 100.0f ) );
     }
     // frefall for cat toy until it is in freefall
     else if( getNPC()->getJumper()->getPhase() == ::jpRoaming || getNPC()->getJumper()->getPhase() == ::jpFreeFalling )
     {
+		//getCore()->logMessage("call NPCFreefall_DZ");
         call( new NPCFreefall_DZ( getNPC() ) );
     }
     // flight for cat toy
     else 
     {
+		getCore()->logMessage("call NPCFlight_DZ");
+
         bool canopyIsSkydiving = database::Canopy::getRecord( getNPC()->getJumper()->getVirtues()->equipment.canopy.id )->skydiving;
         if( canopyIsSkydiving )
         {

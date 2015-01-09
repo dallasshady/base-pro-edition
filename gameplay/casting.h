@@ -18,6 +18,7 @@ void castingCallbackKVLY(Actor* parent);
 void castingCallbackKjerag(Actor* parent);
 void castingCallbackAngelFalls(Actor* parent);
 void castingCallbackElCapitan(Actor* parent);
+void castingCallbackTestLevel(Actor* parent);
 
 }
 

@@ -1,4 +1,3 @@
-
 #include "headers.h"
 #include "scene.h"
 #include "imath.h"
@@ -9,8 +8,6 @@
 #include "../common/istring.h"
 #include "mission.h"
 #include "interrupt.h"
-#include "version.h"
-//#include "checkreg.h"
 #include "forest.h"
 
 /**
@@ -37,6 +34,9 @@ Scene::Scene(Career* career, Location* location, float holdingTime)
     _rainTexture    = NULL;
     _rain           = NULL;
 
+	// init network
+	network = new Network();
+
     _scenery = new Actor( this );    
     _camera = NULL;
     _lastCameraPose.set( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
@@ -52,7 +52,7 @@ Scene::Scene(Career* career, Location* location, float holdingTime)
     _phScene = NULL;
     _phTerrainVerts     = NULL;
     _phTerrainTriangles = NULL;
-    _phTerrainMaterials = NULL;
+    //_phTerrainMaterials = NULL;
 
     // database record for scene location 
     _locationInfo = database::LocationInfo::getRecord( _location->getDatabaseId() );    
@@ -102,7 +102,7 @@ Scene::~Scene()
     // release physics
     if( _phTerrainVerts ) delete[] _phTerrainVerts;
     if( _phTerrainTriangles ) delete[] _phTerrainTriangles;
-    if( _phTerrainMaterials ) delete[] _phTerrainMaterials;
+    //if( _phTerrainMaterials ) delete[] _phTerrainMaterials;
 
     // release modes
     while( _modes.size() )
@@ -113,10 +113,16 @@ Scene::~Scene()
         if( _modes.size() ) _modes.top()->onResume();
     }
 
+	// release network
+	if (network != NULL) {
+		network->stopSending();
+		delete network;
+	}
+
     // release scenery actors
     delete _scenery;
 
-    if( _phScene ) NxGetPhysicsSDK()->releaseScene( *_phScene );
+	if( _phScene ) _phScene->release();
 
     for( EnclosureI enclosureI = _enclosures.begin();
                     enclosureI != _enclosures.end();
@@ -222,7 +228,7 @@ static engine::IClump* adjustAmbientLightCCB(engine::IClump* clump, void* data)
 
 void Scene::load(void)
 {
-    #ifdef GAMEPLAY_EDITION_ND
+   //#ifdef GAMEPLAY_EDITION_ND
         // cache default desktop texture
         engine::ITexture* desktopTexture = Gameplay::iGui->getDesktop()->getTexture();
         gui::Rect desktopTextureRect = Gameplay::iGui->getDesktop()->getTextureRect();
@@ -253,7 +259,7 @@ void Scene::load(void)
                 gui::Rect( 0,0, slideTexture->getWidth(), slideTexture->getHeight() )
             );
         }
-    #endif
+    //#endif
 
     callback::BSPL   bsps;
     callback::ClumpL clumps;
@@ -285,37 +291,6 @@ void Scene::load(void)
         }
     }
 
-    // retrieve weather option
-    if( _locationWeather )
-    {
-        // load panorama
-        _panoramaNearClip = _locationWeather->panorama.zNear;
-        _panoramaFarClip  = _locationWeather->panorama.zFar;
-        _panoramaAsset    = Gameplay::iEngine->createAsset( engine::atBinary, _locationWeather->panorama.resource ); assert( _panoramaAsset );
-        _panoramaAsset->forAllBSPs( callback::enumerateBSPs, &bsps ); assert( bsps.size() );
-        _panoramaAsset->forAllClumps( callback::enumerateClumps, &clumps );
-        _panorama = *( bsps.begin() );
-        for( clumpI = clumps.begin(); clumpI != clumps.end(); clumpI++ ) 
-        {
-            _panorama->add( *( clumpI ) );
-        }
-        bsps.clear();
-        clumps.clear();
-    }
-
-    // load stage
-    _stageNearClip = locationInfo->stage.zNear;
-    _stageFarClip = locationInfo->stage.zFar;
-    _stageAsset = Gameplay::iEngine->createAsset( engine::atBinary, locationInfo->stage.resource ); assert( _stageAsset );
-    _stageAsset->forAllBSPs( callback::enumerateBSPs, &bsps ); assert( bsps.size() );
-    _stageAsset->forAllClumps( callback::enumerateClumps, &clumps );
-    _stage = *( bsps.begin() );
-    for( clumpI = clumps.begin(); clumpI != clumps.end(); clumpI++ ) 
-    {
-        _stage->add( *( clumpI ) );
-    }
-    bsps.clear();
-    clumps.clear();   
 
     // retrieve weather options
     database::LocationInfo::Weather* weatherOption = NULL;
@@ -332,6 +307,44 @@ void Scene::load(void)
             currentOption++;
         }
     }
+
+    // retrieve weather option
+    if( _locationWeather )
+    {
+        // load panorama
+        _panoramaNearClip = _locationWeather->panorama.zNear;
+        _panoramaFarClip  = _locationWeather->panorama.zFar;
+        _panoramaAsset    = Gameplay::iEngine->createAsset( engine::atBinary, _locationWeather->panorama.resource ); assert( _panoramaAsset );
+        _panoramaAsset->forAllBSPs( callback::enumerateBSPs, &bsps ); assert( bsps.size() );
+        _panoramaAsset->forAllClumps( callback::enumerateClumps, &clumps );
+        _panorama = *( bsps.begin() );
+
+        for( clumpI = clumps.begin(); clumpI != clumps.end(); clumpI++ ) 
+        {
+            _panorama->add( *( clumpI ) );
+        }
+        bsps.clear();
+        clumps.clear();
+    }
+
+	//_panorama->forAllClumps( adjustSunLightCCB, &sunMute );
+	//_panorama->forAllClumps( adjustAmbientLightCCB, &ambientMute );
+    
+	// load stage
+    _stageNearClip = locationInfo->stage.zNear;
+    _stageFarClip = locationInfo->stage.zFar;
+    _stageAsset = Gameplay::iEngine->createAsset( engine::atBinary, locationInfo->stage.resource ); assert( _stageAsset );
+	//_stageAsset = Gameplay::iEngine->createAsset( engine::atBinary, "./res/dropzone/burjdubai.ba" ); assert( _stageAsset );
+    
+	_stageAsset->forAllBSPs( callback::enumerateBSPs, &bsps ); assert( bsps.size() );
+    _stageAsset->forAllClumps( callback::enumerateClumps, &clumps );
+    _stage = *( bsps.begin() );
+    for( clumpI = clumps.begin(); clumpI != clumps.end(); clumpI++ ) 
+    {
+        _stage->add( *( clumpI ) );
+    }
+    bsps.clear();
+    clumps.clear();
 
     // modify rendering options
     if( weatherOption )
@@ -460,6 +473,7 @@ void Scene::load(void)
         bool creationFlag = false;
         for( clumpI = clumps.begin(); clumpI != clumps.end(); clumpI++ )
         {            
+//			getCore()->logMessage((*clumpI)->getName());
             if( strcmp( (*clumpI)->getName(), exitPoint->extras ) == 0 )
             {
                 _enclosures.insert( EnclosureT( exitPoint, new Enclosure( *clumpI, exitPoint->delay ) ) );
@@ -490,6 +504,62 @@ void Scene::load(void)
             slideTexture->release();
         }
     #endif
+
+
+	// CLEAN VERSION
+	//updateDaytime();
+}
+
+
+void Scene::updateDaytime(void) {
+    // retrieve weather options
+    database::LocationInfo::Weather* weatherOption = NULL;
+	database::LocationInfo* locationInfo = database::LocationInfo::getRecord( _location->getDatabaseId() );
+    if( locationInfo->weathers )
+    {
+        database::LocationInfo::Weather* currentOption = locationInfo->weathers;
+        while( currentOption->weather != ::wtDatabaseEnding )
+        {
+            if( currentOption->weather == _location->getWeather() )
+            {
+                weatherOption = currentOption;
+                break;
+            }
+            currentOption++;
+        }
+    }
+	if (!weatherOption) return;
+
+
+	// set daytime color mute (ambient percentage (0 = black))
+	DateTime dateTime = DateTime( _career->getVirtues()->evolution.time );
+
+	getCore()->logMessage("Time: %2.2f", (float)_career->getVirtues()->evolution.time);
+
+	// normal mutes
+	float sunMute = weatherOption->sunMute;
+	float ambientMute = weatherOption->ambientMute;
+	Vector4f fogColor = Vector4f(weatherOption->fogColor);
+	// daytime adjusted mutes
+	const float minMuteModifier = 0.1f;
+	float muteModifier = sinf(((float)dateTime.hour-6.0f)/5.5f);
+	if (dateTime.hour < 5.0f) muteModifier = 0.0f;
+
+	// modify mutes
+	if (muteModifier < minMuteModifier) muteModifier = minMuteModifier;
+	sunMute *= muteModifier;
+	ambientMute *= muteModifier;
+	// modify fog
+	if (muteModifier == minMuteModifier) muteModifier = 0.0f;
+	fogColor *= muteModifier;
+
+	// modify rendering options
+    assert( weatherOption->fogType != engine::fogLinear );
+    _stage->setFogType( weatherOption->fogType );
+    _stage->setFogDensity( weatherOption->fogDensity );
+    _stage->setFogColor( weatherOption->fogColor );
+    _stage->forAllClumps( adjustSunLightCCB, &sunMute );
+    _stage->forAllClumps( adjustAmbientLightCCB, &ambientMute );
 }
 
 void Scene::initializePhysics(void)
@@ -520,78 +590,96 @@ void Scene::initializePhysics(void)
     _collisionGeometry = *atomicL.begin();
     Vector3f sceneInf = _collisionGeometry->getAABBInf();
     Vector3f sceneSup = _collisionGeometry->getAABBSup();
-    _phSceneBounds.set( sceneInf[0], sceneInf[1], sceneInf[2],
-                        sceneSup[0], sceneSup[1], sceneSup[2] );
+    _phSceneBounds = PxBounds3 (PxVec3(sceneInf[0], sceneInf[1], sceneInf[2]),
+								PxVec3(sceneSup[0], sceneSup[1], sceneSup[2]));
 
     // determine limits of scene
     _phSceneLimits.maxNbActors = locationInfo->physicsLimits.numActors;
     _phSceneLimits.maxNbBodies = locationInfo->physicsLimits.numBodies;
-    _phSceneLimits.maxNbJoints = locationInfo->physicsLimits.numJoints;
+    //_phSceneLimits.maxNbJoints = locationInfo->physicsLimits.numJoints;
     _phSceneLimits.maxNbDynamicShapes = locationInfo->physicsLimits.numDynamicShapes;
     _phSceneLimits.maxNbStaticShapes  = locationInfo->physicsLimits.numStaticShapes;
 
     // initialize physics scene
-    _phSceneDesc.broadPhase = NX_BROADPHASE_COHERENT;
-    _phSceneDesc.gravity.set( 0.0f, -9.8f, 0.0f );
-    _phSceneDesc.userNotify = NULL;
-    _phSceneDesc.userTriggerReport = this;
-    _phSceneDesc.userContactReport = this;
-    _phSceneDesc.maxTimestep = simulationStepTime;
-    _phSceneDesc.maxIter = 1;
-    _phSceneDesc.timeStepMethod = NX_TIMESTEP_VARIABLE;
-    _phSceneDesc.maxBounds = &_phSceneBounds;
-    _phSceneDesc.limits = &_phSceneLimits;
-    _phSceneDesc.groundPlane = false;
-    _phSceneDesc.boundsPlanes = false;
-    _phSceneDesc.collisionDetection = true;
+	PxSceneDesc _phSceneDesc(PxGetPhysics().getTolerancesScale());
+	_phSceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
+	_phSceneDesc.broadPhaseType = PxBroadPhaseType::eSAP;
+    
+	//PHYSX3 fix collision filters
+	//_phSceneDesc.userNotify = NULL;
+    //_phSceneDesc.userTriggerReport = this;
+    //_phSceneDesc.userContactReport = this;
+	//_phSceneDesc.maxTimestep = simulationStepTime;
+    //_phSceneDesc.maxIter = 1;
+    //_phSceneDesc.timeStepMethod = NX_TIMESTEP_VARIABLE;
+    //_phSceneDesc.groundPlane = false;
+    //_phSceneDesc.boundsPlanes = false;
+    //_phSceneDesc.collisionDetection = true;
     _phSceneDesc.userData = this;
 
-    // create scene
-    _phScene = NxGetPhysicsSDK()->createScene( _phSceneDesc ); assert( _phScene );    
+	// create scene
+	//mNbThreads = PxMax(PxI32(shdfnd::Thread::getNbPhysicalCores())-1, 0);
+	//#ifdef PX_PS3
+	//	mNbThreads = 1; // known issue, 0 worker threads and SPU batched query can deadlock.
+	//#endif
+	//PHYSX3
+	mNbThreads = 1;
+	if(!_phSceneDesc.cpuDispatcher) {
+		mCpuDispatcher = PxDefaultCpuDispatcherCreate(mNbThreads);
+		//PHYSX3
+		//if(!mCpuDispatcher)
+		//	fatalError("PxDefaultCpuDispatcherCreate failed!");
+		_phSceneDesc.cpuDispatcher    = mCpuDispatcher;
+	}
+	if(!_phSceneDesc.filterShader)
+		_phSceneDesc.filterShader    = gDefaultFilterShader;
+
+	#ifdef PX_WINDOWS
+	if(!_phSceneDesc.gpuDispatcher && mCudaContextManager) {
+		_phSceneDesc.gpuDispatcher = mCudaContextManager->getGpuDispatcher();
+	}
+	#endif
+	_phScene = PxGetPhysics().createScene(_phSceneDesc); assert( _phScene );   
+
+	// post-creation scene settings
+	_phScene->setVisualizationCullingBox(_phSceneBounds);
+	_phScene->setLimits(_phSceneLimits);   
 
     // default material
-    NxMaterial* defaultMaterial = _phScene->getMaterialFromIndex(0); 
-	defaultMaterial->setRestitution( 0.5f );
-	defaultMaterial->setStaticFriction( 0.25f );
-	defaultMaterial->setDynamicFriction( 0.25f );
+    PxMaterial* defaultMaterial = PxGetPhysics().createMaterial(0.25f, 0.25f, 0.5f);
+	
+	// add ground plane
+	PxRigidStatic* groundPlane = PxCreatePlane(PxGetPhysics(), PxPlane(0,1,0,0), *defaultMaterial);
+	_phScene->addActor(*groundPlane);
 
     // fixed flesh material
-    NxMaterialDesc fixedFleshDesc;
-    fixedFleshDesc.staticFriction  = 0.75f;
-    fixedFleshDesc.dynamicFriction = 0.75f;
-    fixedFleshDesc.restitution     = 0.25f;
-    fixedFleshDesc.frictionCombineMode    = NX_CM_MAX;
-    fixedFleshDesc.restitutionCombineMode = NX_CM_MULTIPLY;
-    _phFleshMaterial = _phScene->createMaterial( fixedFleshDesc );
+    _phFleshMaterial = PxGetPhysics().createMaterial(0.75f, 0.75f, 0.25f);
+	_phFleshMaterial->setFrictionCombineMode(PxCombineMode::eMAX);
+	_phFleshMaterial->setRestitutionCombineMode(PxCombineMode::eMULTIPLY);
     assert( _phFleshMaterial );
 
     // moving flesh material
-    NxMaterialDesc movingFleshDesc;
-    movingFleshDesc.staticFriction  = 0.25f;
-    movingFleshDesc.dynamicFriction = 0.25f;
-    movingFleshDesc.restitution     = 0.125f;
-    movingFleshDesc.frictionCombineMode    = NX_CM_MAX;
-    movingFleshDesc.restitutionCombineMode = NX_CM_MULTIPLY;
-    _phMovingFleshMaterial = _phScene->createMaterial( movingFleshDesc );
+    _phMovingFleshMaterial = PxGetPhysics().createMaterial(0.25f, 0.25f, 0.125f);
+	_phMovingFleshMaterial->setFrictionCombineMode(PxCombineMode::eMAX);
+	_phMovingFleshMaterial->setRestitutionCombineMode(PxCombineMode::eMULTIPLY);
     assert( _phMovingFleshMaterial );
 
     // cloth material
-    NxMaterialDesc clothDesc;
-    clothDesc.staticFriction  = 0.995f;
-    clothDesc.dynamicFriction = 0.995f;
-    clothDesc.restitution     = 0.05f;
-    clothDesc.frictionCombineMode    = NX_CM_MAX;
-    clothDesc.restitutionCombineMode = NX_CM_MULTIPLY;
-    _phClothMaterial = _phScene->createMaterial( clothDesc );
+    _phClothMaterial = PxGetPhysics().createMaterial(0.995f, 0.995f, 0.05f);
+	_phClothMaterial->setFrictionCombineMode(PxCombineMode::eMAX);
+	_phClothMaterial->setRestitutionCombineMode(PxCombineMode::eMULTIPLY);
+    assert( _phClothMaterial );
 
     // build terrain mesh data
     Matrix4f collisionGeometryLTM = _collisionGeometry->getFrame()->getLTM();
     Vector3f worldVertex;
     engine::Mesh* mesh = _collisionGeometry->getGeometry()->createMesh();
-    _phTerrainVerts = new NxVec3[mesh->numVertices];
-    _phTerrainTriangles = new NxU32[3*mesh->numTriangles];
-    _phTerrainMaterials = new NxMaterialIndex[mesh->numTriangles];
-    for( unsigned int i=0; i<mesh->numVertices; i++ )
+    _phTerrainVerts = new PxVec3[mesh->numVertices];
+    _phTerrainTriangles = new PxU32[3*mesh->numTriangles];
+    //PHYSX3
+	//_phTerrainMaterials = new NxMaterialIndex[mesh->numTriangles];
+	unsigned int i;
+    for( i=0; i<mesh->numVertices; i++ )
     {
         worldVertex = Gameplay::iEngine->transformCoord( mesh->vertices[i], collisionGeometryLTM );
         _phTerrainVerts[i] = wrap( worldVertex );
@@ -601,38 +689,43 @@ void Scene::initializePhysics(void)
         _phTerrainTriangles[i*3+0] = mesh->triangles[i].vertexId[0];
         _phTerrainTriangles[i*3+1] = mesh->triangles[i].vertexId[1];
         _phTerrainTriangles[i*3+2] = mesh->triangles[i].vertexId[2];
-        _phTerrainMaterials[i] = 0;
+		//PHYSX3
+        //_phTerrainMaterials[i] = 0;
     }    
 
     // initialize terrain descriptor
-    _phTerrainDesc.numVertices = mesh->numVertices;
-    _phTerrainDesc.numTriangles = mesh->numTriangles;
-    _phTerrainDesc.pointStrideBytes = sizeof(NxVec3);
-    _phTerrainDesc.triangleStrideBytes = 3*sizeof(NxU32);
-    _phTerrainDesc.points = _phTerrainVerts;
-    _phTerrainDesc.triangles = _phTerrainTriangles;
-    _phTerrainDesc.flags = 0;
-    _phTerrainDesc.materialIndexStride = sizeof( NxMaterialIndex );
-    _phTerrainDesc.materialIndices = _phTerrainMaterials;
-    _phTerrainDesc.heightFieldVerticalAxis = NX_NOT_HEIGHTFIELD;
-    _phTerrainDesc.heightFieldVerticalExtent = -1000;
-    //_phTerrainDesc.convexEdgeThreshold = 1.0f;
+	_phTerrainDesc.points.count = mesh->numVertices;
+	_phTerrainDesc.points.data = _phTerrainVerts;
+	_phTerrainDesc.points.stride = sizeof(PxVec3);
+	_phTerrainDesc.triangles.count = mesh->numTriangles;
+	_phTerrainDesc.triangles.data = _phTerrainTriangles;
+	_phTerrainDesc.triangles.stride = 3 * sizeof(PxU32);
 
-    // cook triangle mesh into shape
-    MemoryWriteBuffer writeBuffer;    
-    bool cookStatus = NxCookTriangleMesh( _phTerrainDesc, writeBuffer );
-    MemoryReadBuffer readBuffer( writeBuffer.data );
-    _phTerrainShapeDesc.meshData = NxGetPhysicsSDK()->createTriangleMesh( readBuffer );
-    _phTerrainShapeDesc.meshFlags = _phTerrainShapeDesc.meshFlags | NX_MESH_SMOOTH_SPHERE_COLLISIONS;
-    //_phTerrainShapeDesc.skinWidth = 0.25f;
+	//PHYSX3
+    //_phTerrainDesc.materialIndexStride = sizeof( PxMaterialIndex );
+    //_phTerrainDesc.materialIndices = _phTerrainMaterials;
+    //_phTerrainDesc.heightFieldVerticalAxis = NX_NOT_HEIGHTFIELD;
+    //_phTerrainDesc.heightFieldVerticalExtent = -1000;
+	
+	// cook terrain
 
-    // create terrain actor 
-    _phTerrainActorDesc.shapes.push_back( &_phTerrainShapeDesc );
-    _phTerrain = _phScene->createActor( _phTerrainActorDesc );
+	_phTerrainMesh = Gameplay::pxCooking->createTriangleMesh(_phTerrainDesc, PxGetPhysics().getPhysicsInsertionCallback());
 
+	assert (_phTerrainMesh);
+	
+	_phTerrain = PxGetPhysics().createRigidStatic(PxTransform(PxVec3(0.0f, 1.0f, 0.0f), PxQuat(PxHalfPi / 60.0f, PxVec3(0.0f, 1.0f, 0.0f))));
+
+	assert (_phTerrain);
+
+	PxTriangleMeshGeometry triGeom(_phTerrainMesh);
+	PxShape* triangleMeshShape = _phTerrain->createShape(triGeom, *defaultMaterial);
+	assert (triangleMeshShape);
+
+	_phScene->addActor(*_phTerrain);
+
+	//PHYSX3
     // retrieve terrain shape
-    NxShape** terrainShapes = _phTerrain->getShapes();
-    _phTerrainShape = terrainShapes[0]->isTriangleMesh();
+	_phTerrain->getShapes(&_phTerrainShape, 1);
     assert( _phTerrainShape );
     
     Gameplay::iEngine->releaseMesh( mesh );
@@ -642,7 +735,10 @@ void Scene::initializePhysics(void)
  * physics handlers
  */
 
-void Scene::onContactNotify(NxContactPair &pair, NxU32 events)
+
+//PHYSX3
+/*
+void Scene::onContactNotify(NxContactPair &pair, PxU32 events)
 {
     if( pair.actors[0]->userData )
     {
@@ -652,11 +748,7 @@ void Scene::onContactNotify(NxContactPair &pair, NxU32 events)
     {
         reinterpret_cast<Actor*>( pair.actors[1]->userData )->onContact( pair, events );
     }
-}
-
-void Scene::onTrigger(NxShape& triggerShape, NxShape& otherShape, NxTriggerFlag status)
-{
-}
+}*/
 
 /**
  * Activity
@@ -782,10 +874,14 @@ void Scene::updateActivity(float dt)
     }
 
     // update current mode
+	//network->stopSending();
     if( _modes.size() )
     {
         _modes.top()->updateActivity( dt );
     }
+	//if (!network->arePacketsLocked() && !network->arePacketsSendingLocked()) {
+	//	network->beginSending();
+	//}
 
     // update rain
     if( _rain )
@@ -793,7 +889,7 @@ void Scene::updateActivity(float dt)
         Matrix4f cameraPose = _camera->getPose();
         Vector3f cameraPos( cameraPose[3][0], cameraPose[3][1], cameraPose[3][2] );
         _rain->setProperty( "Center", cameraPos );
-        Vector3f vel = Vector3f( 0,-1000,0 ) - wrap( getWindAtPoint( NxVec3( 0,0,0 ) ) );
+        Vector3f vel = Vector3f( 0,-1000,0 ) - wrap( getWindAtPoint( PxVec3( 0,0,0 ) ) );
         _rain->setProperty( "Velocity", vel );
         _rain->setProperty( "NBias", 3.0f );
         _rain->setProperty( "TimeSpeed", _timeSpeed * _timeSpeedMultiplier );
@@ -978,7 +1074,7 @@ float Scene::getTimeSpeed(void)
 void Scene::setTimeSpeed(float value)
 {
 	// no slow down override v0.1
-	_timeSpeed = _timeSpeedMultiplier = 1.0f;return;
+	//_timeSpeed = _timeSpeedMultiplier = 1.0f;return;
     assert( value > 0 );
     _timeSpeed = value;
 }
@@ -986,7 +1082,7 @@ void Scene::setTimeSpeed(float value)
 void Scene::setTimeSpeedMultiplier(float value)
 {
 	// no slow down override v0.1
-	_timeSpeed = _timeSpeedMultiplier = 1.0f;return;
+	//_timeSpeed = _timeSpeedMultiplier = 1.0f;return;
     assert( value > 0 );
     _timeSpeedMultiplier = value;
 }
@@ -1048,11 +1144,11 @@ static float blast(float t)
     return sin(t) + 0.0625f * sin( 10 * t ) + 0.1f * sin( 150 * t );
 }
 
-NxVec3 Scene::getWindAtPoint(const NxVec3& point)
+PxVec3 Scene::getWindAtPoint(const PxVec3& point)
 {
     if( !database::LocationInfo::getRecord( _location->getDatabaseId() )->wind ) 
     {
-        return NxVec3( 0,0,0 );
+        return PxVec3( 0,0,0 );
     }
 
     float windAmbient   = _location->getWindAmbient();
@@ -1061,7 +1157,7 @@ NxVec3 Scene::getWindAtPoint(const NxVec3& point)
 
     float windMagnitude = windAmbient + windAmplitude + windAmplitude * blast( _windTime );
 
-    NxVec3 windN = wrap( _location->getWindDirection() );
+    PxVec3 windN = wrap( _location->getWindDirection() );
     windN.normalize();
 
     return windN * windMagnitude;

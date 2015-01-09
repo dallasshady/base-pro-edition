@@ -6,7 +6,6 @@
 #include "callback.h"
 #include "xpp.h"
 #include "../common/istring.h"
-#include "version.h"
 #include "currenttime.h"
 
 /**

@@ -3,7 +3,7 @@
 #include "jumper.h"
 #include "imath.h"
 
-Jumper::FlipJump::FlipJump(Jumper* jumper, NxActor* phActor, MatrixConversion* mc, engine::AnimSequence* sequence, float animSpeed, float criticalPeriod) :
+Jumper::FlipJump::FlipJump(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc, engine::AnimSequence* sequence, float animSpeed, float criticalPeriod) :
     Jumper::JumperAction( jumper )
 {
     // set action properties
@@ -76,7 +76,7 @@ Jumper::FlipJump::~FlipJump()
 
         // place actor
         Matrix4f sampleLTM = Jumper::getCollisionFF( _clump )->getFrame()->getLTM();
-        _phActor->setGlobalPose( wrap( sampleLTM ) );
+        _phActor->setGlobalPose(PxTransform(wrap( sampleLTM )));
 
         // wake up actor
         _phActor->wakeUp();
@@ -112,18 +112,18 @@ void Jumper::FlipJump::update(float dt)
 
         // linear velocity
 		if (_jumper->getAirplane() == NULL) {
-			NxVec3 vel = wrap( ( currPelvisPos - _prevPelvisPos ) * 1.0f / dt );
+			PxVec3 vel = wrap( ( currPelvisPos - _prevPelvisPos ) * 1.0f / dt );
 			_phActor->setLinearVelocity( vel );
 			_jumper->initOverburdenCalculator( vel );
 		// linear velocity from aircraft
 		} else {
-			NxVec3 velH = wrap( _clump->getFrame()->getAt() );
+			PxVec3 velH = wrap( _clump->getFrame()->getAt() );
 			velH.normalize();
 			velH *= 3.0f;
-			NxVec3 velV = wrap( _clump->getFrame()->getUp() );
+			PxVec3 velV = wrap( _clump->getFrame()->getUp() );
 			velV.normalize();
 			velV *= 0.25f;
-			NxVec3 velA = wrap( _jumper->getAirplane()->getVel() );
+			PxVec3 velA = wrap( _jumper->getAirplane()->getVel() );
 			_phActor->setLinearVelocity( velH + velV + velA );
 			_jumper->initOverburdenCalculator( velH + velV + velA );
 		}

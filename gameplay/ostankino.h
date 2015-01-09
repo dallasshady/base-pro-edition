@@ -26,9 +26,9 @@ NPC* castGhostNPC(Mission* mission, Enclosure* enclosure, CatToy* ghost, std::ve
 
 // startups
 void castingCallback_AU_PCA(Actor* parent);
-
+void castingCallback_AU_PCIH(Actor* parent);
 bool equipCallback_AU_PCA(Career* career, float windAmbient, float windBlast, database::MissionInfo* missionInfo);
-
+bool equipCallback_AU_PCIH(Career* career, float windAmbient, float windBlast, database::MissionInfo* missionInfo);
 /**
  * "Open Air BASE"
  */

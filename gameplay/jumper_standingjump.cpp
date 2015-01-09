@@ -27,7 +27,7 @@ static engine::AnimSequence standingJumpSequenceWings =
  * class implementation
  */
 
-Jumper::StandingJump::StandingJump(Jumper* jumper, NxActor* actor, MatrixConversion* mc) :
+Jumper::StandingJump::StandingJump(Jumper* jumper, PxRigidDynamic* actor, MatrixConversion* mc) :
     JumperAction( jumper )
 {
     // set action properties
@@ -87,12 +87,12 @@ void Jumper::StandingJump::update(float dt)
         if( _phActor->isSleeping() )
         {
             Matrix4f sampleLTM = Jumper::getCollisionFF( _clump )->getFrame()->getLTM();
-            _phActor->setGlobalPose( wrap( sampleLTM ) );
+            _phActor->setGlobalPose(PxTransform(wrap( sampleLTM )));
             _phActor->wakeUp();
-            NxVec3 velH = wrap( _clump->getFrame()->getAt() );
+            PxVec3 velH = wrap( _clump->getFrame()->getAt() );
             velH.normalize();
             velH *= 3.0f;
-            NxVec3 velV = wrap( _clump->getFrame()->getUp() );
+            PxVec3 velV = wrap( _clump->getFrame()->getUp() );
             velV.normalize();
             velV *= 1.5f;
             _phActor->setLinearVelocity( velH + velV );
@@ -109,5 +109,4 @@ void Jumper::StandingJump::update(float dt)
     {
         _endOfAction = true;
     }
-	getCore()->logMessage("actiontime: %2.5f", _actionTime);
 }

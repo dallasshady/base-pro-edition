@@ -3,7 +3,6 @@
 #include "gameplay.h"
 #include "crypt.h"
 #include "scene.h"
-#include "version.h"
 #include "unicode.h"
 #include "communitymission.h"
 
@@ -218,7 +217,8 @@ void Gameplay::generateMissions(TiXmlElement* node, database::TournamentInfo* to
 void Gameplay::cleanupUserCommunityEvents(void)
 {
     // delete XML documents
-    for( unsigned int i=0; i<_userTournaments.size(); i++ )
+	unsigned int i;
+    for( i=0; i<_userTournaments.size(); i++ )
     {
         delete _userTournaments[i];
     }

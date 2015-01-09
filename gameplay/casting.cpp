@@ -1016,3 +1016,31 @@ void casting::castingCallbackElCapitan(Actor* parent)
     cutsceneDesc.speed = 0.5f;
     new Cutscene( parent->getScene(), &cutsceneDesc );
 }
+
+void casting::castingCallbackTestLevel(Actor* parent)
+{
+    double forestFactor;
+    double trafficDensity, crowdDensity;
+    TiXmlElement* details = Gameplay::iGameplay->getConfigElement( "details" );
+    details->Attribute( "traffic", &trafficDensity );
+    details->Attribute( "crowd", &crowdDensity );
+    details->Attribute( "forest", &forestFactor );
+
+    // cast wind by ordinary method
+    castingCallbackOrdinaryWind( parent );
+
+    // cast rain by ordinary method
+    castingCallbackOrdinaryRain( parent );
+
+
+    // cutscene mode
+    CutsceneDesc cutsceneDesc;
+    cutsceneDesc.source = parent->getScene()->findClump( "KVLYCutscene" ); assert( cutsceneDesc.source );
+    cutsceneDesc.tracks.push_back( CutsceneTrack( FRAMETIME(1), FRAMETIME(98) ) );
+    cutsceneDesc.tracks.push_back( CutsceneTrack( FRAMETIME(104), FRAMETIME(264) ) );
+    cutsceneDesc.tracks.push_back( CutsceneTrack( FRAMETIME(272), FRAMETIME(405) ) );
+    cutsceneDesc.tracks.push_back( CutsceneTrack( FRAMETIME(412), FRAMETIME(538) ) );
+    cutsceneDesc.tracks.push_back( CutsceneTrack( FRAMETIME(542), FRAMETIME(636) ) );
+    cutsceneDesc.speed = 0.5f;
+    new Cutscene( parent->getScene(), &cutsceneDesc );
+}

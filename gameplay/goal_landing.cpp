@@ -1,5 +1,3 @@
-
-#include "headers.h"
 #include "goal.h"
 
 const wchar_t* GoalLanding::getGoalName(void)

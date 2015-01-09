@@ -52,11 +52,11 @@ public:
 struct Gear
 {
 public:
-    GearType     type;  // type of gear
-    unsigned int id;    // database identifier
-    float        state; // state factor (0..1)
-    unsigned int age;   // age (number of jumps)
-	unsigned int rig_aad;	// add setting for rigs
+    GearType     type;		// type of gear
+    unsigned int id;		// database identifier
+    float        state;		// state factor (0..1)
+    unsigned int age;		// age (number of jumps)
+	signed int rig_aad;	// aad setting for rigs	(skydive). special options (basejump). Forced default options - negative.
 public:
     Gear() : type(gtUnequipped), id(0), state(0), age(0) {}    
     Gear(GearType t, unsigned int i) : type(t), id(i), state(1), age(0), rig_aad(0) {}    

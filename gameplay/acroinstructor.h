@@ -2,7 +2,7 @@
 #ifndef ACROBATICS_INSTRUCTORS_INCLUDED
 #define ACROBATICS_INSTRUCTORS_INCLUDED
 
-#include "headers.h"
+//#include "headers.h"
 #include "instructor.h"
 #include "landingaccuracy.h"
 

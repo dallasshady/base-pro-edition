@@ -65,6 +65,7 @@ private:
     engine::IClump* _clump;
     AnimSequenceL   _animSequenceL;
     AnimSequenceI   _animSequenceI;
+	bool			_animSequenceI_isNULL;
     Camera*         _camera;
 public:
     // actor abstracts

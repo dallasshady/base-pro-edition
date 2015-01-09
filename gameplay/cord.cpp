@@ -98,7 +98,8 @@ void CanopySimulator::BrakeSimulator::update(float dt)
 {
     Vector3f riserPos = _riserJoint->getPos();
     Vector3f branchingPos = _canopyJoints[0]->getPos();
-    for( unsigned int i=1; i<_numCanopyJoints; i++ ) branchingPos += _canopyJoints[i]->getPos();
+	unsigned int i;
+    for( i=1; i<_numCanopyJoints; i++ ) branchingPos += _canopyJoints[i]->getPos();
     branchingPos *= ( 1.0f / _numCanopyJoints );
     branchingPos = branchingPos - riserPos;
     branchingPos *= _aspect;

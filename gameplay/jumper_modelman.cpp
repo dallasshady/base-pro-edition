@@ -4,7 +4,6 @@
 #include "imath.h"
 #include "gear.h"
 #include "database.h"
-#include "version.h"
 
 /**
  * model management
@@ -157,7 +156,7 @@ void Jumper::setHead(engine::IClump* clump, unsigned int headId, Jumper* jumper)
         if( i == headId ) 
         {
             flags = engine::afRender | engine::afCollision;
-            if( jumper && jumper->isPlayer() ) 
+            if( jumper /*&& jumper->isPlayer()*/ ) 
             {
                 int shadows = atoi( Gameplay::iGameplay->getConfigElement( "video" )->Attribute( "shadows" ) );
                 if( shadows ) flags = flags | engine::afCastShadow;
@@ -198,7 +197,7 @@ void Jumper::setHelmet(engine::IClump* clump, unsigned int helmetId, Jumper* jum
         if( i == helmetId ) 
         {
             flags = engine::afRender | engine::afCollision;
-            if( jumper && jumper->isPlayer() ) 
+            if( jumper /*&& jumper->isPlayer()*/ ) 
             {
                 int shadows = atoi( Gameplay::iGameplay->getConfigElement( "video" )->Attribute( "shadows" ) );
                 if( shadows ) flags = flags | engine::afCastShadow;
@@ -277,7 +276,7 @@ void Jumper::setBody(engine::IClump* clump, unsigned int bodyId, Jumper* jumper)
         if( i == bodyId ) 
         {
             flags = engine::afRender | engine::afCollision;
-            if( jumper && jumper->isPlayer() ) 
+            if( jumper /*&& jumper->isPlayer()*/ ) 
             {
                 int shadows = atoi( Gameplay::iGameplay->getConfigElement( "video" )->Attribute( "shadows" ) );
                 if( shadows ) flags = flags | engine::afCastShadow;

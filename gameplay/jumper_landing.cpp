@@ -27,7 +27,7 @@ static engine::AnimSequence canopySuppressionSequence =
  * class implementation
  */
 
-Jumper::Landing::Landing(Jumper* jumper, NxActor* phFlight, MatrixConversion* mcFlight) :
+Jumper::Landing::Landing(Jumper* jumper, PxRigidDynamic* phFlight, MatrixConversion* mcFlight) :
     JumperAction( jumper )
 {
 	if (jumper->getCanopySimulator()->isCutAway) return;
@@ -103,10 +103,10 @@ void Jumper::Landing::update(float dt)
 void Jumper::Landing::updatePhysics(void)
 {
     // local coordinate system of base jumper
-    NxMat34 actorPose = _phActor->getGlobalPose();
-    NxVec3 x = actorPose.M.getColumn(0);
-    NxVec3 y = actorPose.M.getColumn(1);
-    NxVec3 z = actorPose.M.getColumn(2);
+	PxTransform actorPose = _phActor->getGlobalPose();
+    PxVec3 x = actorPose.q.getBasisVector0();
+    PxVec3 y = actorPose.q.getBasisVector1();
+    PxVec3 z = actorPose.q.getBasisVector2();
 
     // update character physics for landing action
     // determine angle btw. character vertical && world up vector
@@ -123,12 +123,12 @@ void Jumper::Landing::updatePhysics(void)
 
     // align torque, relative to world up direction
     float Kalign = 1.0f;
-    NxVec3 Talign( axis[0], axis[1], axis[2] );
+    PxVec3 Talign( axis[0], axis[1], axis[2] );
     Talign = Talign * sqr( angle ) * sgn( angle ) * Kalign;
 
     // align torque, relative to canopy
     float Kcanopy = 0.0125f;
-    NxVec3 Tcanopy( 0,0,0 );
+    PxVec3 Tcanopy( 0,0,0 );
     if( &canopySuppressionSequence == _clump->getAnimationController()->getTrackAnimation( 0 ) )
     {
         Vector3f charAt = _clump->getFrame()->getAt();
@@ -140,12 +140,12 @@ void Jumper::Landing::updatePhysics(void)
         charAt[1] = 0; charAt.normalize();
         dirToCanopy[1] = 0; dirToCanopy.normalize();
         angle = ::calcAngle( charAt, dirToCanopy, worldUp );
-        Tcanopy.set( 0,1,0 );
+        Tcanopy = PxVec3( 0,1,0 );
         Tcanopy = Tcanopy * sqr( angle ) * sgn( angle ) * -Kcanopy;
     }
 
     // friction force
-    NxVec3 vel = _phActor->getLinearVelocity();
+    PxVec3 vel = _phActor->getLinearVelocity();
     engine::IAnimationController* animCtrl = _clump->getAnimationController();
     if( animCtrl->getTrackAnimation( 0 ) == &canopySuppressionSequence )
     {
@@ -154,7 +154,7 @@ void Jumper::Landing::updatePhysics(void)
             _Kfr += 5.0f * ::simulationStepTime;
         }
     }
-    NxVec3 Ffr = vel * -_Kfr * _phActor->getMass();
+    PxVec3 Ffr = vel * -_Kfr * _phActor->getMass();
 
     // finalize motion equation        
     _phActor->addForce( Ffr );
@@ -167,9 +167,13 @@ void Jumper::Landing::startCanopySuppression(void)
 
     // change material
     assert( _phActor->getNbShapes() );
-    _phActor->getShapes()[0]->setMaterial( 
-        _jumper->getScene()->getPhFleshMaterial()->getMaterialIndex() 
-    );
+	PxShape **shapes;
+	_phActor->getShapes(shapes, 1);
+
+	PxMaterial **materials;
+	materials[0] = _jumper->getScene()->getPhFleshMaterial();
+
+	shapes[0]->setMaterials(materials, 1);
 
     _phActor->setAngularDamping( 3.0f );
 

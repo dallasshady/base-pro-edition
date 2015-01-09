@@ -1,7 +1,6 @@
 
 #include "headers.h"
 #include "database.h"
-#include "version.h"
 
 using namespace database;
 
@@ -68,6 +67,9 @@ using namespace database;
 #define MODELID_INFINITY_160 744
 #define MODELID_INFINITY_190 745
 
+#define MODELID_PETRA_69 915
+#define MODELID_EFREET_49 919
+
 #define DESCRIPTIONID_PSYCHONAUT 345
 #define DESCRIPTIONID_JAHNCLE    346
 #define DESCRIPTIONID_HAIBANE    378
@@ -76,6 +78,8 @@ using namespace database;
 #define DESCRIPTIONID_OBSESSION  740
 #define DESCRIPTIONID_GFORCE     743
 #define DESCRIPTIONID_INFINITY   746
+#define DESCRIPTIONID_PETRA   915
+#define DESCRIPTIONID_EFREET   919
 
 /**
  * riser scheme 02 - common skydiving canopy (9 sections)
@@ -389,13 +393,13 @@ public:
 #define COLOR_GForce_sky_01    gui::Rect( 288,0,303,31 ), 67 
 #define COLOR_Infinity_sky_01  gui::Rect( 304,0,319,31 ), 68
 #define COLOR_FBRedBull        gui::Rect( 320,0,335,31 ), 69
+#define COLOR_Main_petra_69    gui::Rect( 352,0,367,31 ), 72
 
 // inflation dynamics
 // SRDminvel, SRDmink, SRDmaxvel, SRDmaxk, SUminvel, SUmink, SUmaxvel, SUmaxk
-
-#define INFL_PSYCHONAUT 2.5f, 0.0f, 20.0f, 0.5f, 0.0f, 0.125f, 50.0f, 0.05f
-#define INFL_JAHNCLE    5.0f, 0.0f, 20.0f, 1.0f, 0.0f, 0.250f, 50.0f, 0.0625f
-#define INFL_HAIBANE    0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.125f, 50.0f, 0.0375f
+#define INFL_PSYCHONAUT 2.5f, 0.0f, 20.0f, 0.5f, 0.0f, 0.125f, 40.0f, 0.05f
+#define INFL_JAHNCLE    5.0f, 0.0f, 20.0f, 1.0f, 0.0f, 0.250f, 70.0f, 0.0625f
+#define INFL_HAIBANE    0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.125f, 40.0f, 0.0375f
 
 // collapse dynamics
 // Cnum, Cradius, Cpower, Cminvel, Cmaxvel, Crestore, Cresvel
@@ -425,21 +429,22 @@ const unsigned int numBasePilots = 6;
 static database::Pilotchute basePilots[numBasePilots] = 
 {
     //        size, mass, scale, Vrec, Talign, Tgyres, Fair
-    /* 0 */ { 48, 0.24f, 1.2192f, 8.26f, 2.0f, 0.5f, 2.0f },
-    /* 1 */ { 45, 0.225f, 1.1430f, 17.23f, 1.9f,  0.48f, 2.0f },
-    /* 2 */ { 42, 0.21f, 1.0688f, 25.24f, 1.8f,  0.46f, 2.0f },
-    /* 3 */ { 40, 0.20f, 1.0160f, 32.11f, 1.7f,  0.44f, 2.0f },
-    /* 4 */ { 38, 0.19f, 0.9652f, 42.24f, 1.6f,  0.42f, 2.0f },
-    /* 5 */ { 36, 0.18f, 0.9144f, 49.98f, 1.5f,  0.40f, 2.0f }
+    /* 0 */ { 48, 0.36f, 1.2192f, 8.26f, 2.0f, 0.5f, 4.0f },
+    /* 1 */ { 45, 0.30f, 1.1430f, 17.23f, 1.9f,  0.48f, 3.9f },
+    /* 2 */ { 42, 0.28f, 1.0688f, 25.24f, 1.8f,  0.46f, 3.8f },
+    /* 3 */ { 40, 0.26f, 1.0160f, 32.11f, 1.7f,  0.44f, 3.7f },
+    /* 4 */ { 38, 0.25f, 0.9652f, 42.24f, 1.6f,  0.42f, 3.6f },
+    /* 5 */ { 36, 0.24f, 0.9144f, 49.98f, 1.5f,  0.40f, 3.5f }
 };
 
 const unsigned int numSkydivingPilots = 2;
 
 static database::Pilotchute skydivingPilots[numSkydivingPilots] = 
 {
-    // size, mass, scale, Vrec, Talign, Tgyres, Fair
-    /* 0 */ { 36, 0.18f, 0.9144f, 49.98f, 1.5f,  0.40f, 2.0f },
-    /* 1 */ { 32, 0.16f, 0.8f, 56.0f, 1.3f, 0.36f, 2.0f }
+          // size, mass, scale, Vrec, Talign, Tgyres, Fair
+    ///* 0 */ { 72, 0.48f, 1.8f, 39.98f, 1.5f,  0.40f, 8.0f },
+    /* 0 */ { 36, 0.24f, 0.9144f, 49.98f, 1.5f,  0.40f, 4.0f },
+    /* 1 */ { 32, 0.21f, 0.8f, 56.0f, 1.3f, 0.36f, 3.8f }
 };
 
 /**
@@ -465,8 +470,13 @@ static database::Pilotchute skydivingPilots[numSkydivingPilots] =
 #define PROPS_JAHNCLE_290 MODELID_JAHNCLE_290, DESCRIPTIONID_JAHNCLE, MFRID_D3, 3.25f, 5.190f, 290.0f, 2.0f, 3.400f, 3.814f, 3.814f, 2.25f, &riserScheme01, 48.33f, 2.76f, 13.80f, AA_JAHNCLE, 17.26f, 34.52f, 1.380f, 8.28f, 0.242f, 1.035f, 8.28f, 16.57f, 27.61f, INFL_JAHNCLE, COLLAPSE_JAHNCLE, AGEING_JAHNCLE, numBasePilots, basePilots
 
 #define PROPS_JAHNCLE_150 MODELID_JAHNCLE_150, DESCRIPTIONID_JAHNCLE, MFRID_D3, 2.30f, 3.300f, 150.0f, 2.5f,  2.20f, 2.400f,  2.300f,   2.25f, &riserScheme01,29.00f, 1.20f,  8.50f, AA_JAHNCLE, 11.00f, 21.00f, 0.880f, 5.30f, 0.145f,   0.400f,  5.10f, 10.00f, 17.00f,INFL_JAHNCLE, COLLAPSE_JAHNCLE, AGEING_JAHNCLE, numBasePilots, basePilots
-//						  nameId			   descriptionId		  manufId   mass   scale   area    aspect ftCord rearCord ctrCord cascade				Kyair   Kzair   Kxair  AAdeep      Klifts  Kliftd  Kdrags  Kdragd Kbraking  Kturn  Kdampmin max    Vdampmax
-#define PROPS_HAIBANE_71  MODELID_HAIBANE_71,  DESCRIPTIONID_HAIBANE, MFRID_D3, 1.30f, 2.122f, 71.0f,  2.45f, 1.295f, 1.670f, 1.670f, 1.0f, &riserScheme02, 13.00f, 0.270f, 16.0f, AA_HAIBANE,  9.70f, 13.20f, 0.110f, 0.44f, 0.0350f, 0.10500f, 1.30f, 4.50f, 14.00f, INFL_HAIBANE, COLLAPSE_HAIBANE, AGEING_HAIBANE, numSkydivingPilots, skydivingPilots
+//						  nameId			   descriptionId		  manufId   mass   scale   area    aspect ftCord rearCord ctrCord cascade				  Kyair   Kzair  Kxair  AAdeep      Klifts  Kliftd  Kdrags  Kdragd Kbraking  Kturn  Kdampmin max    Vdampmax
+// 2.93
+//#define PROPS_PETRA_69	  MODELID_PETRA_69,    DESCRIPTIONID_PETRA,   MFRID_D3, 1.70f, 2.022f*1.7f, 69.0f,  1.4607f, 2.4f, 2.500f,  2.4f, 2.25f, &riserScheme02, 9.50f, 0.070f, 11.0f, AA_HAIBANE,  7.50f, 11.00f, 0.050f, 0.09f, 0.0600f, 0.15100f, 25.20f, 20.00f, 14.00f, INFL_HAIBANE, COLLAPSE_HAIBANE, AGEING_HAIBANE, numSkydivingPilots, skydivingPilots
+#define PROPS_PETRA_69	  MODELID_PETRA_69,     DESCRIPTIONID_PETRA, MFRID_D3,  1.70f, 2.022f, 69.0f,  1.4607f, 1.095f, 1.370f, 1.370f, 1.2f, &riserScheme02, 9.00f, 0.100f, 11.0f, AA_HAIBANE,  7.50f, 11.00f, 0.050f, 0.09f, 0.0500f, 0.15100f, 9.20f, 20.00f,  14.00f, INFL_HAIBANE, COLLAPSE_HAIBANE, AGEING_HAIBANE, numSkydivingPilots, skydivingPilots
+#define PROPS_EFREET_49	  MODELID_EFREET_49,    DESCRIPTIONID_EFREET,MFRID_D3,  0.98f, 1.900f, 49.0f,  2.7000f, 0.800f, 1.200f, 1.200f, 1.0f, &riserScheme01, 1.00f, 0.040f, 10.0f,  10.0f,      9.50f, 12.00f, 0.150f, 0.25f, 0.1000f, 0.15000f, 25.00f, 50.00f, 16.00f, INFL_HAIBANE, COLLAPSE_HAIBANE, AGEING_HAIBANE, numSkydivingPilots, skydivingPilots
+
+#define PROPS_HAIBANE_71  MODELID_HAIBANE_71,  DESCRIPTIONID_HAIBANE, MFRID_D3, 1.30f, 2.122f, 71.0f,  2.45f, 1.295f, 1.670f, 1.670f, 1.0f, &riserScheme02, 13.00f, 0.270f, 16.0f, AA_HAIBANE,  9.70f, 13.20f, 0.110f, 0.44f, 0.0350f, 0.07500f, 1.30f, 4.50f, 14.00f, INFL_HAIBANE, COLLAPSE_HAIBANE, AGEING_HAIBANE, numSkydivingPilots, skydivingPilots
 #define PROPS_HAIBANE_100 MODELID_HAIBANE_100, DESCRIPTIONID_HAIBANE, MFRID_D3, 1.70f, 2.988f, 100.0f, 2.5f,  1.850f, 2.400f, 2.400f, 1.2f, &riserScheme02, 14.00f, 0.380f, 26.0f, AA_HAIBANE, 11.50f, 15.00f, 0.150f, 0.59f, 0.0490f, 0.11500f, 1.10f, 4.00f, 14.00f, INFL_HAIBANE, COLLAPSE_HAIBANE, AGEING_HAIBANE, numSkydivingPilots, skydivingPilots
 #define PROPS_HAIBANE_130 MODELID_HAIBANE_130, DESCRIPTIONID_HAIBANE, MFRID_D3, 2.50f, 3.885f, 130.0f, 2.5f,  2.650f, 2.900f, 2.900f, 1.5f, &riserScheme02, 15.00f, 0.500f, 30.0f, AA_HAIBANE, 12.00f, 15.50f, 0.350f, 0.60f, 0.0500f, 0.12500f, 1.20f, 4.50f, 14.00f, INFL_HAIBANE, COLLAPSE_HAIBANE, AGEING_HAIBANE, numSkydivingPilots, skydivingPilots
 #define PROPS_HAIBANE_160 MODELID_HAIBANE_160, DESCRIPTIONID_HAIBANE, MFRID_D3, 2.75f, 4.310f, 160.0f, 2.5f,  2.940f, 3.220f, 3.220f, 1.5f, &riserScheme02, 16.65f, 0.555f, 33.3f, AA_HAIBANE, 13.00f, 17.00f, 0.400f, 0.65f, 0.0555f, 0.13875f, 1.30f, 5.00f, 14.00f, INFL_HAIBANE, COLLAPSE_HAIBANE, AGEING_HAIBANE, numSkydivingPilots, skydivingPilots
@@ -661,6 +671,9 @@ static Canopy canopies[] =
 			  { REGULAR_TRADE, true, COLOR_P_onecolor_01_11,  850.0f, "Canopy03", PROPS_HAIBANE_100 },
 	/* 135 */ { REGULAR_TRADE, true, COLOR_P_onecolor_01_13,  750.0f, "Canopy03", PROPS_HAIBANE_71 },
 			  { REGULAR_TRADE, true, COLOR_P_onecolor_01_13,  850.0f, "Canopy03", PROPS_HAIBANE_100 },
+
+	/* 137 */ { REGULAR_TRADE, true, COLOR_Main_petra_69,     699.0f, "Canopy03", PROPS_PETRA_69 },
+	/* 138 */ { REGULAR_TRADE, true, COLOR_P_onecolor_01_08, 2000.0f, "Canopy03", PROPS_EFREET_49 },
 
     { 0, 0, COLOR_DISABLED, 0.0f, 0 }
 };

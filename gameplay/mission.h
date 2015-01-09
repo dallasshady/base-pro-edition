@@ -1,13 +1,13 @@
 
 #ifndef MISSION_MODE_INCLUDED
 #define MISSION_MODE_INCLUDED
-
 #include "headers.h"
 #include "scene.h"
 #include "callback.h"
 #include "sensor.h"
-#include "jumper.h"
 
+#include "jumper.h"
+#include "network.h"
 /**
  * mission mode
  */
@@ -50,10 +50,12 @@ private:
     {
     private:
         engine::IFrame* _headFrame;
+		bool			_canopyMode;
         float           _cameraTilt;
         float           _cameraTurn;
         float           _cameraFOV;
         Matrix4f        _cameraMatrix;
+		float			_positionModeTimeout;
     protected:
         // actor abstracts
         virtual void onEvent(Actor* initiator, unsigned int eventId, void* eventData);
@@ -62,6 +64,8 @@ private:
     public:
         // class implementation
         FirstPersonCamera(Scene* scene, engine::IFrame* headFrame);
+		void switchMode(Jumper *jumper);
+		void resetSwitchTimer(void);
         virtual ~FirstPersonCamera();        
     };
     /**
@@ -150,6 +154,7 @@ public:
     bool cameraIsThirdPerson(void);
     void showGoals(bool flag);
     bool goalsIsVisible(void);
+	void consumePacket(NetworkData *packet);
 public:
     // inlines
     inline database::MissionInfo* getMissionInfo(void) { return _missionInfo; }

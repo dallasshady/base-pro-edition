@@ -97,7 +97,7 @@ NPC* castCameramanNPC(Mission* mission, Enclosure* enclosure, Jumper* player, st
         // select NPC
         unsigned int index = getCore()->getRandToolkit()->getUniformInt() % npcs.size();
         unsigned int npcId = npcs[index];
-        npcs.erase( &npcs[index] );
+        npcs.erase( npcs.begin() + index );
         // create NPC
         NPC* npc = new NPC( mission, npcId, NULL, enclosure, CatToy::wrap( player ) );
         // setup cameraman behaviour
@@ -131,7 +131,7 @@ NPC* castGhostNPC(Mission* mission, Enclosure* enclosure, CatToy* ghost, std::ve
         // select NPC
         unsigned int index = getCore()->getRandToolkit()->getUniformInt() % npcs.size();
         unsigned int npcId = npcs[index];
-        npcs.erase( &npcs[index] );
+        npcs.erase( npcs.begin() + index );
         // cast NPC
         return castGhostNPC( mission, enclosure, ghost, npcId );
     }
@@ -253,6 +253,8 @@ void castingCallback_OpenAir_Opening(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 1.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/lot of lie.ogg" );
@@ -281,6 +283,8 @@ void castingCallback_OpenAir_LandingAccuracy(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalLandingAccuracy( mission->getPlayer(), Vector3f( 18984,10,-4156 ), 25.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/lot of lie.ogg" );
@@ -363,6 +367,8 @@ void castingCallback_OpenAir_TrackingPerformance(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalTrackingPerformance( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/lot of lie.ogg" );
@@ -418,6 +424,8 @@ void castingCallback_OpenAir_SpiralFreefall(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSpiral( mission->getPlayer(), Vector3f( 0.0f, 0.0f, -1464 ) );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/lot of lie.ogg" );
@@ -449,6 +457,8 @@ void castingCallback_OpenAir_PikeOfThrills(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 2.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/lot of lie.ogg" );
@@ -512,6 +522,8 @@ void castingCallback_OpenAir_HardLanding(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast hard landing goal
     switch( getCore()->getRandToolkit()->getUniformInt() % 4 )
@@ -625,6 +637,8 @@ void castingCallback_OpenAir_Cameraman(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalFootage( mission->getPlayer(), ghost, &footageDesc );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play no music for this mission
     Gameplay::iGameplay->stopSoundtrack();
@@ -730,6 +744,8 @@ void castingCallback_OpenAir_6way(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalBonus( mission->getPlayer(), Gameplay::iLanguage->getUnicodeString(533), btProgressive, 1.0f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/lot of lie.ogg" );
@@ -758,6 +774,8 @@ void castingCallback_OpenAir_FlipCount(Actor* parent)
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalFlipCount( mission->getPlayer(), mission->getPlayer()->getVirtues()->getMaximalBonusScore() * 0.75f );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // play original music for this mission
     Gameplay::iGameplay->playSoundtrack( "./res/sounds/music/lot of lie.ogg" );
@@ -874,6 +892,8 @@ void castingCallback_OpenAir_RGB_Zigzag(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSmokeball( mission->getPlayer(), smokeballs, 0.75f * mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast script
     new script::OpenAir_RGB_Script( mission->getPlayer() );
@@ -930,6 +950,8 @@ void castingCallback_OpenAir_RGB_Spiral(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
     new GoalSmokeball( mission->getPlayer(), smokeballs, 1.0f * mission->getPlayer()->getVirtues()->getMaximalBonusScore() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // cast script
     new script::OpenAir_RGB_Script( mission->getPlayer() );
@@ -960,6 +982,8 @@ void castingCallback_OpenAir_RGB_Extreme(Actor* parent)
     new GoalStateOfHealth( mission->getPlayer() );
     new GoalStateOfGear( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // define smokeball properties
     SmokeBallDesc smokeBallDesc;    

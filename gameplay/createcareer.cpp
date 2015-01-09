@@ -4,7 +4,6 @@
 #include "gameplay.h"
 #include "messagebox.h"
 #include "database.h"
-#include "version.h"
 #include "../common/istring.h"
 
 CreateCareer::CreateCareer(Career* career)
@@ -307,7 +306,8 @@ void CreateCareer::generateStartupGearStock(void)
     // choose optimal canopy
     unsigned int variantId = 0;
     float epsilon = fabs( database::Canopy::getRecord( variants[variantId] )->square - optimalSquare );
-    for( unsigned int i=1; i<numVariants; i++ )
+	unsigned int i;
+    for( i=1; i<numVariants; i++ )
     {
         float extraEpsilon = fabs( database::Canopy::getRecord( variants[i] )->square - optimalSquare );
         if( extraEpsilon < epsilon )

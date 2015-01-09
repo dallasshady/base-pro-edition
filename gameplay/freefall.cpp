@@ -16,15 +16,9 @@ FreefallSound::FreefallSound(Actor* parent) : Actor( parent )
     _clothesSound->setGainLimits( 0.0f, 1.0f );
     _clothesSound->setDistanceModel( 1000.0f, 25000.0f, 1.0f );    
 
-    if( getScene()->getReverberation() )
-    {    
-        _clothesSound->setReverberation(
-            getScene()->getReverberation()->inGain,
-            getScene()->getReverberation()->reverbMixDB,
-            getScene()->getReverberation()->reverbTime,
-            getScene()->getReverberation()->hfTimeRatio
-        );
-    }
+	// update revebation based on altitude
+	Matrix4f parentPose = _parent->getPose();
+	updateReverbation(_clothesSound, parentPose[3][1]);
 
     // create specific jet noise that is falling human body produced
     _jetSound = Gameplay::iAudio->createStaticSound( "./res/sounds/freefall/jet2.ogg" ); assert( _jetSound );    
@@ -32,15 +26,8 @@ FreefallSound::FreefallSound(Actor* parent) : Actor( parent )
     _jetSound->setLoop( true );
     _jetSound->setDistanceModel( 2000.0f, 50000.0f, 1.0f );    
 
-    if( getScene()->getReverberation() )
-    {    
-        _jetSound->setReverberation(
-            getScene()->getReverberation()->inGain,
-            getScene()->getReverberation()->reverbMixDB,
-            getScene()->getReverberation()->reverbTime,
-            getScene()->getReverberation()->hfTimeRatio
-        );
-    }
+	// update revebation based on altitude
+	updateReverbation(_jetSound, parentPose[3][1]);
     
     _clothesGain  = 1.0f;
     _clothesPitch = 1.0f;
@@ -67,6 +54,28 @@ static float lerp(float minVel, float minVal, float maxVel, float maxVal, float 
     i = i < 0 ? 0 : ( i > 1 ? 1 : i );
     // result
     return minVal * ( 1.0f - i ) + maxVal * i;
+}
+
+void FreefallSound::updateReverbation(audio::ISound *sound, float altitude) {
+	// get altitude and reverbation (if altitude is above maxAltitude of reverbation, dont play it
+	if (altitude == 0.0f) return;
+
+	database::LocationInfo::Reverberation *reverbation = getScene()->getReverberation();
+	altitude /= 100.f;
+	if(reverbation) {
+		if (reverbation->maxAltitude >= altitude) {
+			sound->setReverberation(
+				reverbation->inGain,
+				reverbation->reverbMixDB,
+				reverbation->reverbTime,
+				reverbation->hfTimeRatio
+			);
+			//getCore()->logMessage("Altitude: %2.2f; Reverb: ON", altitude);
+		} else {
+			//getCore()->logMessage("Altitude: %2.2f; Reverb: OFF", altitude);
+			//sound->setReverberation(0, 0, 0, 0);
+		}
+    }
 }
 
 void FreefallSound::onEvent(Actor* initiator, unsigned int eventId, void* eventData)
@@ -140,13 +149,22 @@ void FreefallSound::onUpdateActivity(float dt)
 
     if( _clothesSound->isPlaying() )
     {
+		// update revebation based on altitude
+		updateReverbation(_clothesSound, parentPose[3][1]);
+
         _clothesSound->place( soundPos, soundVel );
         if( Gameplay::iGameplay->pitchShiftIsEnabled() )
         {
             _clothesSound->setPitchShift( _clothesPitch * _scene->getTimeSpeed() );
         }
-        _clothesSound->setGain( _clothesGain );
-        _jetSound->place( soundPos, soundVel );
+        _clothesSound->setGain( _clothesGain*0.0f );
+
+		// jet sound
+		// update revebation based on altitude
+		updateReverbation(_jetSound, parentPose[3][1]);
+
+		_jetSound->place( soundPos, soundVel );
+		_jetSound->setPitchShift( soundVel.length() / 1300.0f);
         if( Gameplay::iGameplay->pitchShiftIsEnabled() )
         {
             _jetSound->setPitchShift( _jetPitch * _scene->getTimeSpeed() );

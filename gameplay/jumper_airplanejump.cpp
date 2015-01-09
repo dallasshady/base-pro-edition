@@ -27,7 +27,7 @@ static engine::AnimSequence airplaneJumpSequenceWings =
 const float trackSpeed = 0.75f;
 const float trackInvSpeed = 1.0f / trackSpeed;
 
-Jumper::AirplaneJump::AirplaneJump(Jumper* jumper, NxActor* actor, MatrixConversion* mc) :
+Jumper::AirplaneJump::AirplaneJump(Jumper* jumper, PxRigidDynamic* actor, MatrixConversion* mc) :
     JumperAction( jumper )
 {
     // set action properties
@@ -36,6 +36,7 @@ Jumper::AirplaneJump::AirplaneJump(Jumper* jumper, NxActor* actor, MatrixConvers
     _endOfAction = false;
     _phActor = actor;
     _matrixConversion = mc;
+	PxTransform pose = actor->getGlobalPose();
 
     engine::IAnimationController* animCtrl = _clump->getAnimationController();
 
@@ -97,41 +98,69 @@ void Jumper::AirplaneJump::update(float dt)
             _clump->getFrame()->getLTM();
 
             Matrix4f sampleLTM = Jumper::getCollisionFF( _clump )->getFrame()->getLTM();
-            _phActor->setGlobalPose( wrap( sampleLTM ) );
+			PxTransform pose = PxTransform(wrap( sampleLTM ));
+
+			///  WRAP
+			//sampleLTM;
+			PxTransform result;
+			PxVec3  x( exitLTM[0][0], exitLTM[1][0], exitLTM[2][0] );
+			PxVec3  y( exitLTM[0][1], exitLTM[1][1], exitLTM[2][1] );
+			PxVec3  z( exitLTM[0][2], exitLTM[1][2], exitLTM[2][2] );
+			x.normalize();
+			y.normalize();
+			z.normalize();
+			result.q = PxQuat(PxMat33( x,y,z ));
+			result.q = PxQuat(PxIDENTITY::PxIdentity);
+			result.p = PxVec3( exitLTM[3][0] * 0.01f, exitLTM[3][1] * 0.01f, exitLTM[3][2] * 0.01f );
+
+			//PxTransform result(PxMat44(PxVec4(exitLTM[0][0], exitLTM[1][0], exitLTM[2][0], 0),
+			//						   PxVec4(exitLTM[0][1], exitLTM[1][1], exitLTM[2][1], 0),
+			//						   PxVec4(exitLTM[0][2], exitLTM[1][2], exitLTM[2][2], 0),
+			//						   PxVec4(exitLTM[3][0] * 0.01f, exitLTM[3][1] * 0.01f, exitLTM[3][2] * 0.01f, 1.0f)));
+
+			////
+//_phActor->setGlobalPose(PxTransform(wrap( sampleLTM )));
+            _phActor->setGlobalPose(result);
+			pose = _phActor->getGlobalPose();
             _phActor->wakeUp();
-            NxVec3 velH = wrap( _clump->getFrame()->getAt() );
+            pose = _phActor->getGlobalPose();
+			PxVec3 velH = wrap( _clump->getFrame()->getAt() );
             velH.normalize();
             velH *= 3.0f;
-            NxVec3 velV = wrap( _clump->getFrame()->getUp() );
+            PxVec3 velV = wrap( _clump->getFrame()->getUp() );
             velV.normalize();
             velV *= 0.25f;
 			
-            NxVec3 velA = wrap( _jumper->getAirplane()->getVel() );
+            PxVec3 velA = wrap( _jumper->getAirplane()->getVel() );
             _phActor->setLinearVelocity( velH + velV + velA );
             _jumper->initOverburdenCalculator( velH + velV + velA );
 
-			if (_jumper->getSpinalCord()->left) {
-				_phActor->addLocalTorque(NxVec3(0,5700.0f,0));
-				//_phActor->setAngularDamping(2.0f);
-			} else if (_jumper->getSpinalCord()->right) {
-				_phActor->addLocalTorque(NxVec3(0,-5700.0f,0));
-				//_phActor->setAngularDamping(2.0f);
-			}
+			// modified exits (only fixed wing, not heli)
+			bool helicopter = strcmp(_jumper->getAirplane()->getDesc()->templateClump->getName(), "Helicopter01") == 0;
+			if (!helicopter) {
+				if (_jumper->getSpinalCord()->left) {
+					_phActor->addTorque(PxVec3(0,5700.0f,0));
+					//_phActor->setAngularDamping(2.0f);
+				} else if (_jumper->getSpinalCord()->right) {
+					_phActor->addTorque(PxVec3(0,-5700.0f,0));
+					//_phActor->setAngularDamping(2.0f);
+				}
 
-			if (_jumper->getSpinalCord()->up) {		// headdown exit
-				_phActor->addLocalTorque(NxVec3(5700.0f,0,0));
-			} else if (_jumper->getSpinalCord()->down) {	// sitfly exit
-				_phActor->addLocalTorque(NxVec3(-8700.0f,0,0));
-				_phActor->addLocalForce(NxVec3(0,0,10000.0f));
+				if (_jumper->getSpinalCord()->up) {		// headdown exit
+					_phActor->addTorque(PxVec3(5700.0f,0,0));
+				} else if (_jumper->getSpinalCord()->down) {	// sitfly exit
+					_phActor->addTorque(PxVec3(-8700.0f,0,0));
+					_phActor->addForce(PxVec3(0,0,10000.0f));
+				}
+				_phActor->setAngularDamping(2.0f);
 			}
-			_phActor->setAngularDamping(2.0f);
         }
         else
         {
 			if (_jumper->getSpinalCord()->left) {
-				_phActor->addLocalTorque(NxVec3(0,2000.0f*dt,0));
+				_phActor->addTorque(PxVec3(0,2000.0f*dt,0));
 			} else if (_jumper->getSpinalCord()->right) {
-				_phActor->addLocalTorque(NxVec3(0,-2000.0f*dt,0));
+				_phActor->addTorque(PxVec3(0,-2000.0f*dt,0));
 			}
             _clump->getFrame()->setMatrix( _matrixConversion->convert( wrap( _phActor->getGlobalPose() ) ) );
         }
@@ -143,6 +172,8 @@ void Jumper::AirplaneJump::update(float dt)
         Vector3f clumpScale = calcScale( clumpLTM );
 
         Matrix4f exitLTM = _jumper->getAirplaneExit()->getLTM();
+		Vector3f pos = _jumper->getAirplaneExit()->getPos();
+		getCore()->logMessage("exit pos: %2.2f %2.2f %2.2f",  pos[0], pos[1], pos[2]);
         orthoNormalize( exitLTM );
         exitLTM[0][0] *= clumpScale[0], exitLTM[0][1] *= clumpScale[0], exitLTM[0][2] *= clumpScale[0];
         exitLTM[1][0] *= clumpScale[1], exitLTM[1][1] *= clumpScale[1], exitLTM[1][2] *= clumpScale[1];
@@ -151,10 +182,8 @@ void Jumper::AirplaneJump::update(float dt)
         _clump->getFrame()->setMatrix( exitLTM );
     }
 
-	if( _clump->getAnimationController()->isEndOfAnimation( 0 ) || (_jumper->getSpinalCord()->modifier && _jumper->isPlayer() &&   _actionTime > _blendTime + phaseTime ))
+	if( _clump->getAnimationController()->isEndOfAnimation( 0 )) // || (_jumper->getSpinalCord()->modifier && _jumper->isPlayer() &&   _actionTime > _blendTime + phaseTime ))
     {
         _endOfAction = true;
     }
-
-
 }

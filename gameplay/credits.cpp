@@ -2,7 +2,6 @@
 #include "headers.h"
 #include "credits.h"
 #include "gameplay.h"
-#include "version.h"
 #include "selectcareer.h"
 #include "../common/istring.h"
 

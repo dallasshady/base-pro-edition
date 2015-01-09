@@ -12,7 +12,7 @@ void WindPointer::onEvent(Actor* initiator, unsigned int eventId, void* eventDat
     if( eventId == EVENT_CAMERA_IS_ACTUAL )
     {
         // current wind
-        NxVec3 wind = _scene->getWindAtPoint( NxVec3( 0,0,0 ) );
+        PxVec3 wind = _scene->getWindAtPoint( PxVec3( 0,0,0 ) );
 
         // make signature worldspace position
         Matrix4f cameraPose = _scene->getCamera()->getPose();

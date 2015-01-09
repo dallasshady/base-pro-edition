@@ -5,7 +5,6 @@
 #include "database.h"
 #include "equip.h"
 #include "mission.h"
-#include "version.h"
 
 /**
  * class implementation

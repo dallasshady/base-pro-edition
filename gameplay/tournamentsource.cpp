@@ -10,7 +10,6 @@
 #include "climbing.h"
 #include "smokeevent.h"
 #include "community.h"
-#include "version.h"
 
 /**
  * class implementation

@@ -51,6 +51,9 @@ void ButtonChannel::setupDefault(void)
     case iaRightRearRiser:
         _keyCode = 0x2E; // C
         break;
+    case iaRearBrake:
+        _keyCode = 0x2D; // X
+        break;
     case iaHeadLeft:
         _keyCode = 0x4B; // Num 4
         break;
@@ -269,7 +272,8 @@ const wchar_t* ButtonChannel::getInputActionHint(void)
 
 void ButtonChannel::setup(input::MouseState* mouseState, input::KeyboardState* keyboardState, input::JoyState* joystickState)
 {
-    for( unsigned int i=0; i<255; i++ )
+	unsigned int i;
+    for( i=0; i<255; i++ )
     {
         if( keyboardState->keyState[i] & 0x80 )
         {
@@ -314,7 +318,7 @@ void ButtonChannel::update(float dt, input::MouseState* mouseState, input::Keybo
 {
 	// joystick
 	if (_deviceCode == 2) {
-		if (joystickState->buttonState[_keyCode] & 0x80) {
+		if (joystickState->buttonState[_keyCode]) {
 			_amplitude = 1.0f;
 		} else {
 			_amplitude = 0.0f;
@@ -382,5 +386,6 @@ bool ButtonChannel::getTrigger(void)
 
 void ButtonChannel::reset(void)
 {
+	_trigger = false;
     _amplitude = 0.0f;    
 }

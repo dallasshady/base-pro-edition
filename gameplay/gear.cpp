@@ -122,6 +122,7 @@ Vector4f Gear::getGearColor(void)
     case 168: result.set( 148,61,151,255 ); break; // "Фиолетовый",
     case 169: result.set( 16,97,25,255 ); break; // "Темно-зеленый",
     case 230: result.set( 8,8,8,255 ); break; // "Черный",
+	case 911: result.set( 255,255,255,255 ); break; // Crash test diver - they have texture preview
     }
     result *= ( 1.0f / 255.0f );
     return result;
@@ -135,6 +136,18 @@ gui::Rect Gear::getGearPreview(void)
     }
 	else if ( type == ::gtReserve ) {
 		return database::Canopy::getReserveRecord( id )->color;
+	
+	// Crash test diver suit
+	} else if (type == ::gtSuit && database::Suit::getRecord( id )->colorId == 911) {
+		return gui::Rect( 336,0,351,31 );
+
+	// Crash test diver helmet
+	} else if (type == ::gtHelmet && database::Helmet::getRecord( id )->colorId == 911) {
+		return gui::Rect( 336,0,351,31 );
+
+	// Crash test diver rig
+	} else if (type == ::gtRig && database::Rig::getRecord( id )->colorId == 911) {
+		return gui::Rect( 336,0,351,31 );
 	}
     else
     {

@@ -384,7 +384,8 @@ void Equip::initializeCords(void)
     unsigned int instanceId = 0;
     engine::IFrame* innerJoint;
     engine::IFrame* outerJoint;
-    for( unsigned int i=0; i<canopyInfo->riserScheme->getNumCords(); i++ )
+	unsigned int i;
+    for( i=0; i<canopyInfo->riserScheme->getNumCords(); i++ )
     {
         innerJoint = Gameplay::iEngine->findFrame( _canopy->getFrame(), canopyInfo->riserScheme->getJointName( database::RiserScheme::rtInnerFrontLeft, i ) );
         outerJoint = Gameplay::iEngine->findFrame( _canopy->getFrame(), canopyInfo->riserScheme->getJointName( database::RiserScheme::rtOuterFrontLeft, i ) );
@@ -473,6 +474,10 @@ Equip::Equip(Scene* scene, database::MissionInfo* missionInfo, unsigned int wtti
     _cordBatch = NULL;
 
     _virtues = _scene->getCareer()->getVirtues();
+	// default options (negative)
+	if (!database::Rig::getRecord(_virtues->equipment.rig.id)->skydiving && _virtues->equipment.rig.rig_aad < 0) {
+		_virtues->equipment.rig.rig_aad = -_virtues->equipment.rig.rig_aad;
+	}
 
     // create test BSP
     Vector3f inf = _scene->getStage()->getAABBInf();
@@ -670,8 +675,23 @@ void Equip::messageCallback(gui::Message* message, void* userData)
     // button click?
     if( message->event == gui::onButtonClick )
     {
+		// Special basejump option?
+		if( strcmp( message->origin->getName(), "PrevOpts" ) == 0 ) {
+			--__this->_virtues->equipment.rig.rig_aad;
+			if (__this->_virtues->equipment.rig.rig_aad < 0) {
+				__this->_virtues->equipment.rig.rig_aad = 2;
+			}
+            __this->showEquipment();
+
+		} else if( strcmp( message->origin->getName(), "NextOpts" ) == 0 ) {
+			++__this->_virtues->equipment.rig.rig_aad;
+			if (__this->_virtues->equipment.rig.rig_aad > 2) {
+				__this->_virtues->equipment.rig.rig_aad = 0;
+			}
+            __this->showEquipment();
+
         // AAD option?
-        if( strcmp( message->origin->getName(), "NextAAD" ) == 0 )
+		} else if( strcmp( message->origin->getName(), "NextAAD" ) == 0 )
         {
 			unsigned int count = database::AAD::getNumRecords();
 
@@ -875,8 +895,13 @@ void Equip::showEquipment(void)
 {
 	// aad selection
 	gui::IGuiPanel* aad = _reserveSlot->getPanel()->find("AAD"); assert(aad);
+	
+	// skydive rig
 	if (database::Rig::getRecord(_virtues->equipment.rig.id)->skydiving) {
-		if (_virtues->equipment.rig.rig_aad < 0 || _virtues->equipment.rig.rig_aad >= database::AAD::getNumRecords()) {
+		// aad selection
+		if (_virtues->equipment.rig.rig_aad < 0) {
+			_virtues->equipment.rig.rig_aad = database::AAD::getNumRecords()-1;
+		} else if (_virtues->equipment.rig.rig_aad >= database::AAD::getNumRecords()) {
 			_virtues->equipment.rig.rig_aad = 0;
 		}
 		_reserveSlot->getPanel()->setVisible(true);
@@ -894,17 +919,33 @@ void Equip::showEquipment(void)
 				career->equipGear(lastReserveId);
 			}
 		}
+
+		unsigned int descid = database::AAD::getRecord(_virtues->equipment.rig.rig_aad)->descriptionId;
+		aad->getStaticText()->setText( Gameplay::iLanguage->getUnicodeString(descid) );
+
+		// hide options
+		_canopySlot->getPanel()->find("PrevOpts")->setVisible(false);
+		_canopySlot->getPanel()->find("Opts")->setVisible(false);
+		_canopySlot->getPanel()->find("NextOpts")->setVisible(false);
+
+	// base rig
 	} else {
-		_virtues->equipment.rig.rig_aad = 0;
+		// hide aad
 		_reserveSlot->getPanel()->setVisible(false);
 		// put away reserve
 		_scene->getCareer()->addGear(_virtues->equipment.reserve);
 		_virtues->equipment.reserve.id = 0;
 		_virtues->equipment.reserve.type = gtUnequipped;
-	}
-	unsigned int descid = database::AAD::getRecord(_virtues->equipment.rig.rig_aad)->descriptionId;
-	aad->getStaticText()->setText( Gameplay::iLanguage->getUnicodeString(descid) );
 
+		_canopySlot->getPanel()->find("PrevOpts")->setVisible(true);
+		_canopySlot->getPanel()->find("Opts")->setVisible(true);
+		_canopySlot->getPanel()->find("NextOpts")->setVisible(true);
+
+		gui::IGuiPanel* opts = _canopySlot->getPanel()->find("Opts"); assert(opts);
+		int descId = 903;
+		descId += _virtues->equipment.rig.rig_aad;
+		opts->getStaticText()->setText(Gameplay::iLanguage->getUnicodeString(descId));
+	}
 
     // show HRS equipment
     showHRS( &_virtues->equipment.helmet, _helmetSlot );
@@ -1006,7 +1047,8 @@ void Equip::selectEquipment(gui::IGuiPanel* panel, GearType type, Gear* slot)
     // build list of gears
     _selectionTop = 0;
     _selectionSrc.clear();
-    for( unsigned int i=0; i<career->getNumGears(); i++ )
+	unsigned int i;
+    for( i=0; i<career->getNumGears(); i++ )
     {
         if( career->getGear(i).type == _selectionType ) _selectionSrc.push_back( i );
     }
@@ -1130,7 +1172,8 @@ void Equip::equipItem(unsigned int dropListId)
         {
             // search for appropriate canopy
             bool found = false;
-            for( unsigned int i=0; i<_scene->getCareer()->getNumGears(); i++ )
+			unsigned int i;
+            for( i=0; i<_scene->getCareer()->getNumGears(); i++ )
             {
                 Gear gear = _scene->getCareer()->getGear( i );
                 if( gear.type == ::gtCanopy )

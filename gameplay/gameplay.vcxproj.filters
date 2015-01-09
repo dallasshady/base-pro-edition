@@ -2,11 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Component">
-      <UniqueIdentifier>{6a8d3c85-dc76-4fee-bbc1-fe5aae18e59f}</UniqueIdentifier>
+      <UniqueIdentifier>{ea8e7d2f-cbf7-40cf-b222-438e712fb7ce}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{ca100c1f-5254-48ea-829a-a5fb3b06dd0d}</UniqueIdentifier>
+      <UniqueIdentifier>{5a9e11cc-8c8e-462e-885f-ca7803808969}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
   </ItemGroup>
@@ -24,6 +24,9 @@
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="affinstructor.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="airfoil.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="airplane.cpp">
@@ -141,6 +144,9 @@
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="db_npc.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="db_reserve.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="db_rig.cpp">
@@ -305,6 +311,9 @@
     <ClCompile Include="interrupt.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="joystickchannel.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
     <ClCompile Include="jumper.cpp">
       <Filter>Component</Filter>
     </ClCompile>
@@ -344,13 +353,16 @@
     <ClCompile Include="jumper_pull.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="jumper_pull_reserve.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
     <ClCompile Include="jumper_rendercb.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="jumper_runningjump.cpp">
       <Filter>Component</Filter>
     </ClCompile>
-    <ClCompile Include="jumper_sitflying.cpp">
+    <ClCompile Include="jumper_sidestepjump.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="jumper_standingjump.cpp">
@@ -416,13 +428,22 @@
     <ClCompile Include="npccameraman.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="npccameraman_dz.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
     <ClCompile Include="npcflight.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcflight_dz.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="npcfollow.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="npcfreefall.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="npcfreefall_dz.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="npcmove.cpp">
@@ -443,13 +464,13 @@
     <ClCompile Include="pilotchute.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="pose.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
     <ClCompile Include="preloaded.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="render.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
-    <ClCompile Include="rope.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="royalgorge.cpp">
@@ -593,6 +614,30 @@
     <ClCompile Include="xpp_tree.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="goal_canopytime.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_freefalltime.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_jumps.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_opening.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="goal_wingsuittime.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="rds.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="network.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="rope.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="acroinstructor.h">
@@ -605,6 +650,9 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="affinstructor.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="airfoil.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="airplane.h">
@@ -748,6 +796,15 @@
     <ClInclude Include="jumper.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="jumper_machine.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="jumper_poses_init.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="jumper_poses_init_wings.h">
+      <Filter>Component</Filter>
+    </ClInclude>
     <ClInclude Include="kjerag.h">
       <Filter>Component</Filter>
     </ClInclude>
@@ -781,13 +838,22 @@
     <ClInclude Include="npccameraman.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="npccameraman_dz.h">
+      <Filter>Component</Filter>
+    </ClInclude>
     <ClInclude Include="npcflight.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npcflight_dz.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="npcfollow.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="npcfreefall.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="npcfreefall_dz.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="npcmove.h">
@@ -797,6 +863,9 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="pilotchute.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="pose.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="preloaded.h">
@@ -867,8 +936,12 @@
     </ClInclude>
     <ClInclude Include="..\Includes\TinyXML\include\tinystr.h" />
     <ClInclude Include="..\Includes\TinyXML\include\tinyxml.h" />
+    <ClInclude Include="network.h">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="english.txt" />
+    <None Include="TODO.txt" />
   </ItemGroup>
 </Project>

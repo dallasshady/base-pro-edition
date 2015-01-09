@@ -1,7 +1,7 @@
 
 #include "headers.h"
 #include "affinstructor.h"
-#include "gameplay.h"
+//#include "gameplay.h"
 #include "hud.h"
 #include "../common/istring.h"
 
@@ -147,7 +147,7 @@ void StaticLineInstructor::onUpdateActivity(float dt)
             _jumper->getPilotchuteSimulator()->updateActivity( 0.0f );
 
             // and drop
-            _jumper->getPilotchuteSimulator()->drop( NxVec3( 0,0,0 ) );
+            _jumper->getPilotchuteSimulator()->drop( PxVec3( 0,0,0 ) );
             _jumper->getPilotchuteSimulator()->setInflation( 0.5f );
         }
     }
@@ -1013,10 +1013,10 @@ void FreefallInstructor01::onUpdateActivity(float dt)
     {
         Vector3f jumperPos = _jumper->getClump()->getFrame()->getPos();
         // check altitude, disable time acceleration if altitude is less than 200m
-        if( jumperPos[1] < 20000.0f )
-        {
-            _scene->setTimeSpeedMultiplier( 1.0f );
-        }
+        //if( jumperPos[1] < 20000.0f )
+        //{
+        //    _scene->setTimeSpeedMultiplier( 1.0f );
+        //}
     }
 }
 
@@ -1175,10 +1175,10 @@ void FreefallInstructor02::onUpdateActivity(float dt)
     {
         Vector3f jumperPos = _jumper->getClump()->getFrame()->getPos();
         // check altitude, disable time acceleration if altitude is less than 200m
-        if( jumperPos[1] < 20000.0f )
-        {
-            _scene->setTimeSpeedMultiplier( 1.0f );
-        }
+        //if( jumperPos[1] < 20000.0f )
+        //{
+        //    _scene->setTimeSpeedMultiplier( 1.0f );
+        //}
     }
 }
 
@@ -1358,10 +1358,10 @@ void FreefallInstructor03::onUpdateActivity(float dt)
     {
         Vector3f jumperPos = _jumper->getClump()->getFrame()->getPos();
         // check altitude, disable time acceleration if altitude is less than 200m
-        if( jumperPos[1] < 20000.0f )
-        {
-            _scene->setTimeSpeedMultiplier( 1.0f );
-        }
+        //if( jumperPos[1] < 20000.0f )
+        //{
+        //    _scene->setTimeSpeedMultiplier( 1.0f );
+        //}
     }
 }
 

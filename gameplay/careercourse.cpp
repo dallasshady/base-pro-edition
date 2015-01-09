@@ -6,7 +6,6 @@
 #include "travel.h"
 #include "night.h"
 #include "../common/istring.h"
-#include "version.h"
 
 /**
  * class implementation
@@ -233,14 +232,17 @@ void CareerCourse::updateGui(void)
 {
     // career
     Career* career = _geoscape->getCareer();
-	career->getVirtues()->evolution.credits = 3;
+	career->getVirtues()->evolution.credits = 10;
 
 	//mycareer
 	//career->getVirtues()->evolution.score = 290564.0f;
 	//career->getVirtues()->evolution.funds = 15600.0f;
-	//career->getVirtues()->statistics.numBaseJumps = 1653;
-	//career->getVirtues()->statistics.numSkydives = 621;
+	//career->getVirtues()->statistics.numBaseJumps = 1666;
+	//career->getVirtues()->statistics.numSkydives = 872;
 	//career->getVirtues()->evolution.workTime = 900.0f;
+	//career->getVirtues()->statistics.freeFallTime = 3036.0f;
+	//career->getVirtues()->statistics.wingsuitTime = 747.0f;
+	//career->getVirtues()->statistics.canopyTime = 15582.0f;
 	//career->setAcrobaticsSkill(acroJumpFromRun, true);
 	//career->setAcrobaticsSkill(acroFreeflyFlip, true);
 	//career->setAcrobaticsSkill(acroFreeflySitfly, true);
@@ -313,7 +315,7 @@ void CareerCourse::updateGui(void)
     gui::IGuiPanel* time = _careerCourse->getPanel()->find( "Time" );
     assert( time && time->getStaticText() );
     time->getStaticText()->setText( wstrformat( 
-        L"%d/%d/%d/%d %02d:%02d", dateTime.year, dateTime.month, dateTime.week, dateTime.day, dateTime.hour, dateTime.minute
+        L"%02d-%02d-%02d %02d:%02d", dateTime.year, dateTime.month, dateTime.day, dateTime.hour, dateTime.minute
     ).c_str() );
 
     // calculate number of events under group icon
@@ -377,7 +379,8 @@ void CareerCourse::updateGui(void)
 
     // pass all events, remove them from desktop
     gui::IGuiPanel* parent;
-    for( unsigned int i=0; i<career->getNumEvents(); i++ )
+	unsigned int i;
+    for( i=0; i<career->getNumEvents(); i++ )
     {
         parent = career->getEvent( i )->getWindow()->getPanel()->getParent();
         if( parent ) parent->removePanel( career->getEvent( i )->getWindow()->getPanel() );
@@ -852,7 +855,7 @@ void CareerCourse::updateShopScreen(void)
             if( isBestOffer( &candidate, &nominant ) ) bestId = i;
         }       
         _marketOffer.push_back( _unsorted[bestId] );
-        _unsorted.erase( &_unsorted[bestId] );
+		_unsorted.erase( _unsorted.begin() + bestId );
     }
 
     // update player offer
@@ -878,7 +881,7 @@ void CareerCourse::updateShopScreen(void)
             if( isBestOffer( &candidate, &nominant ) ) bestId = i;
         }
         _playerOffer.push_back( _unsorted[bestId] );
-        _unsorted.erase( &_unsorted[bestId] );
+        _unsorted.erase( _unsorted.begin() + bestId );
     }
 
     // update shop slider
@@ -1360,7 +1363,9 @@ void CareerCourse::onGuiMessage(gui::Message* message)
                 {
                     // obtain current time
                     DateTime currentTime( _geoscape->getCareer()->getVirtues()->evolution.time );
-                    if( currentTime.hour < 6 || currentTime.hour >= 18 )
+					// CLEAN VERSION
+					const bool enableNightJumps = false;
+                    if( !enableNightJumps && (currentTime.hour < 6 || currentTime.hour >= 18 ))
                     {
                         _geoscape->addHistory( Gameplay::iLanguage->getUnicodeString(121), Vector4f( 1.0f, 0.25f, 0.25f, 1.0f ) );
                     }
@@ -1413,9 +1418,18 @@ float CareerCourse::getTreatmentEffectivity(void)
 float CareerCourse::getTreatmentFee(void)
 {
     Career* career = _geoscape->getCareer();
+
     float factor = ( career->getVirtues()->evolution.health - treatmentMinHealth) / ( treatmentMaxHealth - treatmentMinHealth );
     factor = ( factor < 0 ) ? 0 : ( ( factor > 1 ) ? 1 : factor );
-    return ( treatmentMinFee * ( 1.0f - factor ) + treatmentMaxFee * factor );
+    
+    // double price when not home
+    if( !_geoscape->getPlayerLocation() ||
+        _geoscape->getPlayerLocation()->getDatabaseId() != 0 )
+	{ 
+		return ( treatmentMinFee * ( 1.0f - factor ) + treatmentMaxFee * factor ) * 2.0f;
+	} else {
+		return ( treatmentMinFee * ( 1.0f - factor ) + treatmentMaxFee * factor );
+	}
 }
 
 void CareerCourse::onUpdateMode(float dt)
@@ -1453,33 +1467,23 @@ void CareerCourse::onUpdateMode(float dt)
     // treatment 
     if( career->getVirtues()->evolution.health < 1.0f )
     {
-        // (only in home location)
-        if( _geoscape->getPlayerLocation() &&
-            _geoscape->getPlayerLocation()->getDatabaseId() == 0 )
-        {             
-            // calculate current treatment effectivity & treatment fee
-            float recovery = getTreatmentEffectivity();
-            float fee      = getTreatmentFee();
+		if( _geoscape->getPlayerLocation() ) { 
 
-            // restore health if player have enough of enough of funds
-            if( career->getVirtues()->evolution.funds > fee * minutes )
-            {
-                career->getVirtues()->evolution.funds -= fee * minutes;
-                career->getVirtues()->evolution.health += recovery * minutes;
-                if( career->getVirtues()->evolution.health > 1 )
-                {
-                    career->getVirtues()->evolution.health = 1;
-                }
-            }
-        }
-        // notify no healing
-        else
-        {
-            if( _geoscape->getHistorySize() == 0 )
-            {
-                _geoscape->addHistory( Gameplay::iLanguage->getUnicodeString(347), Vector4f( 1.0f,0.25f,0.25f,1.0f ) );
-            }
-        }
+			// calculate current treatment effectivity & treatment fee
+			float recovery = getTreatmentEffectivity();
+			float fee      = getTreatmentFee();
+
+			// restore health if player have enough of enough of funds
+			if( career->getVirtues()->evolution.funds > fee * minutes )
+			{
+				career->getVirtues()->evolution.funds -= fee * minutes;
+				career->getVirtues()->evolution.health += recovery * minutes;
+				if( career->getVirtues()->evolution.health > 1 )
+				{
+					career->getVirtues()->evolution.health = 1;
+				}
+			}
+		}
     }
 }
 
@@ -1585,7 +1589,8 @@ float CareerCourse::simulateCourse(float minutes, bool guiFeedback)
     float  stepTime = minutes;
     Event* eventToHandle = NULL;
     Event* event;
-    for( unsigned int i=0; i<career->getNumEvents(); i++ )
+	unsigned int i;
+    for( i=0; i<career->getNumEvents(); i++ )
     {
         event = career->getEvent( i );
         // if event is not finished
@@ -1683,14 +1688,14 @@ float CareerCourse::simulateCourse(float minutes, bool guiFeedback)
     if( night->getTimeTo() > night->getDuration() )
     {
         // check current time
-        DateTime currentDT = _geoscape->getDateTime();
-        if( currentDT.hour < 6 )
-        {
-            float error = float( HOURS_TO_MINUTES(6) - ( HOURS_TO_MINUTES( currentDT.hour ) + currentDT.minute ) );
-            assert( error > 0 );
-            // getCore()->logMessage( "Time correction error: %2.1f", error );
-            simulateCourse( error, false );
-        }
+        //DateTime currentDT = _geoscape->getDateTime();
+        //if( currentDT.hour < 6 )
+        //{
+        //    float error = float( HOURS_TO_MINUTES(6) - ( HOURS_TO_MINUTES( currentDT.hour ) + currentDT.minute ) );
+        //    assert( error > 0 );
+        //    // getCore()->logMessage( "Time correction error: %2.1f", error );
+        //    simulateCourse( error, false );
+        //}
     }
 
     return stepTime;

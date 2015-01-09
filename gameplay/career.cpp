@@ -199,7 +199,7 @@ void Career::addGear(Gear gear)
 void Career::removeGear(unsigned int id)
 {
     assert( id>=0 && id<_gears.size() );
-    _gears.erase( &_gears[id] );
+    _gears.erase( _gears.begin() + id );
 }
 
 void Career::equipGear(unsigned int id)
@@ -332,7 +332,7 @@ void Career::removeEvent(Event* event)
     {
         if( _events[i] == event )
         {
-            _events.erase( &_events[i] );
+            _events.erase( _events.begin() + i );
             delete event;
             return;
         }
@@ -394,6 +394,7 @@ void Career::save(TiXmlDocument* xmlDocument)
     for( i=0; i<_gears.size(); i++ )
     {
         Gear gear = _gears[i];
+		//gear.state = 1.0f;
         TiXmlElement* gearElement = new TiXmlElement( "gear" );
         gearElement->SetAttribute( "checksum", checksum( &gear, sizeof(Gear) ) );
         encrypt( data, &gear, sizeof(Gear), _name.c_str() );

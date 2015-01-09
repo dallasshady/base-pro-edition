@@ -188,9 +188,11 @@ void Geoscape::updateActivity(float dt)
     engine::ITexture* yellowLocation = Gameplay::iEngine->getTexture( "location1" ); assert( yellowLocation );
     engine::ITexture* greenLocation = Gameplay::iEngine->getTexture( "location2" ); assert( greenLocation );
     engine::ITexture* redLocation = Gameplay::iEngine->getTexture( "location3" ); assert( redLocation );
+	engine::ITexture* nightLocation = Gameplay::iEngine->getTexture( "location_night" ); assert( nightLocation );
 
     bool nightEvent = false;
-    for( unsigned int i=0; i<_career->getNumEvents(); i++ )
+	unsigned int i;
+    for( i=0; i<_career->getNumEvents(); i++ )
     {
         if( strcmp( _career->getEvent( i )->getClassName(), NIGHT_CLASS_NAME ) == 0 )            
         {
@@ -202,15 +204,20 @@ void Geoscape::updateActivity(float dt)
         }
     }
 
+	DateTime datetime = getDateTime();
+
     for( i=0; i<_locations.size(); i++ )
     {
         actionPanel = _locations[i]->getWindow()->getPanel()->find( "Action" ); assert( actionPanel );
         if( _locations[i]->getPlayer() )
         {
-            if( ( _career->getVirtues()->evolution.health < 0.75f ) || nightEvent )
+            if( ( _career->getVirtues()->evolution.health < 0.75f ) )
             {
                 actionPanel->setTexture( redLocation );
             }
+			else if ( datetime.hour < 6 || datetime.hour > 22 ) {
+				actionPanel->setTexture( nightLocation );
+			}
             else
             {
                 actionPanel->setTexture( greenLocation );
@@ -264,7 +271,7 @@ void Geoscape::updateActivity(float dt)
             // remove dead history
             if( _history[i].lifetime < 0 ) 
             {
-                _history.erase( &_history[i] );
+				_history.erase( _history.begin() + i );
                 found = true;
                 break;
             }
@@ -536,7 +543,7 @@ void Geoscape::addGearToMarket(Gear gear)
 void Geoscape::removeGearFromMarket(unsigned int id)
 {
     assert( id < _market.size() );
-    _market.erase( &_market[id] );
+    _market.erase( _market.begin() + id );
 }
 
 unsigned int Geoscape::getMarketSize(void)

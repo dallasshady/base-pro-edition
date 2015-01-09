@@ -11,6 +11,9 @@ Actor::Actor(Scene* scene)
     _name  = "Actor";
     _scene = scene;
     _parent = NULL;
+	_airfoils = NULL;
+	_airfoilsC = 0;
+	network_id = -1;
 }
 
 Actor::Actor(Actor* parent)
@@ -19,6 +22,9 @@ Actor::Actor(Actor* parent)
     _parent = parent;
     _parent->_children.push_back( this );
     _scene  = parent->getScene();
+	_airfoils = NULL;
+	_airfoilsC = 0;
+	network_id = -1;
 }
 
 Actor::~Actor()
@@ -40,6 +46,8 @@ Actor::~Actor()
             }
         }
     }
+
+	clearAirfoils();
 }
 
 /**
@@ -71,4 +79,29 @@ void Actor::updatePhysics(void)
     {
         (*actorI)->updatePhysics();
     }
+}
+
+void Actor::clearAirfoils() {
+	if (_airfoils != NULL) {
+		for (int i = 0; i < _airfoilsC; ++i) {
+			delete _airfoils[i];
+		}
+		delete[] _airfoils;
+	}
+	_airfoilsC = 0;
+}
+void Actor::addAirfoils(int c, Airfoil **airfoils) {
+	Airfoil **new_airfoils;
+	new_airfoils = new Airfoil*[_airfoilsC + c];
+	// add old
+	for (int i = 0; i < _airfoilsC; ++i) {
+		new_airfoils[i] = _airfoils[i];
+	}
+	// add new
+	for (int i = 0; i < c; ++i) {
+		//new_airfoils[i+_airfoilsC] = new Airfoil();
+		new_airfoils[i+_airfoilsC] = airfoils[i];
+	}
+	_airfoils = new_airfoils;
+	_airfoilsC += c;
 }

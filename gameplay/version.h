@@ -80,8 +80,10 @@ public:
         #endif
 
         // build result string
-        swprintf( _versionString, L"v%d.%d patch %d (%s,%s,%s)",
-                  _version, _subversion, _patch, 
+			//patch %d
+			//_patch, 
+        swprintf( _versionString, L"v%d.%d  (%s,%s,%s) update 2.6",
+                  _version, _subversion, 
                   statusString, editionString, _localization 
         );
     }
@@ -97,7 +99,7 @@ public:
 };
 
 // version info
-static Version version( Version::beta, Version::pro, L"en", 0, 4, 2);
+static Version version( Version::beta, Version::pro, L"en", 0, 5, 0);
 
 /**
  * version history

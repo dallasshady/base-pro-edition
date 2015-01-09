@@ -77,6 +77,9 @@ static GearTexture textures[] =
     /* 068 */ { "Infinity_sky_01", "./res/x/textures/Infinity_sky_01.dds" },
     /* 069 */ { "fbredbull", "./res/x/textures/fbredbull.dds" },
     /* 070 */ { "FelixCloth01_10", "./res/x/textures/FelixCloth01_10.dds" },
+
+	/* 071 */ { "clothCTD", "./res/x/textures/clothCTD.dds" },
+	/* 072 */ { "Main_petra_69", "./res/x/textures/Main_petra_69.dds" },
     { NULL, NULL }
 };
 

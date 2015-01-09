@@ -4,7 +4,7 @@
 #include "jumper.h"
 #include "gameplay.h"
 #include "../common/istring.h"
-#include "version.h"
+
 
 /**
  * related animations
@@ -140,6 +140,8 @@ PilotchuteSimulator::PilotchuteSimulator(Actor* jumper, database::Canopy* canopy
 	_nx = NULL;
     _phJoint = NULL;
 	_freebag = false;
+	_inflation = 0.0f;
+	_collapsed = false;
 
     _poseModeFrame = Gameplay::iEngine->createFrame( "PilotchutePoseFrame" ); assert( _poseModeFrame );
 
@@ -195,9 +197,9 @@ PilotchuteSimulator::PilotchuteSimulator(Actor* jumper, database::Canopy* canopy
 PilotchuteSimulator::~PilotchuteSimulator()
 {
     if( _poseModeFrame ) _poseModeFrame->release();
-    if( _phJoint ) _scene->getPhScene()->releaseJoint( *_phJoint );
-    if( _phPilotchute ) _scene->getPhScene()->releaseActor( *_phPilotchute );
-	if( _nx ) _scene->getPhScene()->releaseActor( *_nx );
+    if( _phJoint ) _phJoint->release();
+    if( _phPilotchute ) _phPilotchute->release();
+	if( _nx ) _nx->release();
     // delete 3d models
     assert( _scene );
     if( _state != pcsStowed )
@@ -246,6 +248,9 @@ void PilotchuteSimulator::onUpdateActivity(float dt)
 	if (_freebag && isOpened()) {
 		this->disconnect();
 	}
+	if (isOpened()) {
+		_collapsed = true;
+	}
 }
 
 void PilotchuteSimulator::onUpdatePhysics(void)
@@ -253,162 +258,101 @@ void PilotchuteSimulator::onUpdatePhysics(void)
     if( !isDropped() ) return;
 
     // velocity of pilotchute
-    NxVec3 velocity = _phPilotchute->getLinearVelocity();
-
+    PxVec3 velocity = _phPilotchute->getLinearVelocity();
+	if (velocity.x != velocity.x) {	// break QNAN
+		velocity.x = velocity.y = velocity.z = 0.0f;
+	}
     // wind velocity
-    float windFactor = 0.5f;
-    NxVec3 wind = _scene->getWindAtPoint( _phPilotchute->getGlobalPose().t );
-    velocity += wind * windFactor;
+	velocity += _scene->getWindAtPoint( _phPilotchute->getGlobalPose().p );
 
     // velocity interpolation coefficient
     float Iv = velocity.magnitude() / _gearRecord->Vrec;
 
     // local coordinate system of pilotchute
-    NxMat34 pose = _phPilotchute->getGlobalPose();
-    NxVec3 x = pose.M.getColumn(0);
-    NxVec3 y = pose.M.getColumn(1);
-    NxVec3 z = pose.M.getColumn(2);
+	PxTransform pose = _phPilotchute->getGlobalPose();
+	
+	PxVec3 x = pose.q.getBasisVector0();
+    PxVec3 y = pose.q.getBasisVector1();
+    PxVec3 z = pose.q.getBasisVector2();
 
     // recommended speed and woking effectivity
     float effectivity = velocity.magnitude() / _gearRecord->Vrec;
 
+	// hesitation (1 - no hesitation, 0 - will never fully inflate)
+	float hesitation = 0.01f;
+	/*if (_freebag)*/ hesitation = 1.0f;
+
     // additional regulation multiplier
-    float rmul = 1.65f;
-   
-    // animate using effectivity coefficient
-    _pilotClump->getAnimationController()->advance( ::simulationStepTime * effectivity * rmul );
+    float rmul = 1.65f * hesitation;
+
+	// update inflation
+	const float add_inflation = ::simulationStepTime * effectivity * rmul, pre_inflation = _inflation;
+	_inflation += add_inflation;
+	if (_inflation > 1.0f) _inflation = 1.0f;
+	// collapsing
+	if (_collapsed) {
+		_inflation -= 0.2f;
+		if (_inflation < 0.1f) _inflation = 0.1f;
+	}
+	
+	// animate using effectivity coefficient
+	if (!_collapsed) {
+		float delta_inflation = _inflation - pre_inflation;
+		if (delta_inflation == 0.0f) delta_inflation = 0.01f;
+		_pilotClump->getAnimationController()->advance( delta_inflation );
+	} else {
+		_pilotClump->getAnimationController()->advance( -0.05f );
+	}
+
+	//getCore()->logMessage("inflation: %2.2f; pre_inflation: %2.2f; delta: %2.2f; add: %2.2f", _inflation, pre_inflation, delta_inflation, add_inflation);
 
     // air resistance force
-    NxVec3 Fair = velocity * Iv * -_gearRecord->Fair;
+    PxVec3 Fair = (velocity * Iv * -_gearRecord->Fair) * _inflation;
+	if (_inflation < 0.15f) Fair *= 2.0f;
 
     // finalize motion equation
     _phPilotchute->addForce( Fair );
 }
 
 void PilotchuteSimulator::disconnect() {
-	// create new actor
-	NxBodyDesc nxBodyDesc;
-	nxBodyDesc.massSpaceInertia.set( 0,0,0 ); // tensor will be computed automatically
-	nxBodyDesc.mass = 0.17f;
-	nxBodyDesc.linearDamping = 1.0f;
-	nxBodyDesc.angularDamping = 0.0f;
-	nxBodyDesc.flags = NX_BF_VISUALIZATION;    
-	nxBodyDesc.solverIterationCount = 16;
+	//PHYSX3
+	//PxMat44 localPose (PxVec4(1,0,0,0),PxVec4(0,1,0,0),PxVec4(0,0,1,0),PxVec4(0,0,0,1));
+	//localPose = Gameplay::iEngine->rotateMatrix( localPose, Vector3f( 1,0,0 ), 90.0f );
 
-	NxCapsuleShapeDesc nxFreefallDesc;
-	nxFreefallDesc.setToDefault();
-	nxFreefallDesc.radius = _gearRecord->scale * 0.65f;
-	nxFreefallDesc.height = _gearRecord->scale * 0.65f;
-	
-	Matrix4f localPose( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
-	localPose = Gameplay::iEngine->rotateMatrix( localPose, Vector3f( 1,0,0 ), 90.0f );
-	nxFreefallDesc.localPose = wrap( localPose );
-	nxFreefallDesc.materialIndex = _scene->getPhFleshMaterial()->getMaterialIndex();
-	
-	NxActorDesc nxActorDesc;
-	nxActorDesc.userData = this;
-	//nxActorDesc.setToDefault();
-	nxActorDesc.shapes.pushBack( &nxFreefallDesc );
-	nxActorDesc.body = &nxBodyDesc;
-	if (nxActorDesc.isValid()) {
-		getCore()->logMessage( "VALID" );
-	} else {
-		getCore()->logMessage( "INVALID" );
-	}
+	_nx = PxGetPhysics().createRigidDynamic(this->getPhActor()->getGlobalPose());
+	_nx->userData = this;
+	_nx->setMass(0.17f);
+	_nx->setLinearDamping(1.0f);
+	_nx->setAngularDamping(0.0f);
+	_nx->setSolverIterationCounts(16);
+	_nx->setMassSpaceInertiaTensor(PxVec3(0,0,0));
+	_nx->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+	getScene()->getPhScene()->addActor(*_nx);
 
-	_nx = _scene->getPhScene()->createActor( nxActorDesc );
+	// add shape
+	PxShape *shape = _nx->createShape(PxCapsuleGeometry(_gearRecord->scale * 0.65f, _gearRecord->scale * 0.35f),
+					*_scene->getPhFleshMaterial());
+	_nx->attachShape(*shape);
 	
 	_nx->wakeUp();
-	_nx->setGlobalPose(this->getPhActor()->getGlobalPose());
 	_nx->setLinearVelocity(this->getPhActor()->getLinearVelocity());
 	engine::IClump* pilotTemplate = Gameplay::iGameplay->findClump( "Cord" );
 
-	this->connect(_nx, pilotTemplate->clone( "Pilotchute" )->getFrame(), NxVec3(0,0,0));
+    if( _phJoint )
+    {        
+		_phJoint->release();
+		_phJoint = NULL;
+	}
+
+	this->connect(_nx, pilotTemplate->clone( "Pilotchute" )->getFrame(), PxVec3(0,0,0));
 	_scene->getStage()->remove( _cordClump );
 
 	_freebag = false;
 	//_cordClump->release();
 	//_cordClump = NULL;
 }
-//void PilotchuteSimulator::disconnect(NxVec3 weight_pos) {
-//	if( _phJoint && _phConnected->getMass() > 0.001f ) {
-//		// release
-//        _scene->getPhScene()->releaseJoint( *_phJoint );
-//		_poseModeFrame->release();
-//
-//		// create new actor
-//		NxBodyDesc nxBodyDesc;
-//		nxBodyDesc.massSpaceInertia.set( 0,0,0 ); // tensor will be computed automatically
-//		nxBodyDesc.mass = 0.001f;
-//		nxBodyDesc.linearDamping = 0.0f;
-//		nxBodyDesc.angularDamping = 0.0f;
-//		nxBodyDesc.flags = NX_BF_VISUALIZATION;    
-//		nxBodyDesc.solverIterationCount = 16;
-//
-//		NxCapsuleShapeDesc nxFreefallDesc;
-//		nxFreefallDesc.setToDefault();
-//		nxFreefallDesc.radius = 40.1f;
-//		nxFreefallDesc.height = 0.1f;
-//	    
-//		Matrix4f localPose( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
-//		localPose = Gameplay::iEngine->rotateMatrix( localPose, Vector3f( 1,0,0 ), 90.0f );
-//		nxFreefallDesc.localPose = wrap( localPose );
-//		nxFreefallDesc.materialIndex = _scene->getPhFleshMaterial()->getMaterialIndex();
-//
-//		NxActorDesc nxActorDesc;
-//		nxActorDesc.userData = this;
-//		//nxActorDesc.setToDefault();
-//		nxActorDesc.shapes.pushBack( &nxFreefallDesc );
-//		nxActorDesc.body = &nxBodyDesc;
-//		if (nxActorDesc.isValid()) {
-//			getCore()->logMessage( "VALID" );
-//		} else {
-//			getCore()->logMessage( "INVALID" );
-//		}
-//		NxActor *nx = _scene->getPhScene()->createActor( nxActorDesc );
-//		nx->wakeUp();
-//		nx->setGlobalPose(_phPilotchute->getGlobalPose());
-//		nx->setLinearVelocity(_phPilotchute->getLinearVelocity());
-//		nx->setAngularVelocity(_phPilotchute->getAngularVelocity());
-//		
-//		_phConnected = nx;
-//		_phLocalAnchor = weight_pos;
-//
-//		// connect to new actor
-//        NxDistanceJointDesc jointDesc;
-//        jointDesc.actor[0] = _phConnected;
-//        jointDesc.actor[1] = _phPilotchute;
-//        jointDesc.maxDistance = _cordLength;
-//        jointDesc.minDistance = 0.0f;
-//        jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED;        
-//        jointDesc.localAnchor[0] = _phLocalAnchor;
-//        jointDesc.localAnchor[1] = _phPilotAnchor;
-//        jointDesc.jointFlags = NX_JF_VISUALIZATION;
-//        _phJoint = _scene->getPhScene()->createJoint( jointDesc ); 
-//        assert( _phJoint );
-//
-//        _pilotClump->getFrame()->setMatrix( _mcPilotchute.convert( wrap( _phPilotchute->getGlobalPose() ) ) );
-//        _pilotClump->getFrame()->getLTM();
-//
-//		engine::IClump* pilotTemplate = Gameplay::iGameplay->findClump( "Cord" );
-//		// add character model to scene stage
-//		//_scene->getStage()->add( pilotTemplate );
-//		_phConnectedFrame = pilotTemplate->clone( "Pilotchute" )->getFrame();
-//
-////		_phConnectedFrame->setPos(weight_pos);
-//		Vector3f vec;
-//		vec[0] = weight_pos.x;
-//		vec[1] = weight_pos.y; 
-//		vec[2] = weight_pos.z;
-//		getCore()->logMessage( "weight_pos: %2.1f, %2.1f, %2.1f", vec[0], vec[1], vec[2] );
-//		vec = _pilotClump->getFrame()->getPos();
-//		getCore()->logMessage( "_pilotClump: %2.1f, %2.1f, %2.1f", vec[0], vec[1], vec[2] );
-//
-//		Jumper::placeCord( _cordClump, vec, _pilotClump->getFrame()->getPos() );
-//	}
-//}
 
-void PilotchuteSimulator::connect(NxActor* actor, engine::IFrame* frame, const NxVec3& localAnchor)
+void PilotchuteSimulator::connect(PxRigidDynamic* actor, engine::IFrame* frame, const PxVec3& localAnchor)
 {
     assert( actor ); assert( frame );
     _phConnected = actor;
@@ -418,18 +362,12 @@ void PilotchuteSimulator::connect(NxActor* actor, engine::IFrame* frame, const N
     // re-initialize joint
     if( _phJoint )
     {        
-        _scene->getPhScene()->releaseJoint( *_phJoint );
-        NxDistanceJointDesc jointDesc;
-        jointDesc.actor[0] = _phConnected;
-        jointDesc.actor[1] = _phPilotchute;
-        jointDesc.maxDistance = _cordLength;
-        jointDesc.minDistance = 0.0f;
-        jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED;      
-        jointDesc.localAnchor[0] = _phLocalAnchor;
-        jointDesc.localAnchor[1] = _phPilotAnchor;
-        jointDesc.jointFlags = NX_JF_VISUALIZATION;
-        _phJoint = _scene->getPhScene()->createJoint( jointDesc ); 
-        //assert( _phJoint );
+        _phJoint->release();
+		_phJoint = :: PxDistanceJointCreate(PxGetPhysics(), _phConnected, PxTransform(localAnchor), _phPilotchute, PxTransform(_phPilotAnchor));
+		_phJoint->setMinDistance(0.0f);
+		_phJoint->setMaxDistance(_cordLength);
+		_phJoint->setDistanceJointFlag(PxDistanceJointFlag::eMAX_DISTANCE_ENABLED, true);
+		_phJoint->setDistanceJointFlag(PxDistanceJointFlag::eMIN_DISTANCE_ENABLED, true);
     }
 }
 
@@ -450,19 +388,25 @@ void PilotchuteSimulator::pull(Matrix4f pose)
     _scene->getStage()->add( _pilotClump );
 }
 
-void PilotchuteSimulator::drop(const NxVec3& velocity)
+void PilotchuteSimulator::drop(const PxVec3& velocity)
 {
     assert( isConnected() );
     assert( isPulled() );
 
+	_phPilotchute = PxGetPhysics().createRigidDynamic(_phConnected->getGlobalPose());
+	_phPilotchute->userData = this;
+	_phPilotchute->setMass(_gearRecord->mass);
+	_phPilotchute->setLinearDamping(0.0f);
+	_phPilotchute->setAngularDamping(10.0f);
+	_phPilotchute->setSolverIterationCounts(16);
+	_phPilotchute->setMassSpaceInertiaTensor(PxVec3(0,0,0));
+	_phPilotchute->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+	getScene()->getPhScene()->addActor(*_phPilotchute);
+
+	Matrix4f localPose (1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
+	localPose = Gameplay::iEngine->rotateMatrix( localPose, Vector3f( 1,0,0 ), 90.0f );
+
     // initialize pilotchute physics simulator
-    NxBodyDesc nxBodyDesc;
-    nxBodyDesc.massSpaceInertia.set( 0,0,0 ); // tensor will be computed automatically
-    nxBodyDesc.mass = _gearRecord->mass;
-    nxBodyDesc.linearDamping = 0.0f;
-    nxBodyDesc.angularDamping = 10.0f;
-    nxBodyDesc.flags = NX_BF_VISUALIZATION;
-    nxBodyDesc.solverIterationCount = 16;
     Vector3f aabbScale(
         getCollision( _pilotClump )->getFrame()->getRight().length(),
         getCollision( _pilotClump )->getFrame()->getUp().length(),
@@ -474,40 +418,37 @@ void PilotchuteSimulator::drop(const NxVec3& velocity)
     aabbDim[0] *= aabbScale[0] * 0.5f,
     aabbDim[1] *= aabbScale[1] * 0.5f,
     aabbDim[2] *= aabbScale[2] * 0.5f;
-    NxBoxShapeDesc nxBoxDesc;
-    nxBoxDesc.dimensions = wrap( aabbDim );
-    nxBoxDesc.materialIndex = _scene->getPhClothMaterial()->getMaterialIndex();
-    NxActorDesc nxActorDesc;
-    nxActorDesc.userData = this;
-    nxActorDesc.shapes.pushBack( &nxBoxDesc );
-    nxActorDesc.body = &nxBodyDesc;
+
+	// add shape
+	PxShape *shape = _phPilotchute->createShape(PxBoxGeometry(wrap( aabbDim )), *_scene->getPhFleshMaterial());
+	shape->setLocalPose(PxTransform(wrap(localPose)));
+	_phPilotchute->attachShape(*shape);
+	
+	_phPilotchute->wakeUp();
+	_phPilotchute->setLinearVelocity(_phConnected->getLinearVelocity());
+	
     Matrix4f collisionLTM = getCollision( _pilotClump )->getFrame()->getLTM();
     orthoNormalize( collisionLTM );
-    nxActorDesc.globalPose = wrap( collisionLTM );
-    _phPilotchute = _scene->getPhScene()->createActor( nxActorDesc );
-    assert( _phPilotchute );
+	_phPilotchute->setGlobalPose(PxTransform(wrap( collisionLTM )));
 
     // initialize velocity
-    _phPilotchute->addForce( _phConnected->getLinearVelocity(), NX_VELOCITY_CHANGE );
-    _phPilotchute->addForce( velocity, NX_VELOCITY_CHANGE );
-
+	_phPilotchute->addForce( _phConnected->getLinearVelocity(), PxForceMode::eVELOCITY_CHANGE);
+	if (velocity.isFinite()) {
+		_phPilotchute->addForce( velocity, PxForceMode::eVELOCITY_CHANGE);
+	} else {
+		_phPilotchute->addForce( PxVec3(0,0,0), PxForceMode::eVELOCITY_CHANGE);
+	}
     // initialize PTV transformation
     Matrix4f pilotchuteLTM = getCollision( _pilotClump )->getFrame()->getLTM();
     Matrix4f viewLTM = _pilotClump->getFrame()->getLTM();
     _mcPilotchute.setup( pilotchuteLTM, viewLTM );
 
     // initialize joint
-    NxDistanceJointDesc jointDesc;
-    jointDesc.actor[0] = _phConnected;
-    jointDesc.actor[1] = _phPilotchute;    
-    jointDesc.maxDistance = _cordLength;
-    jointDesc.minDistance = 0.0f;
-    jointDesc.flags = NX_DJF_MAX_DISTANCE_ENABLED;    
-    jointDesc.localAnchor[0] = _phLocalAnchor;
-    jointDesc.localAnchor[1] = _phPilotAnchor;
-    jointDesc.jointFlags = NX_JF_VISUALIZATION;
-    _phJoint = _scene->getPhScene()->createJoint( jointDesc ); 
-    assert( _phJoint );
+	_phJoint = :: PxDistanceJointCreate(PxGetPhysics(), _phConnected, PxTransform(_phLocalAnchor), _phPilotchute, PxTransform(_phPilotAnchor));
+	_phJoint->setMinDistance(0.0f);
+	_phJoint->setMaxDistance(_cordLength);
+	_phJoint->setDistanceJointFlag(PxDistanceJointFlag::eMAX_DISTANCE_ENABLED, true);
+	_phJoint->setDistanceJointFlag(PxDistanceJointFlag::eMIN_DISTANCE_ENABLED, true);
 }
 
 void PilotchuteSimulator::setFreebag(bool value) {
@@ -516,10 +457,13 @@ void PilotchuteSimulator::setFreebag(bool value) {
 bool PilotchuteSimulator::isFreebag(void) {
 	return _freebag;
 }
+float PilotchuteSimulator::getInflation(void) {
+	return _inflation;
+}
 void PilotchuteSimulator::setInflation(float value)
 {
-    value = value < 0 ? 0 : ( value > 1 ? 1 : value );
+    _inflation = value < 0 ? 0 : ( value > 1 ? 1 : value );
 
     _pilotClump->getAnimationController()->resetTrackTime( 0 );
-    _pilotClump->getAnimationController()->advance( value * ( openingSequence.endTime - openingSequence.startTime ) );
+    _pilotClump->getAnimationController()->advance( _inflation * ( openingSequence.endTime - openingSequence.startTime ) );
 }

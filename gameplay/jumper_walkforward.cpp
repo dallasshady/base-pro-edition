@@ -124,7 +124,7 @@ void Jumper::WalkForward::update(float dt)
     engine::IAnimationController* animCtrl = _clump->getAnimationController(); 
 
     // jumper can run
-    _running = _jumper->getSpinalCord()->modifier /*&& !database::Suit::getRecord( _jumper->getVirtues()->equipment.suit.id )->wingsuit*/;
+    _running = _jumper->getSpinalCord()->modifier > 0.0f; /*&& !database::Suit::getRecord( _jumper->getVirtues()->equipment.suit.id )->wingsuit*/;
 
     // speedup & final velocity
     _velocity = _clump->getFrame()->getAt();

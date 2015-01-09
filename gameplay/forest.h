@@ -65,19 +65,19 @@ private:
     engine::IBatch*       _canopyBatch;      // canopy batch renderer
     audio::ISound*        _rustleSound;      // sound of rustle
     audio::ISound*        _squeakSound;      // sound of wook squeak
-    std::vector<NxBox>    _debugBoxes;
+    std::vector<PxBoxObstacle>    _debugBoxes;
 private:
     // collision with jumpers
     Actor*            _currentJumper;
     engine::IAtomic*  _currentJumperCollision;
-    NxActor*          _currentJumperActor;
-    NxBox             _jumperOBB;
+	PxRigidDynamic*   _currentJumperActor;
+    PxBoxObstacle             _jumperOBB;
     bool              _jumperCanopyIsOpened;
     Actor*            _currentCanopy;
     database::Canopy* _currentCanopyInfo;
     engine::IAtomic*  _currentCanopyCollision;
-    NxActor*          _currentCanopyActor;
-    NxBox             _canopyOBB;
+    PxRigidDynamic*    _currentCanopyActor;
+    PxBoxObstacle             _canopyOBB;
 private:
     static unsigned int getClumpLodId(engine::IClump* clump);
     static unsigned int onCollideJumper(unsigned int id, Matrix4f* matrix, void* data);

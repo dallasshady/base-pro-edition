@@ -50,6 +50,67 @@ void NPCFlight_DZ::onUpdate(float dt)
     SpinalCord* spinalCord = getNPC()->getSpinalCord();
     spinalCord->reset();
 
+	const PxVec3 pos = this->getNPC()->getJumper()->getFlightActor()->getGlobalPose().p;
+	const PxVec3 vel = getNPC()->getJumper()->getFreefallActor()->getLinearVelocity();
+
+	// handle linetwist
+	if (getNPC()->getJumper()->getDominantCanopy()->getLinetwists() > 0.0f) {
+		if (getNPC()->getJumper()->getDominantCanopy()->isOpened()) {
+			spinalCord->leftWarp = 1.0f;
+		}
+		if (pos.y <= 600.0f && pos.y > 0.0f) {
+			spinalCord->cutAway = true;
+			spinalCord->pullReserve = true;
+		}
+		return;
+	} else if (getNPC()->getJumper()->getDominantCanopy()->getLinetwists() < 0.0f) {
+		if (getNPC()->getJumper()->getDominantCanopy()->isOpened()) {
+			spinalCord->rightWarp = 1.0f;
+		}
+		if (pos.y <= 600.0f && pos.y > 0.0f) {
+			spinalCord->cutAway = true;
+			spinalCord->pullReserve = true;
+		}
+		return;
+	}
+
+	// is canopy inflated enough and is flying slow enough below 600 m.?
+	if (pos.y <= 600.0f && pos.y > 0.0f &&
+		(getNPC()->getJumper()->getDominantCanopy()->getInflation() < 0.6f ||
+		fabs(vel.y) > 27.0f
+		)) {
+		
+		//spinalCord->cutAway = true;
+		//spinalCord->pullReserve = true;
+	}
+
+
+	/// landing vars
+	float turnIntoFinalAlt;
+	const float square = getNPC()->getJumper()->getDominantCanopy()->getGearRecord()->square;
+
+	/*
+	220		200
+	200		 90
+	180		110
+	160		130
+	140		 60
+	120		 80
+	100		100
+	80		130
+	60		130
+	*/
+
+	if (square > 200.0f) {
+		turnIntoFinalAlt = 80.0f;
+	} else if (square <= 60) {
+		turnIntoFinalAlt = 100.0f;
+	} else {
+		turnIntoFinalAlt = 80.0f + (200.0f / square) / 4.0f;
+	}
+	const Vector3f wind = wrap(getNPC()->getScene()->getWindAtPoint( pos ));
+	const Vector3f landingoffset = wind*(12-wind.length())*8;
+
     // ||                    ||
     // \/ AUTOMATE CONDITION \/
 
@@ -58,8 +119,8 @@ void NPCFlight_DZ::onUpdate(float dt)
     Vector3f targetPos( catToyPose[3][0]*0, catToyPose[3][1]*0, catToyPose[3][2]*0 );
 	
 	if (_groundTargetEnabled) {
-		NxVec3 pos = this->getNPC()->getJumper()->getFlightActor()->getGlobalPosition();
 		if (pos.y > 300.0f) {
+			/*
 			if (pos.x >= 300.0f) {
 				_groundTarget[0] = getCore()->getRandToolkit()->getUniform(-33000.0f, -35000.0f);
 				_groundTarget[2] = getCore()->getRandToolkit()->getUniform(33000.0f, 35000.0f);
@@ -68,10 +129,12 @@ void NPCFlight_DZ::onUpdate(float dt)
 				_groundTarget[0] = getCore()->getRandToolkit()->getUniform(33000.0f, 35000.0f);
 				_groundTarget[2] = getCore()->getRandToolkit()->getUniform(33000.0f, 35000.0f);
 				//getCore()->logMessage("going right");
-			}
+			}*/
 		} else {
 			_groundTarget = Vector3f(0,0,0);
 		}
+
+		_groundTarget = Vector3f(-8000.0,0,-9860.0f) + (wind/wind.length())*turnIntoFinalAlt;
 		targetPos = _groundTarget;
 	}
 
@@ -87,8 +150,13 @@ void NPCFlight_DZ::onUpdate(float dt)
     jumperPos += Vector3f( 0, jumperRoamingSphereSize, 0 );
 
     // direction to target
-    Vector3f targetDir = targetPos - jumperPos; 
-    targetDir.normalize();
+    Vector3f targetDir = targetPos - jumperPos;
+
+	// turn upwind
+	if (pos.y <= turnIntoFinalAlt) {
+		targetDir = wrap(getNPC()->getScene()->getWindAtPoint( pos ));
+	}
+	targetDir.normalize();
 
     // angle to target
     Vector3f atH = jumperAt; atH[1] = 0; atH.normalize();
@@ -111,6 +179,7 @@ void NPCFlight_DZ::onUpdate(float dt)
         factorSteering = altitude / _steeringAltitude;
         factorSteering = factorSteering < 0.0f ? 0.0f : factorSteering;
         factorSteering = factorSteering > 1.0f ? 1.0f : factorSteering;
+		factorSteering = 1.0f;
     }
 
     // horizontal steering (steering mode)
@@ -127,13 +196,16 @@ void NPCFlight_DZ::onUpdate(float dt)
     if( targetAngle < 0 )
     {            
         spinalCord->right = impulse * factorSteering * _steeringRange;
+		if (pos.y < turnIntoFinalAlt && pos.y > turnIntoFinalAlt - 20.0f) spinalCord->right = 0.8f;
     }
     else
     {
         spinalCord->left = impulse * factorSteering * _steeringRange;
+		if (pos.y < turnIntoFinalAlt && pos.y > turnIntoFinalAlt - 20.0f) spinalCord->left = 0.8f;
     }
 
     // detect obstacles
+	/*
     NxRay worldRay;
     worldRay.orig = wrap( getNPC()->getJumper()->getClump()->getFrame()->getPos() );
     worldRay.dir  = wrap( getNPC()->getJumper()->getClump()->getFrame()->getAt() );
@@ -159,7 +231,7 @@ void NPCFlight_DZ::onUpdate(float dt)
         {
             spinalCord->left += ( 1.0f - dist / maxDist ) * factorSteering * _steeringRange;
         }
-    }
+    }*/
 
     // oscullation reduction (steering mode)
     // works if NPC is precisely oriented on its "cat toy"

@@ -9,9 +9,10 @@
 #include "demo.h"
 #include "fatalitylist.h"
 #include "version.h"
+
 #include "../common/istring.h"
 #include "unicode.h"
-#include "version.h"
+
 
 /**
  * aggregate : Item

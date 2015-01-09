@@ -7,7 +7,6 @@
 #include "npccameraman.h"
 #include "npcassist.h"
 #include "landingaccuracy.h"
-#include "version.h"
 #include "ostankino.h"
 #include "dropzone.h"
 #include "equip.h"
@@ -487,6 +486,9 @@ void castingCallback_CommunityMission(Actor* parent)
                                 new GoalStateOfGear( mission->getPlayer() );
                                 new GoalLanding( mission->getPlayer() );
                                 new GoalExperience( mission->getPlayer() );
+								new GoalFreeFallTime( mission->getPlayer() );
+								new GoalOpening( mission->getPlayer() );
+								new GoalCanopyTime( mission->getPlayer() );
 
                                 // raise flag
                                 playerIsPresent = true;

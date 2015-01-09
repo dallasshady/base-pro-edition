@@ -3,7 +3,7 @@
 #include "jumper.h"
 #include "imath.h"
 
-Jumper::SideStepJump::SideStepJump(Jumper* jumper, NxActor* phActor, MatrixConversion* mc, engine::AnimSequence* sequence, float animSpeed, float criticalPeriod) :
+Jumper::SideStepJump::SideStepJump(Jumper* jumper, PxRigidDynamic* phActor, MatrixConversion* mc, engine::AnimSequence* sequence, float animSpeed, float criticalPeriod) :
     Jumper::JumperAction( jumper )
 {
     // set action properties
@@ -75,7 +75,7 @@ Jumper::SideStepJump::~SideStepJump()
 
         // place actor
         Matrix4f sampleLTM = Jumper::getCollisionFF( _clump )->getFrame()->getLTM();
-        _phActor->setGlobalPose( wrap( sampleLTM ) );
+        _phActor->setGlobalPose(PxTransform(wrap( sampleLTM )));
 
         // wake up actor
         _phActor->wakeUp();
@@ -114,7 +114,7 @@ void Jumper::SideStepJump::update(float dt)
         //currPelvisAt.normalize();
 
         // linear velocity
-        //NxVec3 vel = wrap( ( currPelvisPos - _prevPelvisPos ) * 1.0f / dt );
+        //PxVec3 vel = wrap( ( currPelvisPos - _prevPelvisPos ) * 1.0f / dt );
         //_phActor->setLinearVelocity( vel );
         //_jumper->initOverburdenCalculator( vel );
     
@@ -135,10 +135,10 @@ void Jumper::SideStepJump::update(float dt)
 void Jumper::SideStepJump::updatePhysics(void)
 {
     // velocity of base jumper's body
-    NxVec3 velocity = _phActor->getLinearVelocity();
+    PxVec3 velocity = _phActor->getLinearVelocity();
 
     // vectical velocity of base jumper's body
-    NxVec3 velocityV( 0, velocity.y, 0 );
+    PxVec3 velocityV( 0, velocity.y, 0 );
 
     // air resistance coefficient
     float AR = 1.125f * _jumper->getVirtues()->getFrogAirResistance();
@@ -149,15 +149,15 @@ void Jumper::SideStepJump::updatePhysics(void)
 
     // air resistance force
 	float res = ( exp( pow( ( velocityV.magnitude() / Vt ), 1.4f ) )  - 1.0f ) / 1.718f;
-    NxVec3 Far = NxVec3(0,1,0) * res * _phActor->getMass() * 9.8f;
+    PxVec3 Far = PxVec3(0,1,0) * res * _phActor->getMass() * 9.8f;
 
     // control torque
-    NxVec3 Tctrl( 0,0,0 );
-    Tctrl += NxVec3(1,0,0) * -_jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->down;
-    Tctrl += NxVec3(1,0,0) * _jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->up;
+    PxVec3 Tctrl( 0,0,0 );
+    Tctrl += PxVec3(1,0,0) * -_jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->down;
+    Tctrl += PxVec3(1,0,0) * _jumper->getVirtues()->getSteerPitch() * _jumper->getSpinalCord()->up;
     Tctrl *= It;
 
     // finalize motion equation    
     _phActor->addForce( Far );
-    _phActor->addLocalTorque( Tctrl );
+    _phActor->addTorque( Tctrl );
 }

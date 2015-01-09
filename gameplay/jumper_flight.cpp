@@ -39,11 +39,55 @@ static engine::AnimSequence groupingSequence =
     0.0f
 };
 
+
+
+static engine::AnimSequence steerRightSequenceHalf = 
+{
+    FRAMETIME(652), 
+    FRAMETIME(660), 
+    engine::ltNone, 
+    0.0f 
+};
+static engine::AnimSequence unstowRightSequence = 
+{
+    FRAMETIME(666), 
+    FRAMETIME(667), 
+    engine::ltNone, 
+    0.0f 
+};
+static engine::AnimSequence steerLeftSequenceHalf = 
+{
+    FRAMETIME(712), 
+    FRAMETIME(716), 
+    engine::ltNone, 
+    0.0f
+};
+static engine::AnimSequence unstowLeftSequence = 
+{
+    FRAMETIME(720), 
+    FRAMETIME(721),
+    engine::ltNone, 
+    0.0f 
+};
+static engine::AnimSequence groupingSequenceHalf =
+{
+    FRAMETIME(832),
+    FRAMETIME(841),
+    engine::ltNone,
+    0.0f
+};
+static engine::AnimSequence groupingUnstowSequence =
+{
+    FRAMETIME(850),
+    FRAMETIME(851),
+    engine::ltNone,
+    0.0f
+};
 /**
  * class implementation
  */
 
-Jumper::Flight::Flight(Jumper* jumper, NxActor* phFlight, MatrixConversion* mcFlight) :
+Jumper::Flight::Flight(Jumper* jumper, PxRigidDynamic* phFlight, MatrixConversion* mcFlight) :
     JumperAction( jumper )
 {
     // set action properties
@@ -102,14 +146,14 @@ void Jumper::Flight::update(float dt)
 
     // determine animation playing direction
     float animDir;
-    if( _targetSequence == animCtrl->getTrackAnimation( 0 ) )
+    if( _targetSequence->startTime == animCtrl->getTrackAnimation( 0 )->startTime )
     {
-        if( &groupingSequence == animCtrl->getTrackAnimation( 0 ) )
+        if( groupingSequence.startTime == animCtrl->getTrackAnimation( 0 )->startTime )
         {
             animDir = 0.75f;
         }
-        else if( &steerRightSequence == animCtrl->getTrackAnimation( 0 ) ||
-                 &steerLeftSequence == animCtrl->getTrackAnimation( 0 ) )
+        else if( steerRightSequence.startTime == animCtrl->getTrackAnimation( 0 )->startTime ||
+                 steerLeftSequence.startTime == animCtrl->getTrackAnimation( 0 )->startTime )
         {
             animDir = 0.25f;
         }
@@ -120,12 +164,12 @@ void Jumper::Flight::update(float dt)
     }
     else
     {
-        if( &groupingSequence == animCtrl->getTrackAnimation( 0 ) )
+        if( groupingSequence.startTime == animCtrl->getTrackAnimation( 0 )->startTime )
         {
             animDir = -0.75f;
         }
-        else if( &steerRightSequence == animCtrl->getTrackAnimation( 0 ) ||
-                 &steerLeftSequence == animCtrl->getTrackAnimation( 0 ) )
+        else if( steerRightSequence.startTime == animCtrl->getTrackAnimation( 0 )->startTime ||
+                 steerLeftSequence.startTime == animCtrl->getTrackAnimation( 0 )->startTime )
         {
             animDir = -0.75f;
         }
@@ -135,6 +179,8 @@ void Jumper::Flight::update(float dt)
         }
     }
    
+
+
     // determine animation switch
     if( _targetSequence != _clump->getAnimationController()->getTrackAnimation( 0 ) &&
         ( &passiveFlightSequence == _clump->getAnimationController()->getTrackAnimation( 0 ) ||
@@ -178,6 +224,10 @@ void Jumper::Flight::update(float dt)
     // synchronize physics & render
     _clump->getFrame()->setMatrix( _matrixConversion->convert( wrap( _phActor->getGlobalPose() ) ) );
     _clump->getFrame()->getLTM();
+
+
+	// animate arm
+	//_jumper->animBodyPart("joint32", Vector3f(1,1,1), 90.0f);
 }
 
 static float getAirResistancePower(float i)
@@ -192,11 +242,11 @@ void Jumper::Flight::updatePhysics(void)
 	CanopySimulator* canopy = _jumper->getDominantCanopy();
 
     // velocity of base jumper's body
-    NxVec3 velocity = _phActor->getLinearVelocity();
+    PxVec3 velocity = _phActor->getLinearVelocity();
     
     // horizontal velocity (including wind)
-    NxVec3 velocityH = velocity; 
-    velocityH += _jumper->getScene()->getWindAtPoint( _phActor->getGlobalPosition() );    
+    PxVec3 velocityH = velocity; 
+    velocityH += _jumper->getScene()->getWindAtPoint( _phActor->getGlobalPose().p );    
     velocityH.y = 0;
 
     // shock penalty
@@ -222,17 +272,16 @@ void Jumper::Flight::updatePhysics(void)
 		if (spinalCord->rightReserveRearRiser > 0.5f && Gameplay::iGameplay->getActionChannel(iaReserveRightRearRiser)->getTrigger()) Gameplay::iGameplay->getActionChannel(iaReserveRightRearRiser)->downAmplitude(dt, 0.5f);
 	}
 
-	// set toggles
-	canopy->setLeftDeep( spinalCord->left * penalty );
-	canopy->setRightDeep( spinalCord->right * penalty );
+
 	// set risers
     canopy->setLeftWarpDeep( spinalCord->leftWarp * penalty );
     canopy->setRightWarpDeep( spinalCord->rightWarp * penalty );
     canopy->setLeftRearRiser( spinalCord->leftRearRiser * penalty );
     canopy->setRightRearRiser( spinalCord->rightRearRiser * penalty );
 
-    canopy->setWLOToggles( spinalCord->wlo );
-    canopy->setHookKnife( spinalCord->hook );
+	canopy->setWLOToggles( spinalCord->trigger_wlo );
+    canopy->setHookKnife( spinalCord->trigger_hook );
+
 
     // update reserve canopy controls
 	if (_jumper->isPlayer() &&
@@ -250,23 +299,114 @@ void Jumper::Flight::updatePhysics(void)
 		reserve_canopy->setLeftRearRiser( spinalCord->leftReserveRearRiser * penalty );
 		reserve_canopy->setRightRearRiser( spinalCord->rightReserveRearRiser * penalty );
 
-		reserve_canopy->setWLOToggles( spinalCord->wlo );
-		reserve_canopy->setHookKnife( spinalCord->hook );
+		reserve_canopy->setWLOToggles( spinalCord->trigger_wlo );
+		reserve_canopy->setHookKnife( spinalCord->trigger_hook );
 	}
     // determine animation sequence to be played
     _targetSequence = &passiveFlightSequence;
-    if( spinalCord->left != 0 && spinalCord->right == 0 ) _targetSequence = &steerLeftSequence;
-    if( spinalCord->right != 0 && spinalCord->left == 0 ) _targetSequence = &steerRightSequence;
-    if( spinalCord->left != 0 && spinalCord->right != 0 ) _targetSequence = &groupingSequence;
+
+	// get total left and right input
+	float totalInputLeft = 0.0f;
+	float totalInputRight = 0.0f;
+	float toggleLeft = spinalCord->left;
+	float toggleRight = spinalCord->right;
+	if (canopy->getLeftForcedDeep() != -1.0f) toggleLeft = 0.0f;
+	if (canopy->getRightForcedDeep() != -1.0f) toggleRight = 0.0f;
+
+	// hard toggle input if unstowing
+	if (canopy->getLeftStowed() && spinalCord->trigger_left) {
+		toggleLeft = 0.75f;
+	}
+	if (canopy->getRightStowed() && spinalCord->trigger_right) {
+		toggleRight = 0.75f;
+	}
+
+	// set toggles
+	canopy->setLeftDeep( spinalCord->left * penalty );
+	canopy->setRightDeep( spinalCord->right * penalty );
+
+	if (toggleLeft > spinalCord->leftRearRiser && toggleLeft > spinalCord->leftWarp) {
+		totalInputLeft = toggleLeft;
+	} else if (spinalCord->leftRearRiser > toggleLeft && spinalCord->leftRearRiser > spinalCord->leftWarp) {
+		totalInputLeft = spinalCord->leftRearRiser;
+	} else {
+		totalInputLeft = spinalCord->leftWarp;
+	}
+	if (toggleRight > spinalCord->rightRearRiser && toggleRight > spinalCord->rightWarp) {
+		totalInputRight = toggleRight;
+	} else if (spinalCord->rightRearRiser > toggleRight && spinalCord->rightRearRiser > spinalCord->rightWarp) {
+		totalInputRight = spinalCord->rightRearRiser;
+	} else {
+		totalInputRight = spinalCord->rightWarp;
+	}
+
+
+	if( totalInputLeft != 0 && totalInputRight == 0 ) {
+		if (canopy->getLeftStowed() && spinalCord->trigger_left) {
+			_targetSequence = &unstowLeftSequence;
+		} else if (spinalCord->modifier) {
+			_targetSequence = &steerLeftSequenceHalf;
+		} else {
+			_targetSequence = &steerLeftSequence;
+		}
+	}
+	if( totalInputRight != 0 && totalInputLeft == 0 ) {
+		if (canopy->getRightStowed() && spinalCord->trigger_right) {
+			_targetSequence = &unstowRightSequence;
+		} else if (spinalCord->modifier) {
+			_targetSequence = &steerRightSequenceHalf;
+		} else {
+			_targetSequence = &steerRightSequence;
+		}
+	}
+	if( totalInputLeft != 0 && totalInputRight != 0 ) {
+		if (canopy->getLeftStowed() || canopy->getRightStowed()) {
+			_targetSequence = &groupingUnstowSequence;
+		} else if (spinalCord->modifier) {
+			_targetSequence = &groupingSequenceHalf;
+		} else {
+			_targetSequence = &groupingSequence;
+		}
+	}
+
+	// unstow toggles
+	if (spinalCord->left > 0.1f) {
+		canopy->setLeftStowed(false);
+	}
+	if (spinalCord->right > 0.1f) {
+		canopy->setRightStowed(false);
+	}
 
     // local coordinate system of base jumper
-    NxMat34 pose = _phActor->getGlobalPose();
-    NxVec3 x = pose.M.getColumn(0);
-    NxVec3 y = pose.M.getColumn(1);
-    NxVec3 z = pose.M.getColumn(2);
+	PxTransform pose = _phActor->getGlobalPose();
+	PxVec3 x = pose.q.getBasisVector0();
+    PxVec3 y = pose.q.getBasisVector1();
+    PxVec3 z = pose.q.getBasisVector2();
+
+
+
+	// altitude [m]
+	//PxVec3 pos = _phActor->getGlobalPosition();
+	//const float altitude = pos.y;
+	//const float arch_pose_area = 1.9f;
+
+	//// air density: converted to linear from barometric equation [0:10] km altitude
+	//// http://www.denysschen.com/catalogue/density.aspx
+	//const float AirDensityOld = altitude <= 10000.0f ? (1.196f - 0.0000826f * altitude) : (0.27f);
+
+	//// add drag force
+	//float Cd = 0.4f;	// altitude suit = 0.4f
+	//const float mTracking = database::Suit::getRecord( _jumper->getVirtues()->equipment.suit.id )->mTracking;
+	//Cd *= mTracking;
+	//// Drag force vector
+	//PxVec3 VecFd = -_phActor->getLinearVelocity();
+	//VecFd.normalize();
+
+	//float Fd = 0.5f * AirDensityOld * velocity.magnitudeSquared() * Cd * arch_pose_area * getCore()->getRandToolkit()->getUniform(0.94f, 1.06f);
+	//_phActor->addForceAtLocalPos(Fd*VecFd, PxVec3(0, -3.0f, 0));
 
     // air resistance coefficient
-    float ARmult = 2.5f;
+    const float ARmult = 2.5f;
     float AR = ARmult * virtues->getTrackingAirResistance();
     if( database::Suit::getRecord( virtues->equipment.suit.id )->wingsuit )
     {
@@ -274,14 +414,14 @@ void Jumper::Flight::updatePhysics(void)
     }
 
     // terminal velocity
-    float Vt = sqrt( 9.8f * _phActor->getMass() / AR );
-    float It = velocity.magnitude() / Vt;
+    const float Vt = sqrt( 9.8f * _phActor->getMass() / AR );
+    const float It = velocity.magnitude() / Vt;
 
-    NxVec3 dir = velocity * -1;
+    PxVec3 dir = velocity * -1;
     dir.normalize();
 
     // air resistance force
-    NxVec3 Far = dir * getAirResistancePower( velocity.magnitude() / Vt ) * _phActor->getMass() * 9.8f;
+    const PxVec3 Far = dir * getAirResistancePower( velocity.magnitude() / Vt ) * _phActor->getMass() * 9.8f;
 
     // finalize motion equation    
     _phActor->addForce( Far );

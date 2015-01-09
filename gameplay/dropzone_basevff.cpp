@@ -8,7 +8,6 @@
 #include "npcassist.h"
 #include "baseinstructor.h"
 #include "landingaccuracy.h"
-#include "version.h"
 
 /**
  * common methods

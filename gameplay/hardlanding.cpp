@@ -2,7 +2,6 @@
 #include "headers.h"
 #include "landingaccuracy.h"
 #include "imath.h"
-#include "version.h"
 
 /**
  * class implementation

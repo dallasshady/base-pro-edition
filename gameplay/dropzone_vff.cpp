@@ -7,7 +7,6 @@
 #include "npccameraman.h"
 #include "affinstructor.h"
 #include "smokejet.h"
-#include "version.h"
 
 /**
  * database support : clearance functions

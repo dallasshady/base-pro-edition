@@ -344,6 +344,10 @@ unsigned int Enclosure::getRandomRespawnMarker(void)
     {
         if( getMarkerFlags(i) & mtRespawn ) respawnIds.push_back( i );
     }
+	
+	//tsynique
+	if (respawnIds.size() == 0) return 0;
+
     assert( respawnIds.size() );
 
     unsigned int result = unsigned int( getCore()->getRandToolkit()->getUniform( 0, float( respawnIds.size() ) ) );

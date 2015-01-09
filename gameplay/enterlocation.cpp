@@ -84,6 +84,12 @@ void EnterLocationDialog::onGuiMessage(gui::Message* message)
                 {
                     leftDayTime = maxHoldingTime;
                 }
+				// night jump
+				// nightjump
+				if (leftDayTime <= 0) {
+					leftDayTime = 720.0f;
+				}
+
                 _geoscape->requestActivity( new Scene( _geoscape->getCareer(), _location, leftDayTime ) );
             }
             _isComplete = true;

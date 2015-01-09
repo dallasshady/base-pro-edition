@@ -1,7 +1,6 @@
 
 #include "headers.h"
 #include "database.h"
-#include "version.h"
 
 using namespace database;
 

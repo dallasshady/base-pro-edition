@@ -1,4 +1,3 @@
-
 #include "headers.h"
 #include "airplane.h"
 #include "gameplay.h"
@@ -16,6 +15,7 @@ Airplane::Airplane(Actor* parent, AirplaneDesc* desc) : Actor( parent )
     _landingMode = false;
     _restAltitude = _desc.initAltitude - _desc.lastAltitude;
     _waypointId = 0;
+	_phActor = NULL;
     _waypointFactor = 0;
 
     // obtain clump
@@ -26,6 +26,7 @@ Airplane::Airplane(Actor* parent, AirplaneDesc* desc) : Actor( parent )
         _clump->getFrame(), 
         _desc.propellerFrame.c_str() 
     );
+
     assert( _propellerFrame );
 
     // insert clump in to the scene
@@ -101,6 +102,37 @@ Airplane::Airplane(Actor* parent, AirplaneDesc* desc) : Actor( parent )
         ) );
         _clump->getFrame()->getLTM();
     }
+
+	// create new actor
+	//NxBodyDesc nxBodyDesc;
+	//nxBodyDesc.massSpaceInertia.set( 0,0,0 ); // tensor will be computed automatically
+	//nxBodyDesc.mass = 767.0f;
+	//nxBodyDesc.linearDamping = 0.0f;
+	//nxBodyDesc.angularDamping = 0.0f;
+	//nxBodyDesc.flags = NX_BF_VISUALIZATION;    
+	//nxBodyDesc.solverIterationCount = 16;
+
+	//NxCapsuleShapeDesc nxFreefallDesc;
+	//nxFreefallDesc.setToDefault();
+	//nxFreefallDesc.radius = 5.0f;
+	//nxFreefallDesc.height = 5.0f;
+
+	////Matrix4f localPose( 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 );
+	////localPose = Gameplay::iEngine->rotateMatrix( localPose, Vector3f( 1,0,0 ), 90.0f );
+	////nxFreefallDesc.localPose = wrap( localPose );
+	////nxFreefallDesc.materialIndex = _scene->getPhFleshMaterial()->getMaterialIndex();
+	
+	//NxActorDesc nxActorDesc;
+	//nxActorDesc.userData = this;
+	//nxActorDesc.setToDefault();
+	//nxActorDesc.shapes.pushBack( &nxFreefallDesc );
+	//nxActorDesc.body = &nxBodyDesc;
+
+	//_scene->getPhScene()->setGravity(PxVec3(0,0,0));
+	//_phActor = _scene->getPhScene()->createActor( nxActorDesc );
+	//_phActor->setGlobalPosition(PxVec3(0, desc->initAltitude/100.0f, 0));
+	//_phActor->setLinearVelocity(PxVec3(0, 0, 0));
+	//_phActor->wakeUp();
 }
 
 Airplane::~Airplane()
@@ -108,15 +140,94 @@ Airplane::~Airplane()
     if( _propellerSound ) _propellerSound->release();
     getScene()->getStage()->remove( _clump );
     _clump->release();
+	if (_phActor != NULL) {
+		_phActor->release();
+	}
 }
 
 /**
  * actor abstracts
  */
+float lift(float aoa) {
+	if (aoa > 90.0f) aoa -= 90.0f;
 
+	if (aoa <= -8) return 0;
+	if (aoa <= 17) {		// -8:17
+		// x * 0.0682 + 0.34
+		return aoa*0.0682f + 0.34f;
+
+	} else if (aoa <= 19) { // 17:19
+		//-((((-x+38)*0.117)-2.213)^2.213) + 1.55
+		return -powf(((-aoa+38)*0.117f)-2.213f, 2.213f) + 1.55f;
+	
+	} else if (aoa <= 22) { // 19:22
+		//-(((x*0.117)-2.213)^2.213) + 1.55
+		return -powf((aoa*0.117f)-2.213f, 2.213f) + 1.55f;
+	//} else if (aoa <= 50) { // 22:50
+	//	//(x-22.0)*-0.05 + 1.419679
+	//	return (aoa-22.0f)*-0.05f + 1.419679f;
+	} else if (aoa <= 90) {	// 22:90
+		//(x^0.87-22.0)*-0.05 + 1.419679
+		return (powf(aoa,0.87f)-22.0f)*-0.05f + 1.419679f;
+	} else {
+		return 0;
+	}
+}
+float drag(float aoa) {
+	aoa = fabs(aoa);
+	
+	//((x+5)*0.032)^3.04 * 0.43 + 0.01
+	float dragCoeff = powf(((aoa+5)*0.032f), 3.04f) * 0.43f + 0.01f;
+	if (dragCoeff > 1.0f) dragCoeff = 1.0f;
+	return dragCoeff;
+}
 void Airplane::onUpdatePhysics()
 {
-    if( !_roughMode )
+	if (_phActor != NULL) {
+		if (_phActor->isSleeping()) {
+			_phActor->wakeUp();
+			return;
+		}
+		/*
+		/// PHYSICS
+		// altitude [m]
+		PxVec3 pos = _phActor->getGlobalPosition();
+		PxVec3 velocity = _phActor->getLinearVelocity();
+		float altitude = pos.y;
+
+		// speed (m/s) squared
+		const float Vsq = velocity.magnitudeSquared();
+
+		// air density: converted to linear from barometric equation [0:10] km altitude
+		// http://www.denysschen.com/catalogue/density.aspx
+		const float AirDensityOld = altitude <= 10000.0f ? (1.196f - 0.0000826f * altitude) : (0.27f);
+
+		// AOA
+		NxMat34 globalPose = _phActor->getGlobalPose();
+		PxVec3 x = globalPose.M.getColumn(0);
+		PxVec3 y = globalPose.M.getColumn(1);
+		PxVec3 z = globalPose.M.getColumn(2);
+
+		PxVec3 velocityN = velocity;
+		velocityN.normalize();
+		const float AOA = -::calcAngle( z, velocityN, x );
+
+		// ADD DRAG
+		const float Cd = 0.027f;
+		const float Fd = 0.5f * AirDensityOld * Vsq * Cd * 10.0f;
+
+		// crosssectional objects
+		const unsigned int xsections_c = 1;
+		PxVec3 xsections[xsections_c];
+		// fuselage
+		//_phActor->addLocalForce(wrap(_propellerFrame->getAt()) * 100.0f);
+
+		// synchronize physics & render
+		//_clump->getFrame()->setPos(wrap(_phActor->getGlobalPosition()));
+		//_clump->getFrame()->setMatrix(wrap(_phActor->getGlobalPose()));*/
+	}
+
+	if( !_roughMode )
     {
         float dt = ::simulationStepTime;
 
@@ -308,13 +419,18 @@ unsigned int Airplane::getNumUnoccupiedExitPoints(void)
 
 engine::IFrame* Airplane::occupyRandomExitPoint(void)
 {
+	// STUB
+	if ( _unoccupiedExitPoints.size() == 0) {
+		return _propellerFrame;
+	}
+
     assert( _unoccupiedExitPoints.size() > 0 );
     if( _unoccupiedExitPoints.size() )
     {
         unsigned int id = getCore()->getRandToolkit()->getUniformInt() % _unoccupiedExitPoints.size();
         assert( id < _unoccupiedExitPoints.size() );
         engine::IFrame* result = _unoccupiedExitPoints[id];
-        _unoccupiedExitPoints.erase( &_unoccupiedExitPoints[id] );
+		_unoccupiedExitPoints.erase( _unoccupiedExitPoints.begin() + id );
         return result;
     }
     else

@@ -41,24 +41,26 @@ void GoalProximity::onUpdateActivity(float dt)
         // maximal bonus
         float maxBonus = _player->getVirtues()->getMaximalBonusScore();
 
-        NxSphere worldSphere;
-        worldSphere.center = _player->getFreefallActor()->getGlobalPosition();
+		PxSphereGeometry worldSphere;
+		PxOverlapBuffer hit;
+        //PHYSX3
+		//worldSphere.center = _player->getFreefallActor()->getGlobalPose().p;
 
         // detect first range proximity        
         worldSphere.radius = _descriptor.range0.distance;
-        if( _scene->getPhTerrainShape()->checkOverlapSphere( worldSphere ) )
+        if(_scene->getPhScene()->overlap(worldSphere, _player->getFreefallActor()->getGlobalPose(), hit))
         {
             // detect second range proximity
             worldSphere.radius = _descriptor.range1.distance;
-            if( _scene->getPhTerrainShape()->checkOverlapSphere( worldSphere ) )
+            if(_scene->getPhScene()->overlap(worldSphere, _player->getFreefallActor()->getGlobalPose(), hit))
             {
                 // detect third range proximity
                 worldSphere.radius = _descriptor.range2.distance;
-                if( _scene->getPhTerrainShape()->checkOverlapSphere( worldSphere ) )
+                if(_scene->getPhScene()->overlap(worldSphere, _player->getFreefallActor()->getGlobalPose(), hit))
                 {
                     // detect fourth range proximity
                     worldSphere.radius = _descriptor.range3.distance;
-                    if( _scene->getPhTerrainShape()->checkOverlapSphere( worldSphere ) )
+                    if(_scene->getPhScene()->overlap(worldSphere, _player->getFreefallActor()->getGlobalPose(), hit))
                     {
                         // scoring by fourth range
                         _score += maxBonus * _descriptor.range3.scorePerSecond * dt;

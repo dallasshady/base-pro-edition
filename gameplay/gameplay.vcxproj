@@ -90,7 +90,7 @@
     </ClCompile>
     <Link>
       <ShowProgress>NotSet</ShowProgress>
-      <OutputFile>../../game/sys/gameplay.dll</OutputFile>
+      <OutputFile>../../B.A.S.E. Game/sys/gameplay-d.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\Libraries;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>.\Release/gameplay.pdb</ProgramDatabaseFile>
@@ -115,8 +115,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\Includes\Novodex\Cooking\include;..\Includes\Novodex\Physics\include;..\Includes\Novodex\Foundation\include;..\Includes\DirectX\Include;..\Includes\TinyXML\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\input;..\Includes\TinyXML\include;..\Includes;..\physx3\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SFML_STATIC;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -130,17 +130,20 @@
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Iphlpapi.lib;tinyxml.lib;NxPhysics.lib;NxCooking.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../../B.A.S.E._Game_beta3/B.A.S.E. Game/sys/gameplay-d.dll</OutputFile>
+      <AdditionalDependencies>sfml-system-s-d.lib;sfml-network-s-d.lib;Iphlpapi.lib;tinyxml.lib;winmm.lib;PhysX3DEBUG_x86.lib;PhysX3CookingDEBUG_x86.lib;PhysX3CommonDEBUG_x86.lib;PhysX3ExtensionsDEBUG.lib;PxTask.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../../B.A.S.E. Game/sys/gameplay-d.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>..\Libraries;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\Libraries;..\Libraries\SFML;..\physx3\Lib\vc10win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AssemblyDebug>true</AssemblyDebug>
       <ProgramDatabaseFile>.\Debug/gameplay-d.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>.\Debug/gameplay-d.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
     <Midl>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -206,6 +209,7 @@
     <ClCompile Include="activity.cpp" />
     <ClCompile Include="actor.cpp" />
     <ClCompile Include="affinstructor.cpp" />
+    <ClCompile Include="airfoil.cpp" />
     <ClCompile Include="airplane.cpp" />
     <ClCompile Include="ambientsound.cpp" />
     <ClCompile Include="angelfalls.cpp" />
@@ -256,6 +260,7 @@
     <ClCompile Include="db_location.cpp" />
     <ClCompile Include="db_mission.cpp" />
     <ClCompile Include="db_npc.cpp" />
+    <ClCompile Include="db_reserve.cpp" />
     <ClCompile Include="db_rig.cpp" />
     <ClCompile Include="db_suit.cpp" />
     <ClCompile Include="db_textures.cpp" />
@@ -287,19 +292,24 @@
     <ClCompile Include="geoscape.cpp" />
     <ClCompile Include="goal.cpp" />
     <ClCompile Include="goal_bonus.cpp" />
+    <ClCompile Include="goal_canopytime.cpp" />
     <ClCompile Include="goal_delayaccuracy.cpp" />
     <ClCompile Include="goal_dropzone.cpp" />
     <ClCompile Include="goal_experience.cpp" />
     <ClCompile Include="goal_flipcount.cpp" />
     <ClCompile Include="goal_footage.cpp" />
+    <ClCompile Include="goal_freefalltime.cpp" />
     <ClCompile Include="goal_gear.cpp" />
+    <ClCompile Include="goal_jumps.cpp" />
     <ClCompile Include="goal_landing.cpp" />
+    <ClCompile Include="goal_opening.cpp" />
     <ClCompile Include="goal_proximity.cpp" />
     <ClCompile Include="goal_reward.cpp" />
     <ClCompile Include="goal_smokeball.cpp" />
     <ClCompile Include="goal_spiral.cpp" />
     <ClCompile Include="goal_stateofhealth.cpp" />
     <ClCompile Include="goal_trackingperf.cpp" />
+    <ClCompile Include="goal_wingsuittime.cpp" />
     <ClCompile Include="hardlanding.cpp" />
     <ClCompile Include="hookknife.cpp" />
     <ClCompile Include="hud.cpp" />
@@ -310,6 +320,7 @@
     <ClCompile Include="incident.cpp" />
     <ClCompile Include="instructor.cpp" />
     <ClCompile Include="interrupt.cpp" />
+    <ClCompile Include="joystickchannel.cpp" />
     <ClCompile Include="jumper.cpp" />
     <ClCompile Include="jumper_airplaneidle.cpp" />
     <ClCompile Include="jumper_airplanejump.cpp" />
@@ -323,9 +334,10 @@
     <ClCompile Include="jumper_modelman.cpp" />
     <ClCompile Include="jumper_outofcontrol.cpp" />
     <ClCompile Include="jumper_pull.cpp" />
+    <ClCompile Include="jumper_pull_reserve.cpp" />
     <ClCompile Include="jumper_rendercb.cpp" />
     <ClCompile Include="jumper_runningjump.cpp" />
-    <ClCompile Include="jumper_sitflying.cpp" />
+    <ClCompile Include="jumper_sidestepjump.cpp" />
     <ClCompile Include="jumper_standingjump.cpp" />
     <ClCompile Include="jumper_tracking.cpp" />
     <ClCompile Include="jumper_turn.cpp" />
@@ -343,20 +355,26 @@
     <ClCompile Include="missionsource.cpp" />
     <ClCompile Include="mode.cpp" />
     <ClCompile Include="mousechannel.cpp" />
+    <ClCompile Include="network.cpp" />
     <ClCompile Include="night.cpp" />
     <ClCompile Include="npc.cpp" />
     <ClCompile Include="npcassist.cpp" />
     <ClCompile Include="npccameraman.cpp" />
+    <ClCompile Include="npccameraman_dz.cpp" />
     <ClCompile Include="npcflight.cpp" />
+    <ClCompile Include="npcflight_dz.cpp" />
     <ClCompile Include="npcfollow.cpp" />
     <ClCompile Include="npcfreefall.cpp" />
+    <ClCompile Include="npcfreefall_dz.cpp" />
     <ClCompile Include="npcmove.cpp" />
     <ClCompile Include="npcprogram.cpp" />
     <ClCompile Include="ostankino_attic.cpp" />
     <ClCompile Include="ostankino_openair.cpp" />
     <ClCompile Include="pab.cpp" />
     <ClCompile Include="pilotchute.cpp" />
+    <ClCompile Include="pose.cpp" />
     <ClCompile Include="preloaded.cpp" />
+    <ClCompile Include="rds.cpp" />
     <ClCompile Include="render.cpp" />
     <ClCompile Include="rope.cpp" />
     <ClCompile Include="royalgorge.cpp" />
@@ -412,6 +430,7 @@
     <ClInclude Include="actionmap.h" />
     <ClInclude Include="activity.h" />
     <ClInclude Include="affinstructor.h" />
+    <ClInclude Include="airfoil.h" />
     <ClInclude Include="airplane.h" />
     <ClInclude Include="angelfalls.h" />
     <ClInclude Include="animobject.h" />
@@ -459,6 +478,9 @@
     <ClInclude Include="instructor.h" />
     <ClInclude Include="interrupt.h" />
     <ClInclude Include="jumper.h" />
+    <ClInclude Include="jumper_machine.h" />
+    <ClInclude Include="jumper_poses_init.h" />
+    <ClInclude Include="jumper_poses_init_wings.h" />
     <ClInclude Include="kjerag.h" />
     <ClInclude Include="kvly.h" />
     <ClInclude Include="landingaccuracy.h" />
@@ -466,16 +488,21 @@
     <ClInclude Include="messagebox.h" />
     <ClInclude Include="mission.h" />
     <ClInclude Include="missionbrowser.h" />
+    <ClInclude Include="network.h" />
     <ClInclude Include="night.h" />
     <ClInclude Include="npc.h" />
     <ClInclude Include="npcassist.h" />
     <ClInclude Include="npccameraman.h" />
+    <ClInclude Include="npccameraman_dz.h" />
     <ClInclude Include="npcflight.h" />
+    <ClInclude Include="npcflight_dz.h" />
     <ClInclude Include="npcfollow.h" />
     <ClInclude Include="npcfreefall.h" />
+    <ClInclude Include="npcfreefall_dz.h" />
     <ClInclude Include="npcmove.h" />
     <ClInclude Include="ostankino.h" />
     <ClInclude Include="pilotchute.h" />
+    <ClInclude Include="pose.h" />
     <ClInclude Include="preloaded.h" />
     <ClInclude Include="render.h" />
     <ClInclude Include="royalgorge.h" />
@@ -503,6 +530,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="english.txt" />
+    <None Include="TODO.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

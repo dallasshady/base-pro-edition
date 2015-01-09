@@ -1,7 +1,6 @@
 
 #include "headers.h"
 #include "goal.h"
-#include "version.h"
 
 /**
  * class implementation
@@ -20,7 +19,12 @@ GoalStateOfGear::~GoalStateOfGear()
     if( _player->isOverActivity() )
     {	
         Virtues* virtues = getScene()->getCareer()->getVirtues();
-        assert( _finite( getGoalScore() ) );
+        //assert( _finite( getGoalScore() ) );
+		if (!_finite( getGoalScore())) {
+			virtues->evolution.score = 0;
+			return;
+		}
+
         virtues->evolution.score += getGoalScore();
         if( virtues->evolution.score < 0 )
         {
@@ -127,6 +131,9 @@ float GoalStateOfGear::getGoalScore(void)
     totalDamage += ( _suitState - virtues->equipment.suit.state );
     totalDamage += ( _rigState - virtues->equipment.rig.state );
     totalDamage += ( _canopyState - virtues->equipment.canopy.state );
+	
+	totalDamage = 0;
+	return 0;
 
     if( totalDamage < 0.01f )
     {
@@ -134,6 +141,7 @@ float GoalStateOfGear::getGoalScore(void)
     }
     else
     {
+		if (totalDamage > 5.0f) totalDamage = 5.0f;
         return -( totalDamage * 100.0f );
     }
 }

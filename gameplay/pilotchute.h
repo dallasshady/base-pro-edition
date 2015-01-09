@@ -45,18 +45,20 @@ private:
     float                     _cordLength; // lenght of strand cord
     PilotchuteState           _state;
     engine::IFrame*           _poseModeFrame;
-    NxActor*                  _phConnected;      // pilot connected to this actor
+	PxRigidDynamic*           _phConnected;      // pilot connected to this actor
     engine::IFrame*           _phConnectedFrame; // pilot connected to actor by this frame
-    NxVec3                    _phLocalAnchor;    // local anchor of connected actor
+    PxVec3                    _phLocalAnchor;    // local anchor of connected actor
     MatrixConversion          _mcPilotchute;     // pilot matrix conversion
-    NxActor*                  _phPilotchute;     // pilot physics simulator
+    PxRigidDynamic*            _phPilotchute;     // pilot physics simulator
     engine::IFrame*           _pullFrame;        // pulled pilot will be holded at this frame
-    NxJoint*                  _phJoint;          // connection joint
-    NxVec3                    _phPilotAnchor;    // pilot local anchor
+	PxDistanceJoint*          _phJoint;          // connection joint
+    PxVec3                    _phPilotAnchor;    // pilot local anchor
     PilotchuteRenderCallback* _renderCallback;   // render callback
-
-	NxActor*				  _nx;				 // dead weight actor
+	
+	PxRigidDynamic*			  _nx;				 // dead weight actor
 	bool					  _freebag;			 // is pilotchute a freebag (disconnects after full inflation)
+	float					  _inflation;		 // inflation level (0..1)
+	bool					  _collapsed;		 // if true, the pilotchute will never inflate obove 20%
 protected:
     // Actor
     virtual void onUpdateActivity(float dt);
@@ -66,23 +68,24 @@ public:
     PilotchuteSimulator(Actor* jumper, database::Canopy* canopyInfo, database::Pilotchute* gearRecord);
     virtual ~PilotchuteSimulator();
     // class behaviour
-    void connect(NxActor* actor, engine::IFrame* frame, const NxVec3& localAnchor);
+    void connect(PxRigidDynamic* actor, engine::IFrame* frame, const PxVec3& localAnchor);
 	void disconnect();
     void pull(engine::IFrame* frame);
     void pull(Matrix4f pose);
-    void drop(const NxVec3& velocity);
+    void drop(const PxVec3& velocity);
     void setInflation(float value);
+	float getInflation(void);
 	void setFreebag(bool value);
 	bool isFreebag(void);
 public:
     inline PilotchuteState getState(void) { return _state; }
     inline database::Pilotchute* getGearRecord(void) { return _gearRecord; }
-    inline NxActor* getPhActor(void) { return _phPilotchute; }
+    inline PxRigidDynamic* getPhActor(void) { return _phPilotchute; }
 
 	inline bool isConnected(void) { return ( _phConnected != NULL ); }
     inline bool isPulled(void) { return ( _pullFrame != NULL ); }
     inline bool isDropped(void) { return (_phPilotchute != NULL); }
-    inline bool isOpened(void) { return _pilotClump->getAnimationController()->isEndOfAnimation( 0 ); }
+    inline bool isOpened(void) { return _collapsed || _pilotClump->getAnimationController()->isEndOfAnimation( 0 ); }
 public:
     // model management
     static engine::IAtomic* getCollision(engine::IClump* clump);

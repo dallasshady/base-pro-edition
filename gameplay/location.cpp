@@ -16,6 +16,7 @@ Location::Location(Geoscape* geoscape, unsigned int databaseId)
     demoLocationData->player = true;
     // random weather
     unsigned int dice = unsigned int( getCore()->getRandToolkit()->getUniform( 0, 3 ) );
+	dice = 0;
     switch( dice )
     {
     case 0:
@@ -95,6 +96,7 @@ Location::Location(Geoscape* geoscape, unsigned int databaseId)
         setPlayer( false );
         // random weather
         unsigned int dice = unsigned int( getCore()->getRandToolkit()->getUniform( 0, 6 ) );
+		dice = 0;
         switch( dice )
         {
         case 0:

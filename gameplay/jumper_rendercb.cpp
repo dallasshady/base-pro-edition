@@ -86,7 +86,8 @@ engine::IAtomic* JumperRenderCallback::onRenderBody(engine::IAtomic* atomic, voi
 
 void JumperRenderCallback::apply(engine::IClump* clump)
 {
-    for( unsigned int i=0; i<Jumper::getNumHeads( clump ); i++ )
+	unsigned int i;
+    for( i=0; i<Jumper::getNumHeads( clump ); i++ )
     {
         Jumper::getHead( clump, i )->setRenderCallback( onRenderFace, this );
     }
@@ -237,7 +238,8 @@ void JumperRenderCallback::restore(engine::IClump* clump)
     
     restoreAtomic( Jumper::getLeftHand( clump ) );
     restoreAtomic( Jumper::getRightHand( clump ) );
-    for( unsigned int i=0; i<Jumper::getNumHelmets( clump ); i++ )
+	unsigned int i;
+    for( i=0; i<Jumper::getNumHelmets( clump ); i++ )
     {
         restoreAtomic( Jumper::getHelmet( clump, i ) );
     }

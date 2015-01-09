@@ -14,6 +14,7 @@ NPCFreefall_DZ::NPCFreefall_DZ(NPC* npc) : NPCProgram( npc )
     _positionIsSucceed = false;
     _directionIsSucceed = false;
 	_timeUntilJump = getCore()->getRandToolkit()->getUniform(1.0f, 10.0f);
+	_timeUntilJump = 5.0f;
 }
 
 NPCFreefall_DZ::~NPCFreefall_DZ()
@@ -32,13 +33,14 @@ void NPCFreefall_DZ::onUpdate(float dt)
 
     // update target position
     Matrix4f catToyPose = getNPC()->getCatToy()->getCurrentPose();
+	
     _targetPos.set( catToyPose[3][0], catToyPose[3][1], catToyPose[3][2] );
 
 	// jump only when the wind is right
 	Vector2f pos = Vector2f(catToyPose[3][0], catToyPose[3][2]);
 	pos.normalize();
 	
-	NxVec3 wind = getNPC()->getJumper()->getScene()->getWindAtPoint(NxVec3(catToyPose[3][0], catToyPose[3][1], catToyPose[3][2]));
+	PxVec3 wind = getNPC()->getJumper()->getScene()->getWindAtPoint(PxVec3(catToyPose[3][0], catToyPose[3][1], catToyPose[3][2]));
 	wind.normalize();
 	Vector2f wind2(wind.x, wind.z);
 	float wind_angle = 0.0;
@@ -125,32 +127,98 @@ void NPCFreefall_DZ::onUpdate(float dt)
         Vector3f jumperRight = getNPC()->getJumper()->getClump()->getFrame()->getRight();
         jumperRight.normalize();
 
+        Vector3f jumperUp = getNPC()->getJumper()->getClump()->getFrame()->getUp();
+        jumperUp.normalize();
+
         // retrieve current jumper position    
         Vector3f jumperPos = getNPC()->getJumper()->getClump()->getFrame()->getPos();
         jumperPos += Vector3f( 0, jumperRoamingSphereSize, 0 );
 
+		// wingsuit
+		bool wingsuit = database::Suit::getRecord(getNPC()->getJumper()->getVirtues()->equipment.suit.id)->wingsuit;
+
+		// leveling
+		// wlo - when npc higher
+		//if (!wingsuit) {
+		//	if (jumperPos[1] - _targetPos[1] > 1500.0f) {
+		//		spinalCord->wlo = true;
+		//	} else if (jumperPos[1] - _targetPos[1] < -1500.0f)  {
+		//		spinalCord->hook = true;
+		//	}
+		//}
+
         // direction to target
-        Vector3f targetDir = _targetPos - jumperPos;
-        float distanceToTarget = Vector3f( targetDir[0], 0, targetDir[2] ).length();
-        targetDir.normalize();
+		// above 1500 m. - look at jumper
+		Vector3f pos = getNPC()->getJumper()->getClump()->getFrame()->getPos();
+		float alt = pos[1];
+		Vector3f targetDir;
+		float distanceToTarget = 0.0f;
+		const PxVec3 vel = getNPC()->getJumper()->getFreefallActor()->getLinearVelocity();
+
+		if (alt > 150000.0f) {
+			targetDir = _targetPos - jumperPos;
+			distanceToTarget = Vector3f( targetDir[0], 0, targetDir[2] ).length();
+			targetDir.normalize();
+		// 1500m. - 1400m. - turn away
+		} else if (alt > 140000.0f) {
+			targetDir = _targetPos - jumperPos;
+			distanceToTarget = Vector3f( targetDir[0], 0, targetDir[2] ).length();
+			targetDir.normalize();
+
+		// 1400m. - 1250m. - track away
+		} else if (alt > 125000.0f) {
+			targetDir = _targetPos - jumperPos;
+			distanceToTarget = Vector3f( targetDir[0], 0, targetDir[2] ).length();
+			targetDir.normalize();
+			spinalCord->modifier = 1.0f;
+			spinalCord->trigger_modifier = true;
+			spinalCord->hook = 1.0f;
+			spinalCord->trigger_hook = true;
+			if (alt > 123000.0f) {
+				spinalCord->down = 1.0f;
+				spinalCord->trigger_down = true;
+			}
+		// 1250m. - 1200m. - slow down
+		} else if (alt > 120000.0f) {
+			targetDir = _targetPos - jumperPos;
+			distanceToTarget = Vector3f( targetDir[0], 0, targetDir[2] ).length();
+			targetDir.normalize();
+			spinalCord->modifier = 0.0f;
+			spinalCord->trigger_modifier = false;
+		// 1200m. - deploy
+		} else if (fabs(vel.y) > 25.0f) {
+			if (getNPC()->getJumper()->getCanopySimulator()) {
+				//getCore()->logMessage("npc pull. Far enough: %d", (int)farEnough);
+				spinalCord->phase = true;
+				spinalCord->modifier = wingsuit;
+			} else {
+				//getCore()->logMessage("npc pull reserve. Far enough: %d", (int)farEnough);
+				spinalCord->pullReserve = true;
+				spinalCord->modifier = wingsuit;
+			}
+		}
 
 		// landing too far away? let's deploy in order to return safely
 		// glide ratio is based on canopy size
-		database::Canopy *canopy = database::Canopy::getRecord(getNPC()->getJumper()->getVirtues()->equipment.canopy.id);
-		Vector3f pos = getNPC()->getJumper()->getClump()->getFrame()->getPos();
-		float glide = canopy->square / 150.0f;
-		float alt = pos[1];
-		pos[1] = 0;
-		bool farEnough = pos.length() >= alt*glide;
+		//database::Canopy *canopy = database::Canopy::getRecord(getNPC()->getJumper()->getVirtues()->equipment.canopy.id);
+		//float glide = canopy->square / 150.0f;
+		//pos[1] = 0;
+		//bool farEnough = pos.length() >= alt*glide;
 		//getCore()->logMessage("alt: %2.5f; dst: %2.5f; coverage: %2.5f", alt, pos.length(), alt*glide);
 		// deploy now?
-		if (alt <= 75000.0f || farEnough) {
-			spinalCord->phase = true;
-			//getCore()->logMessage("npc pull. Far enough: %d", (int)farEnough);
-		}
+		//if ((alt <= 85000.0f || farEnough) && alt <= 150000.0f) {
+		//	if (getNPC()->getJumper()->getCanopySimulator()) {
+		//		//getCore()->logMessage("npc pull. Far enough: %d", (int)farEnough);
+		//		spinalCord->phase = true;
+		//		spinalCord->modifier = wingsuit;
+		//	} else {
+		//		//getCore()->logMessage("npc pull reserve. Far enough: %d", (int)farEnough);
+		//		spinalCord->pullReserve = true;
+		//		spinalCord->modifier = wingsuit;
+		//	}
+		//}
 
         // if toy tracking modifier is on
-		bool wingsuit = database::Suit::getRecord(getNPC()->getJumper()->getVirtues()->equipment.suit.id)->wingsuit;
 		if( wingsuit /* getNPC()->getCatToy()->getModifier()*/ )
         {
             // sum up target direction 
@@ -171,24 +239,49 @@ void NPCFreefall_DZ::onUpdate(float dt)
             targetDir.normalize();
         }
 
+        // horizontal steering
+		float minAngle = 5.0f;
+		float minValue = 0.0f;
+        float maxAngle = 45.0f;
+        float maxValue = 1.0f;
+
         // angle to target
-        Vector3f atH = jumperAt; atH[1] = 0; atH.normalize();
+		Vector3f atH = jumperAt; 
+		// headdown
+		if (getNPC()->getJumper()->getDefaultPose() == 1) {
+			atH = jumperUp;
+			minAngle = 25.0f;
+			maxValue = 0.1f;
+		// sitfly
+		} else if (getNPC()->getJumper()->getDefaultPose() == 2) {
+			atH = jumperUp;
+			atH[2] *= -1;
+			//minAngle = 25.0f;
+			maxValue = 0.1f;
+		}
+
+        atH[1] = 0; atH.normalize();
         Vector3f dirH = targetDir; dirH[1] = 0; dirH.normalize();
         float targetAngle = ::calcAngle( dirH, atH, Vector3f( 0,1,0 ) );
 
-        // inclination angle relative to the horizont
-        float horizontalAngle = -1 * ::calcAngle( atH, jumperAt, jumperRight );
+		// turn away
+		if (alt <= 150000.0f) {
+			targetAngle += 180.0f;
+			if (targetAngle >= 360.0f) targetAngle -= 360.0f;
+		}
 
-        // horizontal steering
-        float minAngle = 5.0f;
-        float minValue = 0.0f;
-        float maxAngle = 45.0f;
-        float maxValue = 1.0f;
+        // inclination angle relative to the horizont
+        float horizontalAngle = -1 * ::calcAngle( atH, jumperUp, jumperRight );
+
+        // horizontal steering 
         float factor = ( fabs( targetAngle ) - minAngle ) / ( maxAngle - minAngle );
         factor = ( factor < 0 ) ? 0 : ( ( factor > 1 ) ? 1 : factor );
         float impulse = minValue * ( 1 - factor ) + maxValue * factor;
+		
+		if (wingsuit) impulse = 0.0f;
         // smooth impulse
         impulse = pow( impulse, 1.25f );
+		//if (alt <= 150000.0f) impulse = 1.0f;
         // apply impulse
         if( targetAngle < 0 )
         {            
@@ -204,6 +297,7 @@ void NPCFreefall_DZ::onUpdate(float dt)
         minValue = 25.0f;
         maxAngle = 90.0f;
         maxValue = 0.0f;
+
         factor = ( fabs( targetAngle ) - minAngle ) / ( maxAngle - minAngle );
         factor = ( factor < 0 ) ? 0 : ( ( factor > 1 ) ? 1 : factor );
         float desiredInclination = minValue * ( 1 - factor ) + maxValue * factor;
@@ -219,24 +313,35 @@ void NPCFreefall_DZ::onUpdate(float dt)
         factor = ( fabs( inclinationDifference ) - minAngle ) / ( maxAngle - minAngle );
         factor = ( factor < 0 ) ? 0 : ( ( factor > 1 ) ? 1 : factor );
         impulse = minValue * ( 1 - factor ) + maxValue * factor;
-        if( inclinationDifference < 0 )
-        {            
-            spinalCord->down = impulse;
-        }
-        else
-        {
-            spinalCord->up = impulse;
-        }
+
+		if (!wingsuit && distanceToTarget > 2500.0f && alt > 150000.0f) {
+			if( inclinationDifference < 0 )
+			{            
+				//spinalCord->down += impulse;
+				//if (spinalCord->down > 1.0f) spinalCord->down = 1.0f;
+			}
+			else
+			{
+				//spinalCord->up += impulse;
+				//if (spinalCord->up > 1.0f) spinalCord->up = 1.0f;
+			}
+		}
 
         // tracking modifier
-        if( fabs( targetAngle ) < 90.0f && distanceToTarget > 2500.0f )
-        {
-            spinalCord->modifier = wingsuit;
-        }
-        else
-        {
-            spinalCord->modifier = false;
-        }
+   //     if( fabs( targetAngle ) < 90.0f && distanceToTarget > 2500.0f )
+   //     {
+   //         spinalCord->modifier = 0.0f;
+			//spinalCord->trigger_modifier = false;
+   //     }
+   //     else
+   //     {
+   //         spinalCord->modifier = 0.0f;
+			//spinalCord->trigger_modifier = false;
+   //     }
+
+		if (wingsuit/* || alt <= 130000.0f*/) spinalCord->modifier = 1.0f;
+		if (wingsuit/* || alt <= 130000.0f*/) spinalCord->trigger_modifier = true;
+		return;
 
         // force tracking in several condition        
         if( getNPC()->getCatToy()->getModifier() )

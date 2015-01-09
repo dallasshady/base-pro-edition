@@ -83,6 +83,7 @@ public:
 public:
     FreefallSound(Actor* parent);
     virtual ~FreefallSound();
+	void updateReverbation(audio::ISound *sound, float altitude);
 };
 
 /**
@@ -94,8 +95,12 @@ class FlightSound : public Actor
 private:
     audio::ISound* _openSound;
     audio::ISound* _flappingSound;
+	audio::ISound* _jetSound;
     float          _flappingGain;
     float          _flappingPitch;
+	float		   _jetPitch;
+	float		   _jetGain;
+	float		   _modifier;
     float          _velocity;
 public:
     // actor abstracts
@@ -104,6 +109,7 @@ public:
 public:
     FlightSound(Actor* parent);
     virtual ~FlightSound();
+	void updateReverbation(audio::ISound *sound, float altitude);
 };
 
 /**

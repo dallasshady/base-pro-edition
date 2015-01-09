@@ -40,6 +40,8 @@ void castingCallback_GoFall_RGB_Tracking(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // define smokeball properties
     SmokeBallDesc smokeBallDesc;    
@@ -102,6 +104,8 @@ void castingCallback_GoFall_RGB_Extreme(Actor* parent)
     new GoalStateOfGear( mission->getPlayer() );
     new GoalLanding( mission->getPlayer() );
     new GoalExperience( mission->getPlayer() );
+	new GoalFreeFallTime( mission->getPlayer() );
+	new GoalCanopyTime( mission->getPlayer() );
 
     // define smokeball properties
     SmokeBallDesc smokeBallDesc;    

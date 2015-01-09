@@ -2,13 +2,12 @@
 #include "headers.h"
 #include "npc.h"
 #include "crypt.h"
-#include "version.h"
 
 /**
  * class implemetation
  */
 
-NPC::NPC(Actor* parent, unsigned int databaseId, Airplane* airplane, Enclosure* enclosure, CatToy* catToy, bool dropzone) : Actor( parent )
+NPC::NPC(Actor* parent, unsigned int databaseId, Airplane* airplane, Enclosure* enclosure, CatToy* catToy, Jumper *player, bool dropzone) : Actor( parent )
 {
     assert( _enclosure );
     assert( _catToy );
@@ -22,6 +21,7 @@ NPC::NPC(Actor* parent, unsigned int databaseId, Airplane* airplane, Enclosure* 
     _enclosure  = enclosure;
     _databaseId = databaseId;
     _catToy = catToy;
+	_player = player;
 
     // retrieve NPC Info
     database::NPCInfo* npcInfo = database::NPCInfo::getRecord( _databaseId );
@@ -53,6 +53,7 @@ NPC::NPC(Actor* parent, unsigned int databaseId, Airplane* airplane, Enclosure* 
     _virtues.equipment.rig.age   = 0;
     _virtues.equipment.rig.state = 1.0f;
     _virtues.equipment.rig.type  = ::gtRig;
+	_virtues.equipment.rig.rig_aad = 1;
 
     // equip canopy
 	if (dropzone) {
@@ -62,12 +63,29 @@ NPC::NPC(Actor* parent, unsigned int databaseId, Airplane* airplane, Enclosure* 
 
 		// make sure it's skydiving canopy
 		int br = 0;
-		while (!canopy->skydiving && br++ < 100) {
+		while (!canopy->skydiving && ++br < 100) {
 			tryId = getCore()->getRandToolkit()->getUniformInt() % (database::Canopy::getNumRecords()-1);
 			canopy = database::Canopy::getRecord(tryId);
 		}
 		_virtues.equipment.canopy = Gear(gtCanopy, tryId);
 		_virtues.equipment.pilotchute = 0;
+
+		// give random suit
+		tryId = getCore()->getRandToolkit()->getUniformInt() % (database::Suit::getNumRecords()-1);
+		database::Suit *suit = database::Suit::getRecord(tryId);
+
+		// make sure it's the right type (wingsuit or not)
+		//br = 0;
+		//bool wingsuit = database::Suit::getRecord(_virtues.equipment.suit.id)->wingsuit;
+		//while (suit->wingsuit != wingsuit && ++br < 100) {
+		//	tryId = getCore()->getRandToolkit()->getUniformInt() % (database::Suit::getNumRecords()-1);
+		//	suit = database::Suit::getRecord(tryId);
+		//}
+		//_virtues.equipment.suit = Gear(gtSuit, tryId);
+
+		// give random helmet
+		tryId = getCore()->getRandToolkit()->getUniformInt() % (database::Helmet::getNumRecords()-1);
+		_virtues.equipment.helmet = Gear(gtHelmet, tryId);
 	} else {
 		_virtues.equipment.canopy.id    = catToy->getVirtues()->equipment.canopy.id;
 		_virtues.equipment.canopy.age   = 0;
@@ -78,9 +96,12 @@ NPC::NPC(Actor* parent, unsigned int databaseId, Airplane* airplane, Enclosure* 
 		_virtues.equipment.pilotchute = catToy->getVirtues()->equipment.pilotchute;
 	}
 
-    // (TEST ISSUE) disable malfunctions
-    // because of NPC doesn't able to solve malfuctions
-    _virtues.equipment.malfunctions = false;
+	// equip random reserve
+	if (database::Canopy::getRecord(_virtues.equipment.canopy.id)->skydiving) {
+		_virtues.equipment.reserve = Gear(gtReserve, getCore()->getRandToolkit()->getUniformInt() % (database::Canopy::getReserveNumRecords()-1));
+	}
+
+    _virtues.equipment.malfunctions = true;
 
     // choose slider
     _virtues.equipment.sliderOption = catToy->getVirtues()->equipment.sliderOption;
@@ -149,6 +170,12 @@ void NPC::onUpdateActivity(float dt)
 {
     // update cat toy
     _catToy->update( dt );
+
+	// control NPC
+	//if (_player) {
+	//	_jumper->getSpinalCord()->trigger_phase = _player->getSpinalCord()->trigger_phase;
+	//	_jumper->getSpinalCord()->phase = _player->getSpinalCord()->phase;
+	//}
 
     if( _npcProgram ) 
     {

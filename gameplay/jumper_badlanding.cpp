@@ -19,7 +19,7 @@ static engine::AnimSequence crashSequence =
  * class implementation
  */
 
-Jumper::BadLanding::BadLanding(Jumper* jumper, NxActor* phFlight, MatrixConversion* mcFlight) :
+Jumper::BadLanding::BadLanding(Jumper* jumper, PxRigidDynamic* phFlight, MatrixConversion* mcFlight) :
     JumperAction( jumper )
 {
 	getCore()->logMessage("BAD LANDING");
@@ -36,8 +36,13 @@ Jumper::BadLanding::BadLanding(Jumper* jumper, NxActor* phFlight, MatrixConversi
 	getCore()->logMessage("BAD LANDING2");
     // set fixed flesh material for this actor
     assert( _phActor->getNbShapes() );
-    NxShape** shapes = _phActor->getShapes();
-    shapes[0]->setMaterial( jumper->getScene()->getPhFleshMaterial()->getMaterialIndex() );
+	PxShape **shapes;
+	_phActor->getShapes(shapes, 1);
+
+	PxMaterial **materials;
+	materials[0] = _jumper->getScene()->getPhFleshMaterial();
+	shapes[0]->setMaterials(materials, 1);
+
 	getCore()->logMessage("BAD LANDING3");
     _phActor->setAngularDamping( 5.0f );
     _phActor->setLinearDamping( 0.1f );
@@ -99,17 +104,17 @@ void Jumper::BadLanding::updatePhysics(void)
 
     // align torque, relative to world up direction
     float Kalign = 0.0125f;
-    NxVec3 Talign( axis[0], axis[1], axis[2] );
+    PxVec3 Talign( axis[0], axis[1], axis[2] );
     Talign = Talign * sqr( angle ) * sgn( angle ) * Kalign;
 
     // friction force
     /*
-    NxVec3 vel = _phActor->getLinearVelocity();
+    PxVec3 vel = _phActor->getLinearVelocity();
     if( vel.magnitude() > 0.25f )
     {
         _Kfr += 0.5f * ::simulationStepTime;
     }
-    NxVec3 Ffr = vel * -_Kfr * _phActor->getMass();
+    PxVec3 Ffr = vel * -_Kfr * _phActor->getMass();
     */
 
     // finalize motion equation
